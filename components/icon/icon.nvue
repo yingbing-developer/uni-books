@@ -1,0 +1,59 @@
+<template>
+	<text class="iconfont icon" :style="{'font-size': size + 'px', color: color}">
+		{{icons[name]}}
+	</text>
+</template>
+
+<script>
+	export default {
+		props: {
+			name: {
+				type: String,
+				default: ''
+			},
+			size: {
+				type: Number,
+				default: 18
+			},
+			color: {
+				type: String,
+				default: '#FFFFFF'
+			}
+		},
+		data () {
+			return {
+				icons: {
+					'history': '\ue6aa',
+					'arrow-left': '\ue604',
+					'arrow-right': '\ue60d',
+					'pushpin': '\ue638',
+					'search': '\ue650',
+					'setting': '\ue6a9',
+					'clear': '\ue678',
+					'catalog': '\ue601',
+					'more': '\ue60f',
+					'menu': '\ue624',
+					'filter': '\ue630'
+				}
+			}
+		},
+		beforeCreate () {
+			const src = plus.io.convertLocalFileSystemURL('/static/iconfont.ttf')
+			const domModule = weex.requireModule('dom')
+			domModule.addRule('fontFace', {
+			    'fontFamily': "iconfont",
+				'src': "url('file:/" + src + "')"
+			});
+		}
+	}
+</script>
+
+<style scoped>
+	.iconfont {
+	    font-family: iconfont!important;
+	}
+	.icon {
+		margin-left: -10px;
+		margin-bottom: -3px;
+	}
+</style>

@@ -1,0 +1,130 @@
+<template>
+	<view class="index">
+		<nav-bar></nav-bar>
+		<waterfall column-count="<integer>" column-width="120" column-gap="20" left-gap="20" right-gap="20">
+		    <cell v-for="(item, index) in books" :key="index">
+				<view class="book">
+					<image class="book-img" src="../../static/logo.png" mode="aspectFill"></image>
+					<view class="book-bottom">
+						<text class="book-name">影院街影院街影院街影院街影院街影院街影院街</text>
+						<view class="b-bottom">
+							<text class="book-time">2019-05-15</text>
+							<text class="book-progress">33.33%</text>
+						</view>
+					</view>
+				</view>
+		    </cell>
+		</waterfall>
+		<fixed-button></fixed-button>
+	</view>
+</template>
+
+<script>
+	export default {
+		data () {
+			return {
+				books: [{
+					id: '200901141850320490',
+					name: '影院街影院街影院街影院街影院街影院街影院街',
+					image: '',
+					progress: 33.33
+				},{
+					id: '200901141850320491',
+					name: '影院街影院街影院街影院街影院街影院街影院街',
+					image: '',
+					progress: 33.33
+				},{
+					id: '200901141850320492',
+					name: '影院街影院街影院街影院街影院街影院街影院街',
+					image: '',
+					progress: 33.33
+				},{
+					id: '200901141850320493',
+					name: '影院街影院街影院街影院街影院街影院街影院街',
+					image: '',
+					progress: 33.33
+				},{
+					id: '200901141850320494',
+					name: '影院街影院街影院街影院街影院街影院街影院街',
+					image: '',
+					progress: 33.33
+				},{
+					id: '200901141850320495',
+					name: '影院街影院街影院街影院街影院街影院街影院街',
+					image: '',
+					progress: 33.33
+				},{
+					id: '200901141850320496',
+					name: '影院街影院街影院街影院街影院街影院街影院街',
+					image: '',
+					progress: 33.33
+				},{
+					id: '200901141850320497',
+					name: '影院街影院街影院街影院街影院街影院街影院街',
+					image: '',
+					progress: 33.33
+				},{
+					id: '200901141850320498',
+					name: '影院街影院街影院街影院街影院街影院街影院街',
+					image: '',
+					progress: 33.33
+				},{
+					id: '200901141850320499',
+					name: '影院街影院街影院街影院街影院街影院街影院街',
+					image: '',
+					progress: 33.33
+				},{
+					id: '200901141850320500',
+					name: '影院街影院街影院街影院街影院街影院街影院街',
+					image: '',
+					progress: 33.33
+				}]
+			}
+		}
+	}
+</script>
+
+<style scoped>
+	.book {
+		margin-top: 20px;
+		position: relative;
+		height: 280rpx;
+	}
+	.book-img {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+	}
+	.book-bottom {
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		height: 80rpx;
+		background-color: rgba(255,255,255,0.4);
+		justify-content: center;
+		padding: 0 5px;
+	}
+	.book-name {
+		font-size: 22rpx;
+		color: #333333;
+		lines:1;
+		text-overflow:ellipsis;
+	}
+	.b-bottom {
+		flex-direction: row;
+		justify-content: space-between;
+	}
+	.book-time {
+		font-size: 18rpx;
+		color: #666666;
+		margin-top: 5px;
+	}
+	.book-progress {
+		font-size: 18rpx;
+		color: #666666;
+		margin-top: 5px;
+	}
+</style>
