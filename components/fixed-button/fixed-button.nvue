@@ -1,30 +1,37 @@
 <template>
 	<view class="fixed-button">
-		<view class="button">
-			<c-icon name='history' :size="25"></c-icon>
+		<view :class="{'button': true, 'hide': !show}" v-for="(item, index) in btns" :key="index" @tap="clickItem(item)">
+			<c-icon :name='item' :size="25"></c-icon>
 		</view>
-		<view class="button">
-			<c-icon name='clear' :size="25"></c-icon>
+		<view :class="{'button': true, 'hide': Math.abs(offsetY) < 300}" @tap="clickItem('top')">
+			<c-icon name='top' :size="25"></c-icon>
 		</view>
 	</view>
 </template>
 
 <script>
-	import CIcon from '@/components/icon/icon.nvue'
+	import CIcon from '@/components/c-icon/c-icon.nvue'
 	export default {
 		props: {
 			show: {
 				type: Boolean,
 				default: true
+			},
+			btns: {
+				type: Array,
+				default () {
+					return new Array();
+				}
+			},
+			offsetY: {
+				type: Number,
+				default: 0
 			}
 		},
-		data () {
-			return {
-				isShow: true
+		methods: {
+			clickItem (e) {
+				this.$emit('click', e)
 			}
-		},
-		watch: {
-			
 		},
 		components: {
 			CIcon
@@ -37,6 +44,8 @@
 		position: fixed;
 		bottom: 40px;
 		right: 20px;
+		align-items: center;
+		justify-content: center;
 	}
 	.button {
 		width: 50px;
@@ -48,5 +57,11 @@
 		align-items: center;
 		margin-top: 5px;
 		margin-bottom: 5px;
+		transition-property: width, height;
+		transition-duration: 200;
+	}
+	.hide {
+		width: 0;
+		height: 0;
 	}
 </style>

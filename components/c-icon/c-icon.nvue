@@ -1,10 +1,10 @@
 <template>
-	<text class="iconfont icon" :style="{'font-size': size + 'px', color: color}">
-		{{icons[name]}}
-	</text>
+	<text class="iconfont" :style="{'font-size': size + 'px', color: color}">{{icons[name]}}</text>
 </template>
 
 <script>
+	const src = plus.io.convertLocalFileSystemURL('/static/iconfont.ttf')
+	const domModule = weex.requireModule('dom')
 	export default {
 		props: {
 			name: {
@@ -24,22 +24,26 @@
 			return {
 				icons: {
 					'history': '\ue6aa',
+					'history-fill': '\ue75f',
 					'arrow-left': '\ue604',
 					'arrow-right': '\ue60d',
-					'pushpin': '\ue638',
+					'pushpin-fill': '\ue638',
 					'search': '\ue650',
 					'setting': '\ue6a9',
-					'clear': '\ue678',
+					'setting-fill': '\ue608',
+					'clear-fill': '\ue678',
 					'catalog': '\ue601',
 					'more': '\ue60f',
 					'menu': '\ue624',
-					'filter': '\ue630'
+					'filter': '\ue630',
+					'top': '\ue62c',
+					'books-fill': '\ue60e',
+					'night-fill': '\ue6c1',
+					'about-fill': '\ue760'
 				}
 			}
 		},
 		beforeCreate () {
-			const src = plus.io.convertLocalFileSystemURL('/static/iconfont.ttf')
-			const domModule = weex.requireModule('dom')
 			domModule.addRule('fontFace', {
 			    'fontFamily': "iconfont",
 				'src': "url('file:/" + src + "')"
@@ -51,9 +55,5 @@
 <style scoped>
 	.iconfont {
 	    font-family: iconfont!important;
-	}
-	.icon {
-		margin-left: -10px;
-		margin-bottom: -3px;
 	}
 </style>

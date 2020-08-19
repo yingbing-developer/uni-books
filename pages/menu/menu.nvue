@@ -1,0 +1,122 @@
+<template>
+	<view class="menu">
+		<view class="mask" @touchmove="moveEnable"></view>
+		<view class="popup">
+			<image class="bg" src="../../static/logo.png" mode="aspectFill"></image>
+			<view class="list" :class="{'list-actived': current == 0}" @tap="changeCurrent(0)">
+				<view class="icon">
+					<c-icon name="books-fill" size="22" :color="current == 0 ? activeColor : iconColor"></c-icon>
+				</view>
+				<text class="title" :style="{color: current == 0 ? activeColor : fontColor}">阅读中</text>
+			</view>
+			<view class="list" :class="{'list-actived': current == 1}" @tap="changeCurrent(1)">
+				<view class="icon">
+					<c-icon name="history-fill" size="25" :color="current == 1 ? activeColor : iconColor"></c-icon>
+				</view>
+				<text class="title" :style="{color: current == 1 ? activeColor : fontColor}">已读完</text>
+			</view>
+			<view class="hr"></view>
+			<view class="list">
+				<view class="icon">
+					<c-icon name="night-fill" size="25" :color="iconColor"></c-icon>
+				</view>
+				<text class="title" :style="{color: fontColor}">夜间模式</text>
+			</view>
+			<view class="list">
+				<view class="icon">
+					<c-icon name="setting-fill" size="25" :color="iconColor"></c-icon>
+				</view>
+				<text class="title" :style="{color: fontColor}">设置</text>
+			</view>
+			<view class="list">
+				<view class="icon">
+					<c-icon name="about-fill" size="25" :color="iconColor"></c-icon>
+				</view>
+				<text class="title" :style="{color: fontColor}">关于</text>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	import CIcon from '@/components/c-icon/c-icon.nvue'
+	export default {
+		data () {
+			return {
+				fontColor: '#333',
+				iconColor: '#8a8a8a',
+				activeColor: '#1A95EA',
+				current: 0
+			}
+		},
+		created () {
+		},
+		methods: {
+			moveEnable () {
+				return true;
+			},
+			changeCurrent (val) {
+				this.current = val;
+			}
+		},
+		watch: {
+			current (val) {
+				this.$emit('change', val);
+			}
+		},
+		components: {
+			CIcon
+		}
+	}
+</script>
+
+<style>
+	.menu {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+	}
+	.mask {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background-color: rgba(0,0,0,0.4);
+	}
+	.popup {
+		position: absolute;
+		left: 0;
+		top: 0;
+		bottom: 0;
+		width: 540rpx;
+		background-color: #FFFFFF;
+	}
+	.bg {
+		height: 350rpx;
+		background-color: #666;
+	}
+	.hr {
+		height: 1px;
+		background-color: #71716d;		margin-top: 15px;
+		margin-bottom: 15px;
+	}
+	.list {
+		flex-direction: row;
+		align-items: center;
+		height: 60px;
+	}
+	.list-actived {
+		background-color: #EEEEEE;
+	}
+	.icon {
+		width: 25px;
+		margin-left: 20px;
+		margin-right: 40px;
+	}
+	.title {
+		font-size: 18;
+	}
+</style>

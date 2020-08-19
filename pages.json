@@ -11,7 +11,6 @@
 	"globalStyle": {
 		"navigationBarTextStyle": "white",
 		"navigationBarTitleText": "uni-app",
-		"navigationBarBackgroundColor": "#1A95EA",
 		"backgroundColor": "#F8F8F8"
 	}
 }

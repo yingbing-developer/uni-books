@@ -1,9 +1,16 @@
 <template>
 	<view class="index">
-		<nav-bar></nav-bar>
-		<waterfall column-count="<integer>" column-width="120" column-gap="20" left-gap="20" right-gap="20">
-		    <cell v-for="(item, index) in books" :key="index">
-				<view class="book">
+		<nav-bar title="好用阅读器" :backShow="false" :cWidth="420">
+			<view class="nav-left" slot="left">
+				<c-icon name="menu" size="25"></c-icon>
+			</view>
+			<c-icon slot="right" name="search" size="25"></c-icon>
+			<c-icon slot="right" name="filter" size="25"></c-icon>
+			<c-icon slot="right" name="more" size="25"></c-icon>
+		</nav-bar>
+		<waterfall @scroll="scroll" column-count="<integer>" column-width="120" column-gap="10" left-gap="10" right-gap="10">
+		    <cell v-for="(item, index) in books" :key="item.id">
+				<view class="book" ref="list">
 					<image class="book-img" src="../../static/logo.png" mode="aspectFill"></image>
 					<view class="book-bottom">
 						<text class="book-name">影院街影院街影院街影院街影院街影院街影院街</text>
@@ -13,13 +20,18 @@
 						</view>
 					</view>
 				</view>
+				<view v-if="index == books.length - 1" style="height: 10px;"></view>
 		    </cell>
 		</waterfall>
-		<fixed-button></fixed-button>
+		<fixed-button :offsetY="oldOffsetY" :show="btnShow" :btns="['history', 'clear-fill']" @click="clickItem"></fixed-button>
+		<c-menu></c-menu>
 	</view>
 </template>
 
 <script>
+	import CIcon from '@/components/c-icon/c-icon.nvue'
+	import CMenu from '@/pages/menu/menu.nvue'
+	const dom = weex.requireModule('dom') || {};
 	export default {
 		data () {
 			return {
@@ -78,17 +90,87 @@
 					name: '影院街影院街影院街影院街影院街影院街影院街',
 					image: '',
 					progress: 33.33
-				}]
+				},{
+					id: '200901141850320501',
+					name: '影院街影院街影院街影院街影院街影院街影院街',
+					image: '',
+					progress: 33.33
+				},{
+					id: '200901141850320502',
+					name: '影院街影院街影院街影院街影院街影院街影院街',
+					image: '',
+					progress: 33.33
+				},{
+					id: '200901141850320503',
+					name: '影院街影院街影院街影院街影院街影院街影院街',
+					image: '',
+					progress: 33.33
+				},{
+					id: '200901141850320504',
+					name: '影院街影院街影院街影院街影院街影院街影院街',
+					image: '',
+					progress: 33.33
+				},{
+					id: '200901141850320505',
+					name: '影院街影院街影院街影院街影院街影院街影院街',
+					image: '',
+					progress: 33.33
+				},{
+					id: '200901141850320506',
+					name: '影院街影院街影院街影院街影院街影院街影院街',
+					image: '',
+					progress: 33.33
+				},{
+					id: '200901141850320507',
+					name: '影院街影院街影院街影院街影院街影院街影院街',
+					image: '',
+					progress: 33.33
+				}],
+				oldOffsetY: 0,
+				btnShow: true
 			}
+		},
+		methods: {
+			clickItem (e) {
+				if ( e == 'clear-fill' ) {
+					uni.showModal({
+						title: '提示',
+						content: '是否清空所有书籍？',
+						success (res) {
+							if ( res.confirm ) {
+								console.log('清空');
+							}
+						}
+					})
+				}
+				if ( e == 'top' ) {
+					this.scrollTop();
+				}
+			},
+			scroll (e) {
+				if ( e.contentOffset.y < this.oldOffsetY ) {
+					this.btnShow = false;
+				} else {
+					this.btnShow = true;
+				}
+				this.oldOffsetY = e.contentOffset.y;
+			},
+			scrollTop () {
+				dom.scrollToElement(this.$refs['list'][0]);
+			}
+		},
+		components: {
+			CIcon,
+			CMenu
 		}
 	}
 </script>
 
 <style scoped>
 	.book {
-		margin-top: 20px;
+		margin-top: 10px;
 		position: relative;
-		height: 280rpx;
+		height: 190px;
 	}
 	.book-img {
 		position: absolute;
@@ -126,5 +208,8 @@
 		font-size: 18rpx;
 		color: #666666;
 		margin-top: 5px;
+	}
+	.nav-left {
+		margin-right: 60rpx;
 	}
 </style>

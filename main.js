@@ -1,6 +1,5 @@
 import Vue from 'vue'
 import App from './App'
-import '@/common/router'//引入路由
 
 Vue.config.productionTip = false
 

@@ -1,0 +1,105 @@
+
+view,
+swiper-item,
+scroll-view {
+  display:-webkit-box;
+  display:-webkit-flex;
+  display:flex;
+  -webkit-box-orient:vertical;
+  -webkit-box-direction:normal;
+  -webkit-flex-direction:column;
+          flex-direction:column;
+  -webkit-flex-shrink: 0;
+          flex-shrink: 0;
+  -webkit-box-flex: 0;
+  -webkit-flex-grow: 0;
+          flex-grow: 0;
+  -webkit-flex-basis: auto;
+          flex-basis: auto;
+  -webkit-box-align: stretch;
+  -webkit-align-items: stretch;
+          align-items: stretch;
+  -webkit-align-content: flex-start;
+          align-content: flex-start;
+}
+view,
+image,
+input,
+scroll-view,
+swiper,
+swiper-item,
+text,
+textarea,
+video {
+  position: relative;
+  border: 0px solid #000000;
+  -webkit-box-sizing: border-box;
+          box-sizing: border-box;
+}
+swiper-item {
+  position: absolute;
+}
+
+
+.book.data-v-304e786c {
+	margin-top: 20px;
+	position: relative;
+	height: 280rpx;
+}
+.book-img.data-v-304e786c {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+}
+.book-bottom.data-v-304e786c {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	height: 80rpx;
+	background-color: rgba(255,255,255,0.4);
+	-webkit-box-pack: center;
+	-webkit-justify-content: center;
+	        justify-content: center;
+	padding: 0 5px;
+}
+.book-name.data-v-304e786c {
+	font-size: 22rpx;
+	color: #333333;
+	lines:1;
+	text-overflow:ellipsis;
+}
+.b-bottom.data-v-304e786c {
+	-webkit-box-orient: horizontal;
+	-webkit-box-direction: normal;
+	-webkit-flex-direction: row;
+	        flex-direction: row;
+	-webkit-box-pack: justify;
+	-webkit-justify-content: space-between;
+	        justify-content: space-between;
+}
+.book-time.data-v-304e786c {
+	font-size: 18rpx;
+	color: #666666;
+	margin-top: 5px;
+}
+.book-progress.data-v-304e786c {
+	font-size: 18rpx;
+	color: #666666;
+	margin-top: 5px;
+}
+.nav-left.data-v-304e786c {
+	margin: 0 10px;
+}
+.nav-right.data-v-304e786c {
+	-webkit-box-orient: horizontal;
+	-webkit-box-direction: normal;
+	-webkit-flex-direction: row;
+	        flex-direction: row;
+}
+.right-icon.data-v-304e786c {
+	margin-left: 15px;
+}
+

@@ -4,26 +4,49 @@
 		<view class="nav">
 			<view class="left">
 				<slot name="left">
-					<c-icon name="arrow-left" :size="20"></c-icon>
 				</slot>
+				<view class="back" v-if="backShow" @tap="back">
+					<c-icon name="arrow-left" :size="28"></c-icon>
+				</view>
 			</view>
-			<view class="center">
-				
+			<view class="center" :style="{width: cWidth + 'rpx'}">
+				<text class="title">{{title}}</text>
 			</view>
 			<view class="right">
-				
+				<slot name="right">
+				</slot>
 			</view>
 		</view>
 	</view>
 </template>
 
 <script>
-	import CIcon from '@/components/icon/icon.nvue'
+	import CIcon from '@/components/c-icon/c-icon.nvue'
 	export default {
 		props: {
 			bgColor: {
 				type: String,
 				default: '#1A95EA'
+			},
+			backShow: {
+				type: Boolean,
+				default: true
+			},
+			title: {
+				type: String,
+				default: ''
+			},
+			lWidth: {
+				type: Number,
+				default: 0
+			},
+			cWidth: {
+				type: Number,
+				default: 500
+			},
+			rWidth: {
+				type: Number,
+				default: 0
 			}
 		},
 		data () {
@@ -41,6 +64,11 @@
 						this.barHeight = `${res.statusBarHeight + 4}px`;
 					}
 				})
+			},
+			back () {
+				uni.navigateBack({
+					delta: 1
+				})
 			}
 		},
 		components: {
@@ -52,5 +80,26 @@
 <style scoped>
 	.nav {
 		height: 44px;
+		flex-direction: row;
+		padding-left: 20rpx;
+		padding-right: 20rpx;
+	}
+	.back {
+		width: 44px;
+		justify-content: center;
+		align-items: flex-start;
+		height: 44px;
+	}
+	.title {
+		color: #FFFFFF;
+		font-size: 28rpx;
+	}
+	.left, .center, .right {
+		flex-direction: row;
+		align-items: center;
+	}
+	.right {
+		flex: 1;
+		justify-content: space-between;
 	}
 </style>
