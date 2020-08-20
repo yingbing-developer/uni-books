@@ -38,8 +38,13 @@
 					'filter': '\ue630',
 					'top': '\ue62c',
 					'books-fill': '\ue60e',
+					'night': '\ue625',
 					'night-fill': '\ue6c1',
-					'about-fill': '\ue760'
+					'about': '\ue600',
+					'about-fill': '\ue760',
+					'read': '\ue67a',
+					'light': '\ue65e',
+					'light-fill': '\ue6c7'
 				}
 			}
 		},

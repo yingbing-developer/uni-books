@@ -1,55 +1,93 @@
 <template>
-	<view class="menu">
-		<view class="mask" @touchmove="moveEnable"></view>
-		<view class="popup">
-			<image class="bg" src="../../static/logo.png" mode="aspectFill"></image>
-			<view class="list" :class="{'list-actived': current == 0}" @tap="changeCurrent(0)">
-				<view class="icon">
-					<c-icon name="books-fill" size="22" :color="current == 0 ? activeColor : iconColor"></c-icon>
-				</view>
-				<text class="title" :style="{color: current == 0 ? activeColor : fontColor}">阅读中</text>
+	<view class="menu" v-if="isShow">
+		<!-- 遮罩层 -->
+		<view class="mask" ref="mask" @touchmove="moveEnable" :style="{'opacity': maskOpacity}" @tap="hide"></view>
+		<view class="popup" ref="popup" @touchstart="touchstart" @touchmove="touchmove" @touchend="touchend" :style="{'background-color': skinColor.menuBgColor, 'transform': 'translateX(' + popuplate + 'rpx)'}" @tap="moveEnable">
+			<view class="top-img">
+				<image class="bg" src="../../static/logo.png" mode="aspectFill"></image>
+				<view class="top-mask" :style="{opacity: skinColor.imgMask}"></view>
 			</view>
-			<view class="list" :class="{'list-actived': current == 1}" @tap="changeCurrent(1)">
+			<!-- 列表切换 -->
+			<view class="list" :style="isActived(index)" @tap="changeCurrent(index)" v-for="(item, index) in navs" :key="index">
 				<view class="icon">
-					<c-icon name="history-fill" size="25" :color="current == 1 ? activeColor : iconColor"></c-icon>
+					<c-icon :name="item.icon" :size="item.size" :color="current == index ? skinColor.menuActiveColor : skinColor.menuIconColor"></c-icon>
 				</view>
-				<text class="title" :style="{color: current == 1 ? activeColor : fontColor}">已读完</text>
+				<text class="title" :style="{color: current == index ? skinColor.menuActiveColor : skinColor.menuTitleColor}">{{item.title}}</text>
 			</view>
-			<view class="hr"></view>
-			<view class="list">
+			<view class="hr" :style="{'background-color': skinColor.gapColor}"></view>
+			<!-- 夜间模式切换 -->
+			<view class="list" @tap="changeMode">
 				<view class="icon">
-					<c-icon name="night-fill" size="25" :color="iconColor"></c-icon>
+					<c-icon :name="modeIcon" size="25" :color="skinColor.menuIconColor"></c-icon>
 				</view>
-				<text class="title" :style="{color: fontColor}">夜间模式</text>
+				<text class="title" :style="{color: skinColor.menuTitleColor}">{{modeName}}</text>
 			</view>
-			<view class="list">
+			<!-- 功能页面 -->
+			<view class="list" v-for="(item, index) in options" :key="index">
 				<view class="icon">
-					<c-icon name="setting-fill" size="25" :color="iconColor"></c-icon>
+					<c-icon :name="item.icon" :size="item.size" :color="skinColor.menuIconColor"></c-icon>
 				</view>
-				<text class="title" :style="{color: fontColor}">设置</text>
-			</view>
-			<view class="list">
-				<view class="icon">
-					<c-icon name="about-fill" size="25" :color="iconColor"></c-icon>
-				</view>
-				<text class="title" :style="{color: fontColor}">关于</text>
+				<text class="title" :style="{color: skinColor.menuTitleColor}">{{item.title}}</text>
 			</view>
 		</view>
 	</view>
 </template>
 
 <script>
+	const animation = weex.requireModule('animation');
 	import CIcon from '@/components/c-icon/c-icon.nvue'
+	import { skinMixin } from '@/common/mixin/index.js'
 	export default {
-		data () {
-			return {
-				fontColor: '#333',
-				iconColor: '#8a8a8a',
-				activeColor: '#1A95EA',
-				current: 0
+		mixins: [skinMixin],
+		props: {
+			translate: {
+				type: Number,
+				default: 0
+			},
+			opacity: {
+				type: Number,
+				default: 0
 			}
 		},
-		created () {
+		data () {
+			return {
+				anima: {
+					duration: 400,
+					late: -540,
+					opac: 0.5
+				},
+				isShow: false,
+				maskOpacity: 0,
+				popuplate: -540,
+				pointX: 0,
+				current: 0,
+				navs: [{
+					icon: 'books-fill',
+					size: 23,
+					title: '阅读中'
+				},{
+					icon: 'history-fill',
+					size: 25,
+					title: '已读完'
+				}],
+				options:[{
+					icon: 'setting-fill',
+					size: 23,
+					title: '设置'
+				},{
+					icon: 'about',
+					size: 22,
+					title: '关于'
+				}]
+			}
+		},
+		computed: {
+			modeName () {
+				return this.skinMode == 'default' ? '夜间模式' : '日间模式';
+			},
+			modeIcon () {
+				return this.skinMode == 'default' ? 'night' : 'light-fill';
+			}
 		},
 		methods: {
 			moveEnable () {
@@ -57,11 +95,126 @@
 			},
 			changeCurrent (val) {
 				this.current = val;
+			},
+			isActived (val) {
+				if ( val == this.current ) {
+					return {'background-color': this.skinColor.menuActiveBgColor}
+				}
+			},
+			changeMode () {
+				const skin = this.skinMode == 'default' ? 'night' : 'default';
+				this.changeSkin(skin);
+			},
+			//仅仅显示组件，并不显示菜单和遮罩层
+			open () {
+				this.isShow = true;
+			},
+			//显示出菜单和遮罩层
+			show () {
+				this.isShow = true;
+				this.$nextTick(() => {
+					animation.transition(this.$refs.mask, {
+					    styles: {
+							opacity: this.anima.opac
+					    },
+					    duration: this.anima.duration, //ms
+					    timingFunction: 'ease',
+					    needLayout:false,
+					    delay: 0 //ms
+					}, (res) => {
+						this.maskOpacity = this.anima.opac;
+					})
+					animation.transition(this.$refs.popup, {
+					    styles: {
+							transform: 'translateX(0)'
+					    },
+					    duration: this.anima.duration, //ms
+					    timingFunction: 'ease',
+					    needLayout:false,
+					    delay: 0 //ms
+					}, (res) => {
+						this.popuplate = 0;
+					})
+				})
+			},
+			//关闭全部
+			hide () {
+				animation.transition(this.$refs.mask, {
+				    styles: {
+						opacity: 0
+				    },
+				    duration: this.anima.duration, //ms
+				    timingFunction: 'ease',
+				    needLayout:false,
+				    delay: 0 //ms
+				}, (res) => {
+					this.maskOpacity = 0;
+				})
+				animation.transition(this.$refs.popup, {
+				    styles: {
+						transform: 'translateX(' + this.anima.late + 'rpx)'
+				    },
+				    duration: this.anima.duration, //ms
+				    timingFunction: 'ease',
+				    needLayout:false,
+				    delay: 0 //ms
+				}, (res) => {
+					this.isShow = false;
+					this.popuplate = this.anima.late;
+				})
+			},
+			touchstart (e) {
+				if ( e.touches.length > 1 ) {
+					return;
+				}
+				const touch = e.touches[0];
+				this.pointX = touch.pageX;
+			},
+			touchmove (e) {
+				if ( e.touches.length > 1 ) {
+					return;
+				}
+				const touch = e.touches[0];
+				console.log(this.pointX - touch.pageX);
+				this.popuplate = 0 - 1.5 * (this.pointX - touch.pageX);
+				if ( this.popuplate <= -540 ) {
+					this.popuplate = -540;
+				}
+				if ( this.popuplate >= 0 ) {
+					this.popuplate = 0;
+				}
+				this.maskOpacity = Math.abs(this.anima.late - this.popuplate) / Math.abs(this.anima.late) * this.anima.opac;
+				if ( this.maskOpacity <= 0 ) {
+					this.maskOpacity = 0;
+				}
+				if ( this.maskOpacity >= this.anima.opac ) {
+					this.maskOpacity = this.anima.opac;
+				}
+			},
+			touchend (e) {
+				if ( this.popuplate <= -300 ) {
+					this.hide();
+				} else {
+					this.show();
+				}
+				this.pointX = 0;
 			}
 		},
 		watch: {
 			current (val) {
 				this.$emit('change', val);
+			},
+			translate (val) {
+				this.popuplate = val + this.anima.late;
+				if ( this.popuplate > 0 ) {
+					this.popuplate = 0;
+				}
+			},
+			opacity (val) {
+				this.maskOpacity = val;
+				if ( this.maskOpacity > this.anima.opac ) {
+					this.maskOpacity = this.anima.opac
+				}
 			}
 		},
 		components: {
@@ -84,37 +237,61 @@
 		left: 0;
 		right: 0;
 		bottom: 0;
-		background-color: rgba(0,0,0,0.4);
+		background-color: #000000;
 	}
 	.popup {
 		position: absolute;
-		left: 0;
 		top: 0;
+		left: 0;
 		bottom: 0;
 		width: 540rpx;
-		background-color: #FFFFFF;
+		box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+	}
+	.top-img {
+		height: 350rpx;
+		position: relative;
+		margin-bottom: 10px;
 	}
 	.bg {
-		height: 350rpx;
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
 		background-color: #666;
+	}
+	.top-mask {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background-color: #000;
 	}
 	.hr {
 		height: 1px;
-		background-color: #71716d;		margin-top: 15px;
-		margin-bottom: 15px;
+		/* background-color: #E0E0E0; */		margin-top: 10px;
+		margin-bottom: 10px;
 	}
 	.list {
 		flex-direction: row;
 		align-items: center;
 		height: 60px;
 	}
+	.list-right {
+		flex: 1;
+		align-items: flex-end;
+	}
 	.list-actived {
-		background-color: #EEEEEE;
+		background-color: #DDDDDD;
+	}
+	.list-actived-2 {
+		background-color: #343434;
 	}
 	.icon {
-		width: 25px;
+		width: 35px;
 		margin-left: 20px;
-		margin-right: 40px;
+		margin-right: 35px;
 	}
 	.title {
 		font-size: 18;

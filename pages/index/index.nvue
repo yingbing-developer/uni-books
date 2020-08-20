@@ -1,17 +1,24 @@
 <template>
-	<view class="index">
-		<nav-bar title="好用阅读器" :backShow="false" :cWidth="420">
-			<view class="nav-left" slot="left">
-				<c-icon name="menu" size="25"></c-icon>
+	<view class="index" :style="{'background-color': skinColor.bgColor}" @touchstart="touchstart" @touchmove="touchmove" @touchend="touchend">
+		<nav-bar :titleColor="skinColor.iconColor" title="好用阅读器" :backShow="false" :cWidth="420">
+			<view class="nav-left" slot="left" @tap="$refs.leftMenu.show()">
+				<c-icon name="menu" size="25" :color="skinColor.iconColor"></c-icon>
 			</view>
-			<c-icon slot="right" name="search" size="25"></c-icon>
-			<c-icon slot="right" name="filter" size="25"></c-icon>
-			<c-icon slot="right" name="more" size="25"></c-icon>
+			<view slot="right">
+				<c-icon name="search" size="25" :color="skinColor.iconColor"></c-icon>
+			</view>
+			<view slot="right">
+				<c-icon name="filter" size="25" :color="skinColor.iconColor"></c-icon>
+			</view>
+			<view slot="right">
+				<c-icon name="more" size="25" :color="skinColor.iconColor"></c-icon>
+			</view>
 		</nav-bar>
 		<waterfall @scroll="scroll" column-count="<integer>" column-width="120" column-gap="10" left-gap="10" right-gap="10">
 		    <cell v-for="(item, index) in books" :key="item.id">
 				<view class="book" ref="list">
 					<image class="book-img" src="../../static/logo.png" mode="aspectFill"></image>
+					<view class="book-mask" :style="{opacity: skinColor.imgMask}"></view>
 					<view class="book-bottom">
 						<text class="book-name">影院街影院街影院街影院街影院街影院街影院街</text>
 						<view class="b-bottom">
@@ -23,16 +30,34 @@
 				<view v-if="index == books.length - 1" style="height: 10px;"></view>
 		    </cell>
 		</waterfall>
-		<fixed-button :offsetY="oldOffsetY" :show="btnShow" :btns="['history', 'clear-fill']" @click="clickItem"></fixed-button>
-		<c-menu></c-menu>
+		<view class="fixed">
+			<view>
+				<fixed-button :show="btnShow">
+					<c-icon name="history" size="25" :color="skinColor.iconColor"></c-icon>
+				</fixed-button>
+			</view>
+			<view @tap="clear">
+				<fixed-button :show="btnShow">
+					<c-icon name="clear-fill" size="25" :color="skinColor.iconColor"></c-icon>
+				</fixed-button>
+			</view>
+			<view @tap="scrollTop">
+				<fixed-button :show="Math.abs(oldOffsetY) > 300">
+					<c-icon name="top" size="25" :color="skinColor.iconColor"></c-icon>
+				</fixed-button>
+			</view>
+		</view>
+		<c-menu :translate="menuLate" :opacity="menuOpac" ref="leftMenu"></c-menu>
 	</view>
 </template>
 
 <script>
 	import CIcon from '@/components/c-icon/c-icon.nvue'
 	import CMenu from '@/pages/menu/menu.nvue'
+	import { skinMixin } from '@/common/mixin/index.js'
 	const dom = weex.requireModule('dom') || {};
 	export default {
+		mixins: [skinMixin],
 		data () {
 			return {
 				books: [{
@@ -126,27 +151,15 @@
 					image: '',
 					progress: 33.33
 				}],
+				current: 0,
 				oldOffsetY: 0,
-				btnShow: true
+				btnShow: true,
+				pointX: 0,
+				menuLate: 0,
+				menuOpac: 0
 			}
 		},
 		methods: {
-			clickItem (e) {
-				if ( e == 'clear-fill' ) {
-					uni.showModal({
-						title: '提示',
-						content: '是否清空所有书籍？',
-						success (res) {
-							if ( res.confirm ) {
-								console.log('清空');
-							}
-						}
-					})
-				}
-				if ( e == 'top' ) {
-					this.scrollTop();
-				}
-			},
 			scroll (e) {
 				if ( e.contentOffset.y < this.oldOffsetY ) {
 					this.btnShow = false;
@@ -155,9 +168,67 @@
 				}
 				this.oldOffsetY = e.contentOffset.y;
 			},
+			clear () {
+				uni.showModal({
+					title: '提示',
+					content: '是否清空所有书籍？',
+					success (res) {
+						if ( res.confirm ) {
+							console.log('清空');
+						}
+					}
+				})
+			},
+			changeCurrent (val) {
+				this.current = val;
+			},
 			scrollTop () {
 				dom.scrollToElement(this.$refs['list'][0]);
+			},
+			touchstart (e) {
+				if ( e.touches.length > 1 ) {
+					return;
+				}
+				const touch = e.touches[0];
+				this.pointX = touch.pageX;
+				if ( this.pointX <= 10 ) {
+					this.$refs.leftMenu.open();
+				}
+			},
+			touchmove (e) {
+				if ( e.touches.length > 1 ) {
+					return;
+				}
+				if ( this.pointX > 10 ) {
+					return;
+				}
+				const touch = e.touches[0];
+				this.menuLate = 1.5 * (touch.pageX - this.pointX);
+				this.menuOpac = this.menuLate / Math.abs(this.$refs.leftMenu.anima.late) * this.$refs.leftMenu.anima.opac;
+			},
+			touchend (e) {
+				if ( this.pointX > 10 ) {
+					return;
+				}
+				if ( this.$refs.leftMenu.popuplate >= -240 ) {
+					this.$refs.leftMenu.show();
+				} else {
+					this.$refs.leftMenu.hide();
+					setTimeout(() => {
+						this.menuLate = 0;
+					}, this.$refs.leftMenu.anima.duration)
+				}
+				this.$nextTick(() => {
+					this.pointX = 0;
+				})
 			}
+		},
+		onBackPress(event) {
+			if ( this.$refs.leftMenu.isShow ) {
+				this.$refs.leftMenu.hide();
+				return true;
+			}
+			return false;
 		},
 		components: {
 			CIcon,
@@ -178,6 +249,14 @@
 		left: 0;
 		right: 0;
 		bottom: 0;
+	}
+	.book-mask {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background-color: #000000;
 	}
 	.book-bottom {
 		position: absolute;
@@ -211,5 +290,13 @@
 	}
 	.nav-left {
 		margin-right: 60rpx;
+	}
+	.fixed {
+		position: fixed;
+		bottom: 20px;
+		right: 20px;
+		width: 50px;
+		align-items: center;
+		justify-content: flex-end;
 	}
 </style>

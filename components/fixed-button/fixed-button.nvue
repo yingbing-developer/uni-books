@@ -1,67 +1,83 @@
 <template>
-	<view class="fixed-button">
-		<view :class="{'button': true, 'hide': !show}" v-for="(item, index) in btns" :key="index" @tap="clickItem(item)">
-			<c-icon :name='item' :size="25"></c-icon>
-		</view>
-		<view :class="{'button': true, 'hide': Math.abs(offsetY) < 300}" @tap="clickItem('top')">
-			<c-icon name='top' :size="25"></c-icon>
-		</view>
+	<view ref="button" v-if="isShow" class="button" :style="{'background-color': skinColor.itemColor}">
+		<slot></slot>
 	</view>
 </template>
 
 <script>
-	import CIcon from '@/components/c-icon/c-icon.nvue'
+	const animation = weex.requireModule('animation');
+	import { skinMixin } from '@/common/mixin/index.js'
 	export default {
+		mixins: [skinMixin],
 		props: {
 			show: {
 				type: Boolean,
 				default: true
-			},
-			btns: {
-				type: Array,
-				default () {
-					return new Array();
-				}
-			},
-			offsetY: {
-				type: Number,
-				default: 0
+			}
+		},
+		data () {
+			return {
+				isShow: true
+			}
+		},
+		mounted () {
+			if ( !this.show ) {
+				this.hideBtn();
+			} else {
+				this.showBtn();
 			}
 		},
 		methods: {
-			clickItem (e) {
-				this.$emit('click', e)
+			hideBtn () {
+				animation.transition(this.$refs.button, {
+				    styles: {
+						transform: 'scale(0)'
+				    },
+				    duration: 300, //ms
+				    timingFunction: 'ease',
+				    needLayout:false,
+				    delay: 0 //ms
+				}, (res) => {
+					this.isShow = false;
+				})
+			},
+			showBtn () {
+				this.isShow = true;
+				this.$nextTick(() => {
+					animation.transition(this.$refs.button, {
+					    styles: {
+							transform: 'scale(1)'
+					    },
+					    duration: 300, //ms
+					    timingFunction: 'ease',
+					    needLayout:false,
+					    delay: 0 //ms
+					})
+				})
 			}
 		},
-		components: {
-			CIcon
+		watch: {
+			show (val) {
+				if ( !val ) {
+					this.hideBtn();
+				} else {
+					this.showBtn();
+				}
+			}
 		}
 	}
 </script>
 
 <style scoped>
-	.fixed-button {
-		position: fixed;
-		bottom: 40px;
-		right: 20px;
-		align-items: center;
-		justify-content: center;
-	}
 	.button {
 		width: 50px;
 		height: 50px;
+		transform: scale(0);
 		border-radius: 50px;
-		background-color: #1A95EA;
-		box-shadow: 0 2px 6px rgba(26,149,234, 0.4);
+		box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 		justify-content: center;
 		align-items: center;
 		margin-top: 5px;
 		margin-bottom: 5px;
-		transition-property: width, height;
-		transition-duration: 200;
-	}
-	.hide {
-		width: 0;
-		height: 0;
 	}
 </style>

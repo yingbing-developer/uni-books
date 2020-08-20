@@ -1,9 +1,0 @@
-{
-  "navigationStyle": "custom",
-  "disableScroll": true,
-  "usingComponents": {
-    "nav-bar": "/components/nav-bar/nav-bar",
-    "c-icon": "/components/c-icon/c-icon",
-    "fixed-button": "/components/fixed-button/fixed-button"
-  }
-}
