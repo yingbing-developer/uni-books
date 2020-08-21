@@ -1,20 +1,22 @@
 <template>
 	<view class="index" :style="{'background-color': skinColor.bgColor}" @touchstart="touchstart" @touchmove="touchmove" @touchend="touchend">
-		<nav-bar :titleColor="skinColor.iconColor" title="好用阅读器" :backShow="false" :cWidth="420">
+		<nav-bar title="好用阅读器" :backShow="false">
 			<view class="nav-left" slot="left" @tap="$refs.leftMenu.show()">
 				<c-icon name="menu" size="25" :color="skinColor.iconColor"></c-icon>
 			</view>
-			<view slot="right">
-				<c-icon name="search" size="25" :color="skinColor.iconColor"></c-icon>
-			</view>
-			<view slot="right">
-				<c-icon name="filter" size="25" :color="skinColor.iconColor"></c-icon>
-			</view>
-			<view slot="right">
-				<c-icon name="more" size="25" :color="skinColor.iconColor"></c-icon>
+			<view class="nav-right" slot="right">
+				<view @tap="search">
+					<c-icon name="search" size="25" :color="skinColor.iconColor"></c-icon>
+				</view>
+				<view>
+					<c-icon name="filter" size="25" :color="skinColor.iconColor"></c-icon>
+				</view>
+				<view>
+					<c-icon name="more" size="25" :color="skinColor.iconColor"></c-icon>
+				</view>
 			</view>
 		</nav-bar>
-		<waterfall @scroll="scroll" column-count="<integer>" column-width="120" column-gap="10" left-gap="10" right-gap="10">
+		<waterfall :scrollable="scrollable" @scroll="scroll" column-count="<integer>" column-width="120" column-gap="10" left-gap="10" right-gap="10">
 		    <cell v-for="(item, index) in books" :key="item.id">
 				<view class="book" ref="list">
 					<image class="book-img" src="../../static/logo.png" mode="aspectFill"></image>
@@ -38,7 +40,7 @@
 			</view>
 			<view @tap="clear">
 				<fixed-button :show="btnShow">
-					<c-icon name="clear-fill" size="25" :color="skinColor.iconColor"></c-icon>
+					<c-icon name="waste-fill" size="25" :color="skinColor.iconColor"></c-icon>
 				</fixed-button>
 			</view>
 			<view @tap="scrollTop">
@@ -54,10 +56,10 @@
 <script>
 	import CIcon from '@/components/c-icon/c-icon.nvue'
 	import CMenu from '@/pages/menu/menu.nvue'
-	import { skinMixin } from '@/common/mixin/index.js'
+	import { skinMixin, menuTouchMixin } from '@/common/mixin/index.js'
 	const dom = weex.requireModule('dom') || {};
 	export default {
-		mixins: [skinMixin],
+		mixins: [skinMixin, menuTouchMixin],
 		data () {
 			return {
 				books: [{
@@ -153,10 +155,7 @@
 				}],
 				current: 0,
 				oldOffsetY: 0,
-				btnShow: true,
-				pointX: 0,
-				menuLate: 0,
-				menuOpac: 0
+				btnShow: true
 			}
 		},
 		methods: {
@@ -185,41 +184,9 @@
 			scrollTop () {
 				dom.scrollToElement(this.$refs['list'][0]);
 			},
-			touchstart (e) {
-				if ( e.touches.length > 1 ) {
-					return;
-				}
-				const touch = e.touches[0];
-				this.pointX = touch.pageX;
-				if ( this.pointX <= 10 ) {
-					this.$refs.leftMenu.open();
-				}
-			},
-			touchmove (e) {
-				if ( e.touches.length > 1 ) {
-					return;
-				}
-				if ( this.pointX > 10 ) {
-					return;
-				}
-				const touch = e.touches[0];
-				this.menuLate = 1.5 * (touch.pageX - this.pointX);
-				this.menuOpac = this.menuLate / Math.abs(this.$refs.leftMenu.anima.late) * this.$refs.leftMenu.anima.opac;
-			},
-			touchend (e) {
-				if ( this.pointX > 10 ) {
-					return;
-				}
-				if ( this.$refs.leftMenu.popuplate >= -240 ) {
-					this.$refs.leftMenu.show();
-				} else {
-					this.$refs.leftMenu.hide();
-					setTimeout(() => {
-						this.menuLate = 0;
-					}, this.$refs.leftMenu.anima.duration)
-				}
-				this.$nextTick(() => {
-					this.pointX = 0;
+			search () {
+				uni.navigateTo({
+					url: '/pages/search/index'
 				})
 			}
 		},
@@ -290,6 +257,11 @@
 	}
 	.nav-left {
 		margin-right: 60rpx;
+	}
+	.nav-right {
+		flex: 1;
+		flex-direction: row;
+		justify-content: space-between;
 	}
 	.fixed {
 		position: fixed;

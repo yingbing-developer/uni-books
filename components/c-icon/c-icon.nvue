@@ -31,7 +31,8 @@
 					'search': '\ue650',
 					'setting': '\ue6a9',
 					'setting-fill': '\ue608',
-					'clear-fill': '\ue678',
+					'clear-fill': '\ue64c',
+					'waste-fill': '\ue678',
 					'catalog': '\ue601',
 					'more': '\ue60f',
 					'menu': '\ue624',
@@ -44,7 +45,9 @@
 					'about-fill': '\ue760',
 					'read': '\ue67a',
 					'light': '\ue65e',
-					'light-fill': '\ue6c7'
+					'light-fill': '\ue6c7',
+					'folder': '\ue80c',
+					'txt': '\ue60c'
 				}
 			}
 		},

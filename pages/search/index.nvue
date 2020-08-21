@@ -1,0 +1,209 @@
+<template>
+	<view class="search" :style="{'background-color': skinColor.bgColor}">
+		<nav-bar title="添加书籍">
+			<!-- <view slot="right" @tap="showFilterBox">
+				<c-icon name="filter" size="25" :color="skinColor.iconColor"></c-icon>
+			</view> -->
+			<view class="nav-right" slot="right">
+				<text class="nav-text" :style="{'color': skinColor.iconColor}" v-if="checkes.length > 0">选中({{checkes.length}}/{{fileLength}})</text>
+				<view>
+					<c-icon name="more" size="25" :color="skinColor.iconColor"></c-icon>
+				</view>
+			</view>
+		</nav-bar>
+		<c-search @confirm="setNameFilter"></c-search>
+		 <list>
+		    <!-- 注意事项: 不能使用 index 作为 key 的唯一标识 -->
+			<cell v-if="paths.length > 1">
+				<view @tap="getFileSystem(paths[paths.length - 2], -1)" class="list actived" :style="{'border-bottom-color': skinColor.gapColor}">
+					<view class="list-icon">
+						<c-icon name="folder" size="50" color="#FFCA28"></c-icon>
+					</view>
+					<view class="list-right-back">
+						<text class="list-title" :style="{'color': skinColor.titleColor}">..</text>
+					</view>
+				</view>
+			</cell>
+		    <cell v-for="(item, index) in list" :key="item.name">
+				<view v-if="item.name.indexOf(nameFilter) > -1" @tap="getFileSystem(item.path, 1)" class="list actived" :style="{'border-bottom-color': skinColor.gapColor, 'background-color': checkes.indexOf(item.name) > -1 ? skinColor.menuActiveBgColor : ''}">
+					<view class="list-icon" @tap.stop="check(index)">
+						<c-icon name="folder" size="50" color="#FFCA28" v-if="item.type == 'folder'"></c-icon>
+						<c-icon name="txt" size="40" color="#FFCA28" v-else></c-icon>
+					</view>
+					<view class="list-right">
+						<text class="list-title" :style="{'color': skinColor.titleColor}">{{item.name}}</text>
+						<view class="lr-bottom">
+							<text class="list-text" :style="{'color': skinColor.textColor}">{{item.time}}</text>
+							<text class="list-text" :style="{'color': skinColor.textColor}" v-if="item.type != 'folder'">{{item.size}}</text>
+						</view>
+					</view>
+				</view>
+		    </cell>
+		  </list>
+	</view>
+</template>
+
+<script>
+	const animation = weex.requireModule('animation');
+	import { skinMixin } from '@/common/mixin/index.js'
+	import CIcon from '@/components/c-icon/c-icon.nvue'
+	import CSearch from '@/components/search/search.nvue'
+	import { dateFormat, suffix } from '@/common/js/util.js'
+	export default {
+		mixins: [skinMixin],
+		data () {
+			return {
+				list: [],
+				checkes: [],
+				fileLength: 0,
+				//访问路径
+				paths: [],
+				types: ['txt'],
+				//名称过滤
+				nameFilter: ''
+			}
+		},
+		created () {
+			this.getFileSystem('/sdcard', 1);
+		},
+		methods: {
+			//选择文件
+			check (index) {
+				if ( this.list[index].type == 'folder' ) {
+					return;
+				}
+				const name = this.list[index].name;
+				let flag = this.checkes.indexOf(name);
+				if ( flag > -1 ) {
+					this.checkes.splice(flag, 1);
+				} else {
+					this.checkes.push(name);
+				}
+			},
+			setNameFilter (val) {
+				this.nameFilter = val;
+			},
+			//根据url路径获取文件系统对象,type表示前进或后退
+			getFileSystem (url, type) {
+				plus.io.resolveLocalFileSystemURL(url, ( entry ) => {
+					if ( type > 0 ) {
+						//记录访问过的文件路径
+						this.paths.push(entry.fullPath);
+					} else {
+						//删除退出的文件夹路径
+						this.paths.splice(this.paths.length - 1, 1);
+					}
+					let directoryReader = entry.createReader();
+					directoryReader.readEntries(async ( entries ) => {
+						let obj = '';
+						let length = '';
+						let folder = [];
+						let file = [];
+						for ( let i in entries ) {
+							if ( entries[i].isFile ) {
+								//文件
+								if ( this.types.indexOf(suffix(entries[i].name)) > -1 ) {
+									obj = await this.getFileInfo(entries[i]);
+									file.push(obj);
+									length += 1;
+								}
+							} else {
+								//文件夹
+								obj = await this.getFileInfo(entries[i]);
+								folder.push(obj);
+							}
+						}
+						this.list = folder.concat(file);
+						this.fileLength = length;
+						
+					}, (fail) => {
+						console.log( "Request file system failed: " + fail.message );
+					});
+				}, ( fail ) => {
+					console.log( "Request file system failed: " + fail.message );
+				});
+			},
+			getFileInfo (entry) {
+				return new Promise((resolve, reject) => {
+					entry.getMetadata((metadata ) => {
+						const obj = {
+							name: entry.name,
+							size: this.countSize(metadata.size),
+							path: entry.fullPath,
+							time: dateFormat(metadata.modificationTime),
+							type: entry.isFile ? suffix(entry.name) : 'folder'
+						}
+						resolve(obj);
+					}, (fail) => {
+						reject( "Request file system failed: " + fail.message );
+					})
+				})
+			},
+			//计算文件大小
+			countSize (size) {
+				if ( size < 1024 ) {
+					return size + 'B';
+				}
+				if ( size >= 1024 ) {
+					return (size / 1024).toFixed(2) + 'KB';
+				}
+				if ( size >= 1048576 ) {
+					return (size / 1048576).toFixed(2) + 'MB';
+				}
+			}
+		},
+		components: {
+			CIcon,
+			CSearch
+		}
+	}
+</script>
+
+<style scoped>
+	.nav-right {
+		flex-direction: row;
+		flex: 1;
+		justify-content: flex-end;
+		align-items: center;
+	}
+	.nav-text {
+		font-size: 18px;
+		margin-right: 10px;
+	}
+	.list {
+		flex-direction: row;
+		border-bottom-width: 1px;
+		border-bottom-style: solid;
+		padding-left: 10px;
+		padding-right: 10px;
+		padding-top: 10px;
+		padding-bottom: 10px;
+		height: 72px;
+	}
+	.list-icon {
+		justify-content: center;
+		align-items: center;
+		margin-right: 10px;
+		width: 50px;
+	}
+	.list-right {
+		flex: 1;
+		justify-content: space-between;
+	}
+	.list-right-back {
+		flex: 1;
+		justify-content: center;
+	}
+	.list-title {
+		font-size: 20px;
+		lines:1;
+		text-overflow:ellipsis;
+	}
+	.lr-bottom {
+		flex-direction: row;
+		justify-content: space-between;
+	}
+	.list-text {
+		font-size: 16px;
+	}
+</style>

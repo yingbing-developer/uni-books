@@ -6,6 +6,14 @@
 				"navigationStyle": "custom",
 				"disableScroll": true // 不嵌套 scroller
 			}
+		},
+		//本地搜索页
+		{
+			"path": "pages/search/index",
+			"style": {
+				"navigationStyle": "custom",
+				"disableScroll": true // 不嵌套 scroller
+			}
 		}
 	],
 	"globalStyle": {

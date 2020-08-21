@@ -1,14 +1,14 @@
 <template>
-	<view class="menu" v-if="isShow">
+	<view class="menu" v-if="isShow" @touchstart="touchstart" @touchmove="touchmove" @touchend="touchend">
 		<!-- 遮罩层 -->
-		<view class="mask" ref="mask" @touchmove="moveEnable" :style="{'opacity': maskOpacity}" @tap="hide"></view>
-		<view class="popup" ref="popup" @touchstart="touchstart" @touchmove="touchmove" @touchend="touchend" :style="{'background-color': skinColor.menuBgColor, 'transform': 'translateX(' + popuplate + 'rpx)'}" @tap="moveEnable">
+		<view class="mask" ref="mask" @touchmove="moveEnable" :style="{'opacity': maskOpacity}" @tap="maskHide"></view>
+		<view class="popup" ref="popup" @touchmove="moveEnable" :style="{'background-color': skinColor.menuBgColor, 'transform': 'translateX(' + popuplate + 'rpx)'}" @tap="moveEnable">
 			<view class="top-img">
 				<image class="bg" src="../../static/logo.png" mode="aspectFill"></image>
 				<view class="top-mask" :style="{opacity: skinColor.imgMask}"></view>
 			</view>
 			<!-- 列表切换 -->
-			<view class="list" :style="isActived(index)" @tap="changeCurrent(index)" v-for="(item, index) in navs" :key="index">
+			<view class="list actived" :style="isActived(index)" @tap="changeCurrent(index)" v-for="(item, index) in navs" :key="index">
 				<view class="icon">
 					<c-icon :name="item.icon" :size="item.size" :color="current == index ? skinColor.menuActiveColor : skinColor.menuIconColor"></c-icon>
 				</view>
@@ -16,14 +16,14 @@
 			</view>
 			<view class="hr" :style="{'background-color': skinColor.gapColor}"></view>
 			<!-- 夜间模式切换 -->
-			<view class="list" @tap="changeMode">
+			<view class="list actived" @tap="changeMode">
 				<view class="icon">
 					<c-icon :name="modeIcon" size="25" :color="skinColor.menuIconColor"></c-icon>
 				</view>
 				<text class="title" :style="{color: skinColor.menuTitleColor}">{{modeName}}</text>
 			</view>
 			<!-- 功能页面 -->
-			<view class="list" v-for="(item, index) in options" :key="index">
+			<view class="list actived" v-for="(item, index) in options" :key="index">
 				<view class="icon">
 					<c-icon :name="item.icon" :size="item.size" :color="skinColor.menuIconColor"></c-icon>
 				</view>
@@ -60,7 +60,9 @@
 				maskOpacity: 0,
 				popuplate: -540,
 				pointX: 0,
+				touchTime: 0,
 				current: 0,
+				mulriple: 1,
 				navs: [{
 					icon: 'books-fill',
 					size: 23,
@@ -80,6 +82,13 @@
 					title: '关于'
 				}]
 			}
+		},
+		created () {
+			uni.getSystemInfo({
+				success: (res) => {//计算出屏幕宽度和750的倍数
+					this.mulriple = 750 / res.screenWidth;
+				}
+			})
 		},
 		computed: {
 			modeName () {
@@ -104,6 +113,13 @@
 			changeMode () {
 				const skin = this.skinMode == 'default' ? 'night' : 'default';
 				this.changeSkin(skin);
+			},
+			maskHide () {
+				if ( this.popuplate < 0 ) {
+					return;
+				} else {
+					this.hide();
+				}
 			},
 			//仅仅显示组件，并不显示菜单和遮罩层
 			open () {
@@ -169,14 +185,16 @@
 				}
 				const touch = e.touches[0];
 				this.pointX = touch.pageX;
+				this.timer = setInterval(() => {
+					this.touchTime += 0.1;
+				}, 100)
 			},
 			touchmove (e) {
 				if ( e.touches.length > 1 ) {
 					return;
 				}
 				const touch = e.touches[0];
-				console.log(this.pointX - touch.pageX);
-				this.popuplate = 0 - 1.5 * (this.pointX - touch.pageX);
+				this.popuplate = 0 - this.mulriple * (this.pointX - touch.pageX);
 				if ( this.popuplate <= -540 ) {
 					this.popuplate = -540;
 				}
@@ -192,11 +210,15 @@
 				}
 			},
 			touchend (e) {
-				if ( this.popuplate <= -300 ) {
+				if ( this.timer ) {
+					clearInterval(this.timer);
+				}
+				if ( this.popuplate <= -300 || (this.touchTime <= 0.3 && this.popuplate < 0) ) {
 					this.hide();
 				} else {
 					this.show();
 				}
+				this.touchTime = 0;
 				this.pointX = 0;
 			}
 		},
