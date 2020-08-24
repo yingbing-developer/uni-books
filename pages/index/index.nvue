@@ -5,7 +5,7 @@
 				<c-icon name="menu" size="25" :color="skinColor.iconColor"></c-icon>
 			</view>
 			<view class="nav-right" slot="right">
-				<view @tap="search">
+				<view @tap="push('/pages/search/index')">
 					<c-icon name="search" size="25" :color="skinColor.iconColor"></c-icon>
 				</view>
 				<view>
@@ -17,149 +17,68 @@
 			</view>
 		</nav-bar>
 		<waterfall :scrollable="scrollable" @scroll="scroll" column-count="<integer>" column-width="120" column-gap="10" left-gap="10" right-gap="10">
-		    <cell v-for="(item, index) in books" :key="item.id">
+		    <cell v-for="(item, index) in bookList" :key="item.name">
 				<view class="book" ref="list">
 					<image class="book-img" src="../../static/logo.png" mode="aspectFill"></image>
 					<view class="book-mask" :style="{opacity: skinColor.imgMask}"></view>
 					<view class="book-bottom">
-						<text class="book-name">影院街影院街影院街影院街影院街影院街影院街</text>
+						<text class="book-name">{{item.name}}</text>
 						<view class="b-bottom">
-							<text class="book-time">2019-05-15</text>
-							<text class="book-progress">33.33%</text>
+							<text class="book-time">{{item.time}}</text>
+							<text class="book-progress">{{item.progress}}%</text>
 						</view>
 					</view>
 				</view>
-				<view v-if="index == books.length - 1" style="height: 10px;"></view>
+				<view v-if="index == bookList.length - 1" style="height: 10px;"></view>
 		    </cell>
+			<no-data v-if="bookList.length <= 0"></no-data>
+			<view class="fixed">
+				<view @tap="changeCurrent">
+					<fixed-button :show="btnShow">
+						<c-icon name="history" size="25" :color="skinColor.iconColor" v-if="current == 0"></c-icon>
+						<c-icon name="read" size="30" :color="skinColor.iconColor" v-if="current == 1"></c-icon>
+					</fixed-button>
+				</view>
+				<view @tap="clear">
+					<fixed-button :show="btnShow">
+						<c-icon name="waste-fill" size="25" :color="skinColor.iconColor"></c-icon>
+					</fixed-button>
+				</view>
+				<view @tap="scrollTop">
+					<fixed-button :show="Math.abs(oldOffsetY) > 300">
+						<c-icon name="top" size="25" :color="skinColor.iconColor"></c-icon>
+					</fixed-button>
+				</view>
+			</view>
 		</waterfall>
-		<view class="fixed">
-			<view>
-				<fixed-button :show="btnShow">
-					<c-icon name="history" size="25" :color="skinColor.iconColor"></c-icon>
-				</fixed-button>
-			</view>
-			<view @tap="clear">
-				<fixed-button :show="btnShow">
-					<c-icon name="waste-fill" size="25" :color="skinColor.iconColor"></c-icon>
-				</fixed-button>
-			</view>
-			<view @tap="scrollTop">
-				<fixed-button :show="Math.abs(oldOffsetY) > 300">
-					<c-icon name="top" size="25" :color="skinColor.iconColor"></c-icon>
-				</fixed-button>
-			</view>
-		</view>
-		<c-menu :translate="menuLate" :opacity="menuOpac" ref="leftMenu"></c-menu>
+		<c-menu v-model="current" :translate="menuLate" :opacity="menuOpac" ref="leftMenu"></c-menu>
 	</view>
 </template>
 
 <script>
 	import CIcon from '@/components/c-icon/c-icon.nvue'
 	import CMenu from '@/pages/menu/menu.nvue'
+	import NoData from '@/components/no-data/no-data.nvue'
 	import { skinMixin, menuTouchMixin } from '@/common/mixin/index.js'
+	import { mapGetters, mapMutations } from 'vuex'
 	const dom = weex.requireModule('dom') || {};
 	export default {
 		mixins: [skinMixin, menuTouchMixin],
 		data () {
 			return {
-				books: [{
-					id: '200901141850320490',
-					name: '影院街影院街影院街影院街影院街影院街影院街',
-					image: '',
-					progress: 33.33
-				},{
-					id: '200901141850320491',
-					name: '影院街影院街影院街影院街影院街影院街影院街',
-					image: '',
-					progress: 33.33
-				},{
-					id: '200901141850320492',
-					name: '影院街影院街影院街影院街影院街影院街影院街',
-					image: '',
-					progress: 33.33
-				},{
-					id: '200901141850320493',
-					name: '影院街影院街影院街影院街影院街影院街影院街',
-					image: '',
-					progress: 33.33
-				},{
-					id: '200901141850320494',
-					name: '影院街影院街影院街影院街影院街影院街影院街',
-					image: '',
-					progress: 33.33
-				},{
-					id: '200901141850320495',
-					name: '影院街影院街影院街影院街影院街影院街影院街',
-					image: '',
-					progress: 33.33
-				},{
-					id: '200901141850320496',
-					name: '影院街影院街影院街影院街影院街影院街影院街',
-					image: '',
-					progress: 33.33
-				},{
-					id: '200901141850320497',
-					name: '影院街影院街影院街影院街影院街影院街影院街',
-					image: '',
-					progress: 33.33
-				},{
-					id: '200901141850320498',
-					name: '影院街影院街影院街影院街影院街影院街影院街',
-					image: '',
-					progress: 33.33
-				},{
-					id: '200901141850320499',
-					name: '影院街影院街影院街影院街影院街影院街影院街',
-					image: '',
-					progress: 33.33
-				},{
-					id: '200901141850320500',
-					name: '影院街影院街影院街影院街影院街影院街影院街',
-					image: '',
-					progress: 33.33
-				},{
-					id: '200901141850320501',
-					name: '影院街影院街影院街影院街影院街影院街影院街',
-					image: '',
-					progress: 33.33
-				},{
-					id: '200901141850320502',
-					name: '影院街影院街影院街影院街影院街影院街影院街',
-					image: '',
-					progress: 33.33
-				},{
-					id: '200901141850320503',
-					name: '影院街影院街影院街影院街影院街影院街影院街',
-					image: '',
-					progress: 33.33
-				},{
-					id: '200901141850320504',
-					name: '影院街影院街影院街影院街影院街影院街影院街',
-					image: '',
-					progress: 33.33
-				},{
-					id: '200901141850320505',
-					name: '影院街影院街影院街影院街影院街影院街影院街',
-					image: '',
-					progress: 33.33
-				},{
-					id: '200901141850320506',
-					name: '影院街影院街影院街影院街影院街影院街影院街',
-					image: '',
-					progress: 33.33
-				},{
-					id: '200901141850320507',
-					name: '影院街影院街影院街影院街影院街影院街影院街',
-					image: '',
-					progress: 33.33
-				}],
 				current: 0,
 				oldOffsetY: 0,
-				btnShow: true
+				btnShow: true,
+				routeDisabled: false
 			}
 		},
+		computed: {
+			...mapGetters(['bookList'])
+		},
 		methods: {
+			...mapMutations(['deleteBook', 'clearBooks']),
 			scroll (e) {
+				console.log('scroll');
 				if ( e.contentOffset.y < this.oldOffsetY ) {
 					this.btnShow = false;
 				} else {
@@ -171,22 +90,34 @@
 				uni.showModal({
 					title: '提示',
 					content: '是否清空所有书籍？',
-					success (res) {
+					success: (res) => {
 						if ( res.confirm ) {
-							console.log('清空');
+							this.clearBooks();
 						}
 					}
 				})
 			},
-			changeCurrent (val) {
-				this.current = val;
+			changeCurrent () {
+				if ( this.current == 0 ) {
+					this.current = 1;
+				} else {
+					this.current = 0;
+				}
 			},
 			scrollTop () {
 				dom.scrollToElement(this.$refs['list'][0]);
 			},
-			search () {
+			push (url) {
+				//路由防抖
+				if ( this.routeDisabled ) {
+					return;
+				}
+				this.routeDisabled = true;
 				uni.navigateTo({
-					url: '/pages/search/index'
+					url: url,
+					success: (res) => {
+						this.routeDisabled = false;
+					}
 				})
 			}
 		},
@@ -199,7 +130,8 @@
 		},
 		components: {
 			CIcon,
-			CMenu
+			CMenu,
+			NoData
 		}
 	}
 </script>

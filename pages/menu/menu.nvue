@@ -40,6 +40,10 @@
 	export default {
 		mixins: [skinMixin],
 		props: {
+			value: {
+				type: Number,
+				default: 0
+			},
 			translate: {
 				type: Number,
 				default: 0
@@ -224,7 +228,7 @@
 		},
 		watch: {
 			current (val) {
-				this.$emit('change', val);
+				this.$emit('input', val);
 			},
 			translate (val) {
 				this.popuplate = val + this.anima.late;
@@ -237,6 +241,9 @@
 				if ( this.maskOpacity > this.anima.opac ) {
 					this.maskOpacity = this.anima.opac
 				}
+			},
+			value (val) {
+				this.current = val;
 			}
 		},
 		components: {

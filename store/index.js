@@ -1,10 +1,15 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
+import { indexOf, suffix, dateFormat, removeSuffix } from '@/common/js/util.js'
 Vue.use(Vuex)
 const SKIN = 'UNI_BOOK_SKIN'
+const BOOKS = 'UNI_BOOK_LIST'
+const PATH = 'UNI_BOOK_PATH'
 const store = new Vuex.Store({
     state: {
 		skin: uni.getStorageSync(SKIN) || 'default', //皮肤
+		books: uni.getStorageSync(BOOKS) || [],//导入的书籍列表
+		path: uni.getStorageSync(PATH) || []//上次访问的文件夹记录
 	},
 	getters: {
 		skinMode (state) {
@@ -47,12 +52,52 @@ const store = new Vuex.Store({
 					imgMask: 0.45
 				}
 			}
+		},
+		bookList (state) {
+			return state.books;
+		},
+		pathHistory (state) {
+			return state.path;
 		}
 	},
     mutations: {
 		changeSkin (state, skin) {
 			state.skin = skin;
 			uni.setStorageSync(SKIN, skin)
+		},
+		//新增书籍
+		addBooks (state, books) {
+			for ( let i in books ) {
+				state.books.push({
+					name: removeSuffix(books[i].name),
+					image: '',
+					time: dateFormat(new Date().getTime()).split(' ')[0],
+					path: books[i].path,
+					progress: 0.00
+				})
+			}
+			uni.setStorageSync(BOOKS, state.books);
+		},
+		//删除指定名称的书籍
+		deleteBook (state, name) {
+			let flag = indexOf(state.books, name, 'name');
+			if ( flag > -1 ) {
+				state.books.splice(flag, 1);
+				uni.setStorageSync(BOOKS, state.books)
+			}
+		},
+		//清空所有书籍
+		clearBooks (state) {
+			state.books = [];
+			uni.removeStorageSync(BOOKS);
+		},
+		pushPath (state, path) {
+			state.path.push(path);
+			uni.setStorageSync(PATH, state.path);
+		},
+		popPath (state) {
+			state.path.splice(state.path.length - 1, 1);
+			uni.setStorageSync(PATH, state.path);
 		}
 	},
     actions: {}

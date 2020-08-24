@@ -28,6 +28,17 @@ export function suffix (name) {
   	return fileFormat;
 }
 
+/* *
+ * 清除文件后缀
+ * @param {String} name 带后缀的文件名称
+ * */
+export function removeSuffix (name) {
+  	//获取图片后缀
+  	let fileName = name.lastIndexOf(".");
+  	let fileNameFormat = name.substring(0, fileName);
+  	return fileNameFormat;
+}
+
 /**
  * 数组查找符合条件元素并返回下标
  * @param {Array} arr 传入数组
@@ -41,4 +52,19 @@ export const indexOf = function (arr, value, query) {
 		}
 	}
 	return -1;
+}
+
+/**
+ * 生成随机字符串
+ * @param {Number} len 长度
+*/
+export function randomString(len) {
+	len = len || 32;
+	var $chars = 'ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz2345678';    /****默认去掉了容易混淆的字符oOLl,9gq,Vv,Uu,I1****/
+	var maxPos = $chars.length;
+	var pwd = '';
+	for (let i = 0; i < len; i++) {
+	　　pwd += $chars.charAt(Math.floor(Math.random() * maxPos));
+	}
+	return pwd;
 }

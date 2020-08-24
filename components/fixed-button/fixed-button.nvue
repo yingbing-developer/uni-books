@@ -1,5 +1,5 @@
 <template>
-	<view ref="button" v-if="isShow" class="button actived" :style="{'background-color': skinColor.itemColor}">
+	<view ref="button" v-if="isShow" elevation="3" class="button" :style="{'background-color': skinColor.itemColor}">
 		<slot></slot>
 	</view>
 </template>

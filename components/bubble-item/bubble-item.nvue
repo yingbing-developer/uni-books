@@ -1,0 +1,29 @@
+<template>
+	<view class="bubble-item">
+		<text class="list-text">{{title}}</text>
+	</view>
+</template>
+
+<script>
+	export default {
+		props: {
+			title: {
+				type: String,
+				default: ''
+			}
+		}
+	}
+</script>
+
+<style scoped>
+	.bubble-item {
+		height: 50px;
+		align-items: flex-start;
+		justify-content: center;
+		padding-left: 40px;
+	}
+	.list-text {
+		font-size: 18px;
+		color: #333333;
+	}
+</style>
