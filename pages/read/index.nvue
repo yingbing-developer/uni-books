@@ -1,0 +1,143 @@
+<template>
+	<view class="read" :style="{'background-color': skinColor.readBackColor}">
+		<nav-bar :bgColor="skinColor.readBackColor" title="第一章 杉杉苑" :titleColor="skinColor.readTextColor" :backColor="skinColor.readTextColor">
+		</nav-bar>
+		<list>
+			<cell>
+				<view class="content">
+					<text class="content-text" :style="{'font-size': fontSize + 'px', 'line-height': lineHeight + 'px'}">{{bookContent}}</text>
+				</view>
+			</cell>
+		</list>
+	</view>
+</template>
+
+<script>
+	import { skinMixin } from '@/common/mixin/index.js'
+	export default {
+		mixins: [skinMixin],
+		data () {
+			return {
+				bookContent: '',
+				fontSize: 20,
+				webUrl: false
+			}
+		},
+		computed: {
+			path () {
+				const pages = getCurrentPages();
+				const page = pages[pages.length - 1];
+				return page.options.path;
+			},
+			lineHeight () {
+				return this.fontSize + 15;
+			}
+		},
+		created () {
+			this.getContent();
+		},
+		methods: {
+			getContent () {
+				plus.io.resolveLocalFileSystemURL('file://' + this.path, ( entry ) => {
+					entry.file( ( file ) => {
+						file.lastModified = new Date(file.lastModifiedDate).getTime();
+						file.type = 'text/plain';
+						file.webkitRelativePath = '';
+						// this.webUrl = '/hybrid/html/file.html?data=' + JSON.stringify(file);
+						// let wv = plus.webview.create("","custom-webview",{
+						// 	plusrequire:"none", //禁止远程网页使用plus的API，有些使用mui制作的网页可能会监听plus.key，造成关闭页面混乱，可以通过这种方式禁止
+						//     'uni-app': 'none', //不加载uni-app渲染层框架，避免样式冲突
+						//     top: uni.getSystemInfoSync().statusBarHeight+44 //放置在titleNView下方。如果还想在webview上方加个地址栏的什么的，可以继续降低TOP值
+						// })
+						// wv.loadURL(this.webUrl);
+						// // console.log(this.$scope.$getAppWebview());
+						// // var currentWebview = this.$scope.$getAppWebview(); //此对象相当于html5plus里的plus.webview.currentWebview()。在uni-app里vue页面直接使用plus.webview.currentWebview()无效，非v3编译模式使用this.$mp.page.$getAppWebview()
+						// // currentWebview.append(wv);//一定要append到当前的页面里！！！才能跟随当前页面一起做动画，一起关闭
+						// setTimeout(function() {
+						//     console.log(wv.getStyle())
+						// }, 1000);  
+						// let reader = new FileReader();
+						// reader.onloadend = (res) => {
+						// 	console.log(res);
+						// }
+						// reader.onerror = (res) => {
+						// 	console.log(res);
+						// }
+						let reader = new plus.io.FileReader();
+						reader.onloadend = ( e ) => {
+							console.log(e.target.result);
+						};
+						reader.readAsText( file, 'gb2312' );
+					}, ( fail ) => {
+						console.log("Request file system failed: " + fail.message);
+					});
+				}, ( fail ) => {
+					console.log( "Request file system failed: " + fail.message );
+				});
+			},
+			//Unicode转Utf8
+			UnicodeToUtf8 (unicode) {
+				let uchar;
+				let utf8str = "";
+				let i;
+				for(i=0; i<unicode.length;i+=2){
+					uchar = (unicode[i]<<8) | unicode[i+1];     //UNICODE为2字节编码，一次读入2个字节
+					utf8str = utf8str + String.fromCharCode(uchar);  //使用String.fromCharCode强制转换 
+				}
+				return utf8str; 
+			},
+			Utf8ToUniCode (strUtf8) {
+				let i,j; 
+				let uCode; 
+				let temp = new Array(); 
+				for(i=0,j=0; i<strUtf8.length; i++){ 
+				  uCode = strUtf8.charCodeAt(i);
+				  if(uCode<0x100){//ASCII字符 
+				    temp[j++] = 0x00; 
+				    temp[j++] = uCode; 
+				  }else if(uCode<0x10000){ 
+				    temp[j++] = (uCode>>8)&0xff; 
+				    temp[j++] = uCode&0xff; 
+				  }else if(uCode<0x1000000){ 
+				    temp[j++] = (uCode>>16)&0xff; 
+				    temp[j++] = (uCode>>8)&0xff; 
+				    temp[j++] = uCode&0xff; 
+				  }else if(uCode<0x100000000){ 
+				    temp[j++] = (uCode>>24)&0xff; 
+				    temp[j++] = (uCode>>16)&0xff; 
+				    temp[j++] = (uCode>>8)&0xff; 
+				    temp[j++] = uCode&0xff; 
+				  }else{ 
+				    break; 
+				  } 
+				}
+				temp.length = j;
+				this.uniCodeToChinese(temp);
+				// return temp;
+			},
+			uniCodeToChinese (data) {
+				let str = data.reduce((prev, cur) => prev +=`%${cur.toString(16)}`, '');
+				console.log(decodeURIComponent(str));
+				return decodeURIComponent(str) // '深圳华强'
+			}
+		}
+	}
+</script>
+
+<style scoped>
+	.nav-center {
+		flex: 1;
+		align-items: center;
+		justify-content: center;
+	}
+	.content {
+		padding: 5px 20px;
+	}
+	.web {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+	}
+</style>

@@ -1,6 +1,6 @@
 <template>
 	<view class="index" :style="{'background-color': skinColor.bgColor}" @touchstart="touchstart" @touchmove="touchmove" @touchend="touchend">
-		<nav-bar title="好用阅读器" :backShow="false">
+		<nav-bar title="好用阅读器" :backShow="false" :bgColor="skinColor.navColor" :titleColor="skinColor.iconColor">
 			<view class="nav-left" slot="left" @tap="$refs.leftMenu.show()">
 				<c-icon name="menu" size="25" :color="skinColor.iconColor"></c-icon>
 			</view>
@@ -18,7 +18,7 @@
 		</nav-bar>
 		<waterfall :scrollable="scrollable" @scroll="scroll" column-count="<integer>" column-width="120" column-gap="10" left-gap="10" right-gap="10">
 		    <cell v-for="(item, index) in bookList" :key="item.name">
-				<view class="book" ref="list">
+				<view class="book" ref="list" @tap="push('/pages/read/index?path=' + item.path)">
 					<image class="book-img" src="../../static/logo.png" mode="aspectFill"></image>
 					<view class="book-mask" :style="{opacity: skinColor.imgMask}"></view>
 					<view class="book-bottom">

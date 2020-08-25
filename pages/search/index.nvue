@@ -204,6 +204,7 @@
 				}
 				this.checkes = [];
 			},
+			//过滤名称
 			setNameFilter (val) {
 				this.nameFilter = val;
 			},
@@ -270,12 +271,17 @@
 				if ( flag > -1 ) {
 					this.deleteBook(this.bookList[flag].name);
 				}
+				//根据文件名称或获取保存的数据下标
 				let index = indexOf(this.list, name, 'name');
+				//删除本地文件
 				plus.io.resolveLocalFileSystemURL('file://' + this.list[index].path, (entry) => {
 					entry.remove((entry) => {
 						let newIndex = indexOf(this.list, name, 'name');
+						//删除数组的数据
 						this.list.splice(newIndex, 1);
+						//文件数量减1
 						this.fileLength--;
+						//如果被删除的文件被选择,则删除选择的列表数据
 						let i = this.checkes.indexOf(name);
 						if ( i > -1 ) {
 							this.checkes.splice(i, 1);
@@ -361,26 +367,28 @@
 				if ( size < 1024 ) {
 					return size + 'B';
 				}
-				if ( size >= 1024 ) {
+				if ( size >= 1024 && size < 1048576 ) {
 					return (size / 1024).toFixed(2) + 'KB';
 				}
-				if ( size >= 1048576 ) {
+				if ( size >= 1048576 && size < 1073741824  ) {
 					return (size / 1048576).toFixed(2) + 'MB';
 				}
 				if ( size >= 1073741824 ) {
 					return (size / 1073741824).toFixed(2) + 'GB';
 				}
 			},
-			//当前文件是否已经导入
+			//判断当前文件是否已经导入
 			isLead (val) {
 				return indexOf(this.bookList, removeSuffix(val), 'name') > -1 ? true : false;
 			}
 		},
 		onBackPress(event) {
+			//操作列表打开时,先关闭操作列表
 			if ( this.$refs.action.isShow ) {
 				this.$refs.action.hide();
 				return true;
 			}
+			//气泡菜单打开时,先关闭气泡菜单
 			if ( this.$refs.bubble.isShow ) {
 				this.$refs.bubble.hide();
 				return true;

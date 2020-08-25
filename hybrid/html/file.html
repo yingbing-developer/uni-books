@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>测试</title>
+  </head>
+  <body>
+	  <div id="test">
+		  <input type="file" id="file" />
+	  </div>
+  </body>
+  <script type="text/javascript">
+  	function changeFile () {
+		let file = JSON.parse(getQuery('data'));
+		document.getElementById('test').innerHTML = file;
+		let reader = new FileReader();
+		reader.onloadend = function () {
+			console.log(this.result[0]);
+		}
+		reader.readAsText(file, 'gb2312');
+	}
+	function getQuery(name) {
+	    // 正则：[找寻'&' + 'url参数名字' = '值' + '&']（'&'可以不存在）
+	    let reg = new RegExp("(^|&)"+ name +"=([^&]*)(&|$)");
+	    let r = window.location.search.substr(1).match(reg);
+	    if(r != null) {
+	        // 对参数值进行解码
+	        return decodeURIComponent(r[2]);
+	    }
+	    return null;
+	}
+	changeFile();
+  </script>
+</html>

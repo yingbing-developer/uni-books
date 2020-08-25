@@ -31,7 +31,9 @@ const store = new Vuex.Store({
 					menuTitleColor: '#727272',
 					menuActiveColor: '#2397EE',
 					menuActiveBgColor: '#DDDDDD',
-					imgMask: 0
+					imgMask: 0,
+					readBackColor: '#BFAD8A',
+					readTextColor: '#2E2B23'
 				}
 			}
 			// 夜间模式
@@ -49,7 +51,9 @@ const store = new Vuex.Store({
 					menuTitleColor: '#8F8F8F',
 					menuActiveColor: '#FAFAFA',
 					menuActiveBgColor: '#CACACA',
-					imgMask: 0.45
+					imgMask: 0.45,
+					readBackColor: '#393E41',
+					readTextColor: '#95A3A6'
 				}
 			}
 		},

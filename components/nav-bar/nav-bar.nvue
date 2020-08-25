@@ -1,18 +1,19 @@
 <template>
-	<view class="nav-bar" :style="{'background-color': skinColor.navColor}">
+	<view class="nav-bar" :style="{'background-color': bgColor}">
 		<view class="bar" :style="{'height': barHeight}"></view>
 		<view class="nav">
-			<view class="left">
+			<view class="left" :style="{width: lWidth + 'rpx'}">
 				<view class="back" v-if="backShow" @tap="back">
-					<c-icon name="arrow-left" :size="30" :color="skinColor.iconColor"></c-icon>
+					<c-icon name="arrow-left" :size="30" :color="backColor"></c-icon>
 				</view>
 				<slot name="left">
 				</slot>
 			</view>
 			<view class="center" :style="{width: cWidth + 'rpx'}">
-				<text class="title" :style="{'color': skinColor.iconColor}">{{title}}</text>
+				<text class="title" :style="{'color': titleColor}">{{title}}</text>
+				<slot name="center"></slot>
 			</view>
-			<view class="right">
+			<view class="right" :style="{width: rWidth + 'rpx'}">
 				<slot name="right">
 				</slot>
 			</view>
@@ -22,9 +23,7 @@
 
 <script>
 	import CIcon from '@/components/c-icon/c-icon.nvue'
-	import { skinMixin } from '@/common/mixin/index.js'
 	export default {
-		mixins: [skinMixin],
 		props: {
 			bgColor: {
 				type: String,
@@ -33,6 +32,10 @@
 			backShow: {
 				type: Boolean,
 				default: true
+			},
+			backColor: {
+				type: String,
+				default: '#FFFFFF'
 			},
 			title: {
 				type: String,
@@ -44,7 +47,7 @@
 			},
 			lWidth: {
 				type: Number,
-				default: 0
+				default: 100
 			},
 			cWidth: {
 				type: Number,
