@@ -47,7 +47,10 @@
 					'light': '\ue65e',
 					'light-fill': '\ue6c7',
 					'folder': '\ue80c',
-					'txt': '\ue60c'
+					'txt': '\ue60c',
+					'check-fill': '\ue622',
+					'font-up': '\ue611',
+					'font-down': '\ue610'
 				}
 			}
 		},

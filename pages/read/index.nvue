@@ -5,111 +5,63 @@
 		<list>
 			<cell>
 				<view class="content">
-					<text class="content-text" :style="{'font-size': fontSize + 'px', 'line-height': lineHeight + 'px', color: skinColor.titleColor}">{{bookContent}}</text>
+					<text class="content-text" :style="{'font-size': readMode.fontSize + 'px', 'line-height': lineHeight + 'px', color: skinColor.readTextColor}">{{bookContent}}</text>
 				</view>
 			</cell>
 		</list>
+		<read-setting></read-setting>
 	</view>
 </template>
 
 <script>
+	import { mapGetters } from 'vuex'
 	import { skinMixin } from '@/common/mixin/index.js'
+	import ReadSetting from './setting.nvue'
 	export default {
 		mixins: [skinMixin],
 		data () {
 			return {
-				bookContent: '魔化降低撒降低加上\r\n大家级撒就嗲机电技术',
-				fontSize: 20,
-				webUrl: false
+				bookContent: '魔化降低撒降低加上\r\n大家级撒就嗲机电技术'
 			}
 		},
 		computed: {
+			...mapGetters(['readMode']),
 			path () {
 				const pages = getCurrentPages();
 				const page = pages[pages.length - 1];
 				return page.options.path;
 			},
 			lineHeight () {
-				return this.fontSize + 15;
+				return this.readMode.fontSize + 15;
 			}
 		},
 		created () {
 			this.getContent();
 		},
 		methods: {
-			getContent () {
-				let ReadTxt = plus.android.importClass('com.itstudy.io.GetText');
-				let readTxt = new ReadTxt();
-				this.bookContent = readTxt.getTextFromText(plus.io.convertLocalFileSystemURL(this.path));
-			},
 			// getContent () {
-			// 	plus.io.resolveLocalFileSystemURL('file://' + this.path, ( entry ) => {
-			// 		console.log(this.path);
-			// 		entry.file( ( file ) => {
-			// 			let reader = new FileReader();
-			// 			reader.onloadend = (res) => {
-			// 				console.log(res);
-			// 			}
-			// 			reader.onerror = (res) => {
-			// 				console.log(res);
-			// 			}
-			// 			let reader = new plus.io.FileReader();
-			// 			reader.onloadend = ( e ) => {
-			// 				console.log(e.target.result);
-			// 			};
-			// 			reader.readAsText( file, 'gb2312' );
-			// 		}, ( fail ) => {
-			// 			console.log("Request file system failed: " + fail.message);
-			// 		});
-			// 	}, ( fail ) => {
-			// 		console.log( "Request file system failed: " + fail.message );
-			// 	});
-			// },
-			//Unicode转Utf8
-			UnicodeToUtf8 (unicode) {
-				let uchar;
-				let utf8str = "";
-				let i;
-				for(i=0; i<unicode.length;i+=2){
-					uchar = (unicode[i]<<8) | unicode[i+1];     //UNICODE为2字节编码，一次读入2个字节
-					utf8str = utf8str + String.fromCharCode(uchar);  //使用String.fromCharCode强制转换 
-				}
-				return utf8str; 
-			},
-			Utf8ToUniCode (strUtf8) {
-				let i,j; 
-				let uCode; 
-				let temp = new Array(); 
-				for(i=0,j=0; i<strUtf8.length; i++){ 
-				  uCode = strUtf8.charCodeAt(i);
-				  if(uCode<0x100){//ASCII字符 
-				    temp[j++] = 0x00; 
-				    temp[j++] = uCode; 
-				  }else if(uCode<0x10000){ 
-				    temp[j++] = (uCode>>8)&0xff; 
-				    temp[j++] = uCode&0xff; 
-				  }else if(uCode<0x1000000){ 
-				    temp[j++] = (uCode>>16)&0xff; 
-				    temp[j++] = (uCode>>8)&0xff; 
-				    temp[j++] = uCode&0xff; 
-				  }else if(uCode<0x100000000){ 
-				    temp[j++] = (uCode>>24)&0xff; 
-				    temp[j++] = (uCode>>16)&0xff; 
-				    temp[j++] = (uCode>>8)&0xff; 
-				    temp[j++] = uCode&0xff; 
-				  }else{ 
-				    break; 
-				  } 
-				}
-				temp.length = j;
-				this.uniCodeToChinese(temp);
-				// return temp;
-			},
-			uniCodeToChinese (data) {
-				let str = data.reduce((prev, cur) => prev +=`%${cur.toString(16)}`, '');
-				console.log(decodeURIComponent(str));
-				return decodeURIComponent(str) // '深圳华强'
+			// 	let ReadTxt = plus.android.importClass('com.itstudy.io.GetText');
+			// 	let readTxt = new ReadTxt();
+			// 	this.bookContent = readTxt.getTextFromText(plus.io.convertLocalFileSystemURL(this.path));
+			// }
+			getContent () {
+				plus.io.resolveLocalFileSystemURL('file://' + this.path, ( entry ) => {
+					entry.file( ( file ) => {
+						let reader = new plus.io.FileReader();
+						reader.onloadend = ( e ) => {
+							this.bookContent = e.target.result;
+						};
+						reader.readAsText( file, 'gb2312' );
+					}, ( fail ) => {
+						console.log("Request file system failed: " + fail.message);
+					});
+				}, ( fail ) => {
+					console.log( "Request file system failed: " + fail.message );
+				});
 			}
+		},
+		components: {
+			ReadSetting
 		}
 	}
 </script>

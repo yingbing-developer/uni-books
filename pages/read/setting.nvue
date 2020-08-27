@@ -1,0 +1,233 @@
+<template>
+	<view class="read-menu" v-if="isShow">
+		<view class="mask" @touchmove="moveHandle"></view>
+		<view class="read-board" ref="popup" :style="{transform: 'translateY(' + Math.abs(lateY) + 'px)'}">
+			<view class="read-board-line">
+				<view class="progress-btn progress-prev">
+					<c-icon name="arrow-left" size="30" color="#EFEFEF"></c-icon>
+				</view>
+				<view class="progress">
+					 <c-progress v-model="percent" itemShow></c-progress>
+				</view>
+				<view class="progress-btn progress-next">
+					<c-icon name="arrow-right" size="30" color="#EFEFEF"></c-icon>
+				</view>
+			</view>
+			<view class="read-board-line">
+				<view class="chapter-box">
+					<text class="chapter-text">上一章节</text>
+				</view>
+				<view class="chapter-box">
+					<text class="chapter-text">下一章节</text>
+				</view>
+			</view>
+			<view class="read-board-line">
+				<view class="half-box skin-box">
+					<view class="skin-mode light-mode" style="background-color: #BFAD8A;" @tap="changeSkin('default')">
+						<c-icon name="check-fill" size="30" color="#ED7B1F" v-if="skinMode == 'default'"></c-icon>
+					</view>
+					<view class="skin-mode night-mode" style="background-color: #393E41;" @tap="changeSkin('night')">
+						<c-icon name="check-fill" size="30" color="#ED7B1F" v-if="skinMode == 'night'"></c-icon>
+					</view>
+				</view>
+				<view class="half-box font-box">
+					<view class="font-btn" @tap="downFontSize">
+						<c-icon name="font-down" color="#8A8A8A"></c-icon>
+					</view>
+					<view class="font-btn" @tap="upFontSize">
+						<c-icon name="font-up" color="#8A8A8A"></c-icon>
+					</view>
+				</view>
+			</view>
+			<view class="read-board-line scroll-line">
+				<view class="scroll-box" :class="{'scrollActived': readMode.scroll == item.value}" v-for="(item, index) in scroll" :key='index' @tap="changeScrollMode(item.value)">
+					<text class="scroll-text" :class="{'scrollActived': readMode.scroll == item.value}">{{item.title}}</text>
+				</view>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	const animation = weex.requireModule('animation');
+	import { mapGetters, mapMutations } from 'vuex'
+	import { skinMixin } from '@/common/mixin/index.js'
+	import CIcon from '@/components/c-icon/c-icon.nvue'
+	import CProgress from '@/components/progress/progress.nvue'
+	export default {
+		mixins: [skinMixin],
+		data () {
+			return {
+				isShow: false,
+				duration: 200,
+				percent: 100,
+				scroll: [{
+					title: '上下滚动',
+					value: 'upDown'
+				},{
+					title: '左右翻页',
+					value: 'leftRight'
+				},{
+					title: '仿真翻页',
+					value: 'paging'
+				}]
+			}
+		},
+		computed: {
+			...mapGetters(['readMode']),
+			lateY () {
+				return -((4 * 60) + (4 * 1));
+			}
+		},
+		methods: {
+			...mapMutations(['changeFontSize', 'changeScrollMode']),
+			moveHandle () {
+				return true;
+			},
+			show () {
+				this.isShow = true;
+				this.$nextTick(() => {
+					animation.transition(this.$refs.popup, {
+					    styles: {
+							transform: 'translateY(0)'
+					    },
+					    duration: this.duration, //ms
+					    timingFunction: 'ease',
+					    needLayout:false,
+					    delay: 0 //ms
+					})
+				})
+			},
+			hide () {
+				animation.transition(this.$refs.popup, {
+				    styles: {
+						transform: 'translateY(' + Math.abs(this.lateY) + 'px)'
+				    },
+				    duration: this.duration, //ms
+				    timingFunction: 'ease',
+				    needLayout:false,
+				    delay: 0 //ms
+				}, (res) => {
+					this.isShow = false;
+				})
+			},
+			//增大字体
+			upFontSize () {
+				if ( this.readMode.fontSize >= 40 ) {
+					return;
+				}
+				this.changeFontSize(this.readMode.fontSize + 2);
+			},
+			//减小字体
+			downFontSize () {
+				if ( this.readMode.fontSize <= 14 ) {
+					return;
+				}
+				this.changeFontSize(this.readMode.fontSize - 2);
+			}
+		},
+		components: {
+			CIcon,
+			CProgress
+		}
+	}
+</script>
+
+<style scoped>
+	.mask {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+	}
+	.read-board {
+		position: fixed;
+		background-color: #333333;
+		bottom: 0;
+		left: 0;
+		right: 0;
+	}
+	.read-board-line {
+		flex-direction: row;
+		padding: 0 10px;
+		border-bottom-width: 1px;
+		border-bottom-color: #3D3D3D;
+		border-bottom-style: solid;
+		height: 60px;
+		align-items: center;
+	}
+	.progress-btn {
+		justify-content: center;
+		width: 45px;
+	}
+	.progress-prev {
+		align-items: flex-start;
+	}
+	.progress-next {
+		align-items: flex-end;
+	}
+	.progress {
+		flex: 1;
+		justify-content: center;
+	}
+	.half-box {
+		flex: 1;
+		flex-direction: row;
+		justify-content: center;
+		align-items: center;
+	}
+	.skin-mode {
+		width: 100px;
+		height: 40px;
+		border-radius: 5px;
+		margin: 0 5px;
+		justify-content: center;
+		align-items: center;
+	}
+	.font-btn {
+		border-width: 1px;
+		border-style: solid;
+		border-color: #8A8A8A;
+		width: 98px;
+		height: 38px;
+		border-radius: 5px;
+		margin: 0 5px;
+		justify-content: center;
+		align-items: center;
+	}
+	.scroll-box {
+		margin: 0 5px;
+		flex: 1;
+		border-width: 1px;
+		border-style: solid;
+		border-color: #8A8A8A;
+		height: 35px;
+		justify-content: center;
+		align-items: center;
+		border-radius: 5px;
+	}
+	.scroll-text {
+		font-size: 14px;
+		color: #8A8A8A;
+	}
+	.scrollActived {
+		border-color: #EFEFEF;
+		color: #EFEFEF;
+	}
+	.chapter-box {
+		margin: 0 5px;
+		flex: 1;
+		border-width: 1px;
+		border-style: solid;
+		border-color: #8A8A8A;
+		height: 38px;
+		justify-content: center;
+		align-items: center;
+		border-radius: 5px;
+	}
+	.chapter-text {
+		font-size: 14px;
+		color: #8A8A8A;
+	}
+</style>

@@ -1,17 +1,20 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import { indexOf, suffix, dateFormat, removeSuffix } from '@/common/js/util.js'
+import { indexOf, suffix, dateFormat, removeSuffix, randomString } from '@/common/js/util.js'
 Vue.use(Vuex)
 const SKIN = 'UNI_BOOK_SKIN'
 const BOOKS = 'UNI_BOOK_LIST'
 const PATH = 'UNI_BOOK_PATH'
+const READ = 'UNI_BOOK_READ'
 const store = new Vuex.Store({
     state: {
 		skin: uni.getStorageSync(SKIN) || 'default', //皮肤
 		books: uni.getStorageSync(BOOKS) || [],//导入的书籍列表
+		read: uni.getStorageSync(READ) || {scroll: 'upDown', fontSize: 20},//阅读模式包含字体大小，翻页方式
 		path: uni.getStorageSync(PATH) || []//上次访问的文件夹记录
 	},
 	getters: {
+		//当前皮肤模式
 		skinMode (state) {
 			return state.skin
 		},
@@ -62,9 +65,13 @@ const store = new Vuex.Store({
 		},
 		pathHistory (state) {
 			return state.path;
+		},
+		readMode (state) {
+			return state.read;
 		}
 	},
     mutations: {
+		//改变皮肤模式
 		changeSkin (state, skin) {
 			state.skin = skin;
 			uni.setStorageSync(SKIN, skin)
@@ -72,10 +79,12 @@ const store = new Vuex.Store({
 		//新增书籍
 		addBooks (state, books) {
 			for ( let i in books ) {
+				let time = new Date().getTime();
 				state.books.push({
 					name: removeSuffix(books[i].name),
 					image: '',
-					time: dateFormat(new Date().getTime()).split(' ')[0],
+					creatime: time,
+					time: dateFormat(time).split(' ')[0],
 					path: books[i].path,
 					progress: 0.00
 				})
@@ -102,6 +111,16 @@ const store = new Vuex.Store({
 		popPath (state) {
 			state.path.splice(state.path.length - 1, 1);
 			uni.setStorageSync(PATH, state.path);
+		},
+		//改变字体大小
+		changeFontSize (state, fontSize) {
+			state.read.fontSize = fontSize;
+			uni.setStorageSync(READ, state.read);
+		},
+		//改变翻页模式
+		changeScrollMode (state, scroll) {
+			state.read.scroll = scroll;
+			uni.setStorageSync(READ, state.read);
 		}
 	},
     actions: {}

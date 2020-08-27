@@ -35,7 +35,7 @@
 					<view class="list-right">
 						<view class="lr-top">
 							<text class="list-title" :style="{'color': skinColor.titleColor}">{{item.name}}</text>
-							<text v-if="isLead(item.name)" class="list-text" :style="{'color': skinColor.textColor}">已导入</text>
+							<text v-if="isLead(item.path) > -1" class="list-text" :style="{'color': skinColor.textColor}">已导入</text>
 						</view>
 						<view class="lr-bottom">
 							<text class="list-text" :style="{'color': skinColor.textColor}">{{item.time}}</text>
@@ -76,7 +76,7 @@
 	import ActionSheet from '@/components/action-sheet/action-sheet.nvue'
 	import Bubble from '@/components/bubble/bubble.nvue'
 	import BubbleItem from '@/components/bubble-item/bubble-item.nvue'
-	import { dateFormat, suffix, indexOf, removeSuffix } from '@/common/js/util.js'
+	import { dateFormat, suffix, indexOf } from '@/common/js/util.js'
 	import { mapGetters, mapMutations } from 'vuex'
 	export default {
 		mixins: [skinMixin],
@@ -183,9 +183,9 @@
 				let books = [];
 				let err = 0;
 				for ( let i in this.checkes ) {
-					//只有没有导入的文件才能导入
-					if ( indexOf(this.bookList, removeSuffix(this.checkes[i]), 'name') == -1 ) {
-						let index = indexOf(this.list, this.checkes[i], 'name');
+					//根据文件路径判断文件有没有被导入过
+					let index = indexOf(this.list, this.checkes[i], 'name');
+					if ( this.isLead(this.list[index].path) == -1 ) {
 						books.push(this.list[index]);
 					} else {
 						err++;
@@ -217,7 +217,7 @@
 				this.actions = [];
 				this.actionIndex = index;
 				//已经导入的文件操作列表
-				if ( indexOf(this.bookList, removeSuffix(this.list[index].name), 'name') > -1 ) {
+				if ( this.isLead(this.list[index].path) > -1 ) {
 					this.actions = [{
 						title: '删除',
 						value: 'delete'
@@ -237,7 +237,8 @@
 			selectItem (val) {
 				//用户选择导入操作
 				if ( val == 'push' ) {
-					if ( indexOf(this.bookList, removeSuffix(this.list[this.actionIndex].name), 'name') == -1 ) {
+					//根据文件路径判断文件有没有被导入过
+					if ( this.isLead(this.list[this.actionIndex].path) == -1 ) {
 						let books = [];
 						books.push(this.list[this.actionIndex]);
 						this.addBooks(books);
@@ -266,13 +267,13 @@
 			},
 			//删除文件
 			deleteFile (name) {
+				//根据文件名称或获取保存的数据下标
+				let index = indexOf(this.list, name, 'name');
 				// 如果是已经导入的文件，删除导入记录
-				let flag = indexOf(this.bookList, removeSuffix(name), 'name');
+				let flag = this.isLead(this.list[index].path);
 				if ( flag > -1 ) {
 					this.deleteBook(this.bookList[flag].name);
 				}
-				//根据文件名称或获取保存的数据下标
-				let index = indexOf(this.list, name, 'name');
 				//删除本地文件
 				plus.io.resolveLocalFileSystemURL('file://' + this.list[index].path, (entry) => {
 					entry.remove((entry) => {
@@ -377,9 +378,9 @@
 					return (size / 1073741824).toFixed(2) + 'GB';
 				}
 			},
-			//判断当前文件是否已经导入
-			isLead (val) {
-				return indexOf(this.bookList, removeSuffix(val), 'name') > -1 ? true : false;
+			//根据文件路径判断当前文件是否已经导入,返回下标
+			isLead (path) {
+				return indexOf(this.bookList, path, 'path');
 			}
 		},
 		onBackPress(event) {

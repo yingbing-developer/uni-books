@@ -9,7 +9,7 @@ export function dateFormat (time) {
 }
 
 /* *
- * 时间格式化补零
+ * 补零
  * @param {Number} val 数字
  * */
 function zeroize (val) {

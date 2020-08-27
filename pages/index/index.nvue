@@ -17,7 +17,7 @@
 			</view>
 		</nav-bar>
 		<waterfall :scrollable="scrollable" @scroll="scroll" column-count="<integer>" column-width="120" column-gap="10" left-gap="10" right-gap="10">
-		    <cell v-for="(item, index) in bookList" :key="item.name">
+		    <cell v-for="(item, index) in bookList" :key="item.id">
 				<view class="book" ref="list" @tap="push('/pages/read/index?path=' + item.path)">
 					<image class="book-img" src="../../static/logo.png" mode="aspectFill"></image>
 					<view class="book-mask" :style="{opacity: skinColor.imgMask}"></view>

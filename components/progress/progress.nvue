@@ -1,0 +1,137 @@
+<template>
+	<view class="progress-box" :style="{height: itemSize + 'px'}">
+		<view class="gap" :style="{'width': (itemSize/2) + 'px'}"></view>
+		<view class="progress" :style="{'background-color': color}" ref="progress">
+			<view class="active" :style="{'background-color': activeColor, width: activeWidth + 'px'}"></view>
+		</view>
+		<view v-if="!percentShow" class="gap" :style="{'width': (itemSize/2) + 'px'}"></view>
+		<view v-if="percentShow" class="percent">
+			<text class="percent-text">{{percent}}%</text>
+		</view>
+		<view class="item"
+		@touchstart="touchstart"
+		@touchmove="touchmove"
+		@touchend="touchend"
+		:style="{
+			'background-color': activeColor,
+			'transform': 'translateX(' + activeWidth + 'px)',
+			'width': itemSize + 'px',
+			'height': itemSize + 'px',
+			'border-radius': itemSize + 'px'
+		}"></view>
+	</view>
+</template>
+
+<script>
+	const dom = weex.requireModule('dom');
+	export default {
+		props: {
+			value: {
+				type: Number,
+				default: 0
+			},
+			itemSize: {
+				type: Number,
+				default: 15
+			},
+			color: {
+				type: String,
+				default: '#3D3D3D'
+			},
+			activeColor: {
+				type: String,
+				default: '#ED7B1F'
+			},
+			percentShow: {
+				type: Boolean,
+				default: false
+			},
+			itemShow: {
+				type: Boolean,
+				default: false
+			}
+		},
+		data () {
+			return {
+				width: 0,
+				percent: 0,
+				pointX: 0
+			}
+		},
+		computed: {
+			activeWidth () {
+				return (this.width * (this.percent/100));
+			}
+		},
+		created () {
+			this.percent = this.value;
+		},
+		mounted () {
+			//获取整个进度条的宽度
+			setTimeout(() => {
+				dom.getComponentRect(this.$refs.progress, (res) => {
+					this.width = res.size.width;
+				})
+			}, 30)
+		},
+		methods: {
+			touchstart (e) {
+			},
+			touchmove (e) {
+				console.log(e);
+			},
+			touchend (e) {
+				
+			}
+		},
+		watch: {
+			value (val) {
+				if ( val < 0 ) {
+					val = 0
+				}
+				if ( val > 100 ) {
+					val = 100
+				}
+				this.percent = val;
+			},
+			percent (val) {
+				if ( val < 0 ) {
+					val = 0
+				}
+				if ( val > 100 ) {
+					val = 100
+				}
+				this.$emit('input', val);
+			}
+		}
+	}
+</script>
+
+<style scoped>
+	.progress-box {
+		position: relative;
+		align-items: center;
+		justify-content: center;
+		flex-direction: row;
+	}
+	.progress {
+		flex: 1;
+		height: 2.5px;
+	}
+	.active {
+		height: 2.5px;
+	}
+	.item {
+		position: absolute;
+		left: 0;
+		top: 0;
+	}
+	.percent {
+		width: 55px;
+		align-items: flex-end;
+	}
+	.percent-text {
+		font-size: 14px;
+		color: #EFEFEF;
+	}
+</style>
