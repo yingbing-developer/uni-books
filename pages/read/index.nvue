@@ -2,14 +2,23 @@
 	<view class="read" :style="{'background-color': skinColor.readBackColor}">
 		<nav-bar :bgColor="skinColor.readBackColor" title="第一章 杉杉苑" :titleColor="skinColor.readTextColor" :backColor="skinColor.readTextColor">
 		</nav-bar>
-		<list>
-			<cell>
-				<view class="content">
-					<text class="content-text" :style="{'font-size': readMode.fontSize + 'px', 'line-height': lineHeight + 'px', color: skinColor.readTextColor}">{{bookContent}}</text>
+		<view class="list-view">
+			<list>
+				<cell>
+					<view class="content">
+						<text class="content-text" :style="{'font-size': readMode.fontSize + 'px', 'line-height': lineHeight + 'px', color: skinColor.readTextColor}">{{bookContent}}</text>
+					</view>
+				</cell>
+			</list>
+			<view class="touchBoard">
+				<view class="touch-box touch-left"></view>
+				<view class="touch-box touch-center">
+					<view class="touch-item" @tap="$refs.readSetting.show()"></view>
 				</view>
-			</cell>
-		</list>
-		<read-setting></read-setting>
+				<view class="touch-box touch-right"></view>
+			</view>
+		</view>
+		<read-setting ref="readSetting"></read-setting>
 	</view>
 </template>
 
@@ -81,5 +90,32 @@
 		left: 0;
 		right: 0;
 		bottom: 0;
+	}
+	.list-view {
+		flex: 1;
+		position: relative;
+	}
+	.touchBoard {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		flex-direction: row;
+	}
+	.touch-box  {
+		justify-content: center;
+	}
+	.touch-left {
+		flex: 1;
+	}
+	.touch-right {
+		flex: 1;
+	}
+	.touch-center {
+		width: 300rpx;
+	}
+	.touch-item {
+		height: 400rpx;
 	}
 </style>

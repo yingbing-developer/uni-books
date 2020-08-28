@@ -86,7 +86,9 @@ const store = new Vuex.Store({
 					creatime: time,
 					time: dateFormat(time).split(' ')[0],
 					path: books[i].path,
-					progress: 0.00
+					size: books[i].realSize,
+					progress: 0.00,
+					chapterRecord: ''
 				})
 			}
 			uni.setStorageSync(BOOKS, state.books);

@@ -352,6 +352,7 @@
 						const obj = {
 							name: entry.name,
 							size: this.countSize(metadata.size),
+							realSize: metadata.size,
 							path: entry.fullPath,
 							time: dateFormat(metadata.modificationTime),
 							creatime: metadata.modificationTime,

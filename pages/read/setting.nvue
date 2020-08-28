@@ -1,7 +1,7 @@
 <template>
 	<view class="read-menu" v-if="isShow">
-		<view class="mask" @touchmove="moveHandle"></view>
-		<view class="read-board" ref="popup" :style="{transform: 'translateY(' + Math.abs(lateY) + 'px)'}">
+		<view class="mask" @touchmove="moveHandle" @tap="hide"></view>
+		<view class="read-board" ref="popup" :style="{transform: 'translateY(' + Math.abs(lateY) + 'px)'}" @touchmove="moveHandle">
 			<view class="read-board-line">
 				<view class="progress-btn progress-prev">
 					<c-icon name="arrow-left" size="30" color="#EFEFEF"></c-icon>
