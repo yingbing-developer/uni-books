@@ -11,7 +11,7 @@ const store = new Vuex.Store({
 		skin: uni.getStorageSync(SKIN) || 'default', //皮肤
 		books: uni.getStorageSync(BOOKS) || [],//导入的书籍列表
 		read: uni.getStorageSync(READ) || {scroll: 'upDown', fontSize: 20},//阅读模式包含字体大小，翻页方式
-		path: uni.getStorageSync(PATH) || []//上次访问的文件夹记录
+		path: uni.getStorageSync(PATH) || ''//上次访问的文件夹路径
 	},
 	getters: {
 		//当前皮肤模式
@@ -106,12 +106,9 @@ const store = new Vuex.Store({
 			state.books = [];
 			uni.removeStorageSync(BOOKS);
 		},
-		pushPath (state, path) {
-			state.path.push(path);
-			uni.setStorageSync(PATH, state.path);
-		},
-		popPath (state) {
-			state.path.splice(state.path.length - 1, 1);
+		//更新文件路径
+		updatePath (state, path) {
+			state.path = path;
 			uni.setStorageSync(PATH, state.path);
 		},
 		//改变字体大小

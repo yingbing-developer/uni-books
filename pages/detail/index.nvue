@@ -13,7 +13,7 @@
 		</view>
 		<view class="btns">
 			<view class="old-btn btn">
-				<text class="btn-text old-btn-text">从上次记录阅读</text>
+				<text class="btn-text old-btn-text">上次读到第3章</text>
 			</view>
 			<view class="new-btn btn" @tap="routePush('/pages/read/index?path=' + path)">
 				<text class="btn-text new-btn-text">开始阅读</text>

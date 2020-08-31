@@ -5,7 +5,7 @@
 				<c-icon name="menu" size="25" :color="skinColor.iconColor"></c-icon>
 			</view>
 			<view class="nav-right" slot="right">
-				<view @tap="push('/pages/search/index')">
+				<view @tap="routePush('/pages/search/index')">
 					<c-icon name="search" size="25" :color="skinColor.iconColor"></c-icon>
 				</view>
 				<view>
@@ -78,10 +78,14 @@
 		methods: {
 			...mapMutations(['deleteBook', 'clearBooks']),
 			scroll (e) {
-				console.log('scroll');
+				//如果列表向上滑动，隐藏浮动按钮，否则显示浮动按钮
 				if ( e.contentOffset.y < this.oldOffsetY ) {
 					this.btnShow = false;
 				} else {
+					this.btnShow = true;
+				}
+				//如果列表y轴偏移为0，则显示浮动按钮
+				if ( e.contentOffset.y == 0 ) {
 					this.btnShow = true;
 				}
 				this.oldOffsetY = e.contentOffset.y;

@@ -15,8 +15,8 @@
 		 <list>
 		    <!-- 注意事项: 不能使用 index 作为 key 的唯一标识 -->
 			<!-- 返回项 -->
-			<cell v-if="pathHistory.length > 1">
-				<view @tap="getFileSystem(pathHistory[pathHistory.length - 2], -1)" class="list" :style="{'border-bottom-color': skinColor.gapColor}">
+			<cell>
+				<view @tap="backParent(pathHistory)" class="list" :style="{'border-bottom-color': skinColor.gapColor}">
 					<view class="list-icon">
 						<c-icon name="folder" size="50" color="#FFCA28"></c-icon>
 					</view>
@@ -85,7 +85,6 @@
 				list: [],
 				checkes: [],
 				fileLength: 0,
-				//访问路径
 				types: ['txt'],
 				//名称过滤
 				nameFilter: '',
@@ -100,10 +99,10 @@
 		},
 		created () {
 			this.getRoots();
-			this.getFileSystem(this.pathHistory[this.pathHistory.length - 1] || '/sdcard', 0);
+			this.getFileSystem(this.pathHistory || '/sdcard');
 		},
 		methods: {
-			...mapMutations(['addBooks', 'deleteBook', 'pushPath', 'popPath']),
+			...mapMutations(['addBooks', 'deleteBook', 'updatePath']),
 			//获取系统文件根目录
 			getRoots () {
 				let url = '';
@@ -294,23 +293,29 @@
 					console.log( "Request file system failed: " + fail.message );
 				})
 			},
+			//返回上级目录
+			backParent (url) {
+				plus.io.resolveLocalFileSystemURL('file://' + url, ( entry ) => {
+					entry.getParent((parentEntry) => {
+						this.getFileSystem(parentEntry.fullPath);
+					}, (fail) => {
+						console.log( "Request file system failed: " + fail.message );
+					})
+				}, ( fail ) => {
+					console.log( "Request file system failed: " + fail.message );
+				});
+			},
 			//根据url路径获取文件系统对象,type为1表示访问为-1表示后退为0表示不记录
-			getFileSystem (url, type) {
+			getFileSystem (url) {
 				plus.io.resolveLocalFileSystemURL('file://' + url, ( entry ) => {
 					//如果当前访问的是文件则返回
 					if ( entry.isFile ) {
 						return;
 					}
+					//访问文件夹时更新文件历史记录
+					this.updatePath(url);
 					this.checkes = [];
 					this.list = [];
-					if ( type > 0 ) {
-						//记录访问过的文件路径
-						this.pushPath(entry.fullPath);
-					}
-					if ( type < 0 ) {
-						//删除退出的文件夹路径
-						this.popPath();
-					}
 					//读取当前路径下的子文件和子文件夹
 					let directoryReader = entry.createReader();
 					directoryReader.readEntries(async ( entries ) => {
