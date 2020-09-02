@@ -4,14 +4,27 @@
 		</nav-bar>
 		<view class="list-view" ref="listView">
 			<view class="content">
-				<text ref="text" class="content-text" :style="{'font-size': readMode.fontSize + 'px', 'line-height': lineHeight + 'px', color: skinColor.readTextColor}">{{bookContent}}</text>
+				<text
+				ref="text"
+				class="content-text"
+				:style="{
+				lines: textLine * pageIndex,
+				transform: 'translateY(-' + lateY + 'px)',
+				'font-size': fontSize + 'px',
+				'line-height': lineHeight + 'px',
+				color: skinColor.readTextColor}"
+				>{{bookContent}}</text>
 			</view>
 			<view class="touchBoard">
-				<view class="touch-box touch-left"></view>
+				<view class="touch-box touch-left">
+					<view class="touch-item" @tap="prevPage"></view>
+				</view>
 				<view class="touch-box touch-center">
 					<view class="touch-item" @tap="$refs.readSetting.show()"></view>
 				</view>
-				<view class="touch-box touch-right"></view>
+				<view class="touch-box touch-right">
+					<view class="touch-item" @tap="nextPage"></view>
+				</view>
 			</view>
 		</view>
 		<read-setting ref="readSetting"></read-setting>
@@ -22,15 +35,15 @@
 	import { mapGetters } from 'vuex'
 	import { skinMixin } from '@/common/mixin/index.js'
 	import ReadSetting from './setting.nvue'
-	const pageSize = 1000;
 	const dom = weex.requireModule('dom');
+	const pageSize = 1000;
 	export default {
 		mixins: [skinMixin],
 		data () {
 			return {
 				bookContent: '',
 				//当前页面索引
-				pageIndex: 0,
+				pageIndex: 1,
 				listHeight: 0,
 				textHeight: 0
 			}
@@ -42,13 +55,29 @@
 				const page = pages[pages.length - 1];
 				return page.options.path;
 			},
+			fontSize () {
+				return this.readMode.fontSize;
+			},
+			//行高
 			lineHeight () {
-				return this.readMode.fontSize + 15;
+				return this.fontSize + 15;
+			},
+			//行数
+			textLine () {
+				return parseInt(this.listHeight / this.lineHeight);
+			},
+			//偏移值
+			lateY () {
+				return this.textHeight * (this.pageIndex - 1);
 			}
+		},
+		created () {
+			this.getContent();
 		},
 		mounted () {
 			setTimeout(() => {
-				this.getListHeight();
+				this.getListViewHeight();
+				this.getContent();
 			}, 20)
 		},
 		methods: {
@@ -57,42 +86,56 @@
 			// 	let readTxt = new ReadTxt();
 			// 	this.bookContent = readTxt.getTextFromText(plus.io.convertLocalFileSystemURL(this.path));
 			// },
-			// getContent () {
-			// 	plus.io.resolveLocalFileSystemURL('file://' + this.path, ( entry ) => {
-			// 		entry.file( ( file ) => {
-			// 			let slice = file.slice(this.pageIndex, this.pageIndex + pageSize);
-			// 			let reader = new plus.io.FileReader();
-			// 			reader.onloadend = ( e ) => {
-			// 				this.bookContent = e.target.result;
-			// 				console.log(this.bookContent.length);
-			// 			};
-			// 			reader.readAsText( slice, 'utf-8' );
-			// 		}, ( fail ) => {
-			// 			console.log("Request file system failed: " + fail.message);
-			// 		});
-			// 	}, ( fail ) => {
-			// 		console.log( "Request file system failed: " + fail.message );
-			// 	});
-			// },
 			getContent () {
-				let pageText = '';
+				plus.io.resolveLocalFileSystemURL('file://' + this.path, ( entry ) => {
+					entry.file( ( file ) => {
+						let slice = file.slice(this.pageIndex, this.pageIndex + pageSize);
+						let reader = new plus.io.FileReader();
+						reader.onloadend = ( e ) => {
+							this.bookContent = e.target.result;
+							this.getTextHeight();
+						};
+						reader.readAsText( slice, 'utf-8' );
+					}, ( fail ) => {
+						console.log("Request file system failed: " + fail.message);
+					});
+				}, ( fail ) => {
+					console.log( "Request file system failed: " + fail.message );
+				});
 			},
-			getListHeight () {
+			//获取容器高度
+			getListViewHeight () {
 				dom.getComponentRect(this.$refs.listView, (res) => {
 					this.listHeight = res.size.height;
-					console.log(this.listHeight);
 				})
 			},
-			getDomHeight (query) {
-				return new Promise((resolve, reject) => {
-					dom.getComponentRect(this.$refs[query], (res) => {
-						resolve(res.size.height);
-					})
+			//获取文本显示出来的高度
+			getTextHeight () {
+				dom.getComponentRect(this.$refs.text, (res) => {
+					this.textHeight = res.size.height / this.pageIndex;
 				})
+			},
+			prevPage () {
+				if ( this.pageIndex == 1 ) {
+					uni.showToast({
+						icon: 'none',
+						title: '已经是第一页了'
+					})
+					return;
+				}
+				this.pageIndex--;
+			},
+			nextPage () {
+				this.pageIndex++;
 			}
 		},
 		components: {
 			ReadSetting
+		},
+		watch: {
+			fontSize (val) {
+				this.getTextHeight();
+			}
 		}
 	}
 </script>
@@ -103,15 +146,22 @@
 		align-items: center;
 		justify-content: center;
 	}
-	.content {
-		padding: 5px 20px;
-		flex: 1;
-	}
-	.textarea {
-		flex: 1;
-	}
 	.list-view {
 		flex: 1;
+	}
+	.content {
+		padding: 0 20px;
+		flex: 1;
+	}
+	.content-text {
+		text-overflow: unset;
+	}
+	.webview {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
 	}
 	.touchBoard {
 		position: absolute;
