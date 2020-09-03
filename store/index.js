@@ -87,15 +87,15 @@ const store = new Vuex.Store({
 					time: dateFormat(time).split(' ')[0],
 					path: books[i].path,
 					size: books[i].realSize,
-					progress: 0.00,
-					chapterRecord: ''
+					progress: '0.00',
+					pageIndex: 1
 				})
 			}
 			uni.setStorageSync(BOOKS, state.books);
 		},
-		//删除指定名称的书籍
-		deleteBook (state, name) {
-			let flag = indexOf(state.books, name, 'name');
+		//删除指定的书籍
+		deleteBook (state, path) {
+			let flag = indexOf(state.books, path, 'path');
 			if ( flag > -1 ) {
 				state.books.splice(flag, 1);
 				uni.setStorageSync(BOOKS, state.books)
@@ -106,7 +106,19 @@ const store = new Vuex.Store({
 			state.books = [];
 			uni.removeStorageSync(BOOKS);
 		},
-		//更新文件路径
+		// 更新书籍阅读页数
+		updateBookPage (state, book) {
+			let index = indexOf(state.books, book.path, 'path');
+			state.books[index].pageIndex = book.page;
+			uni.setStorageSync(BOOKS, state.books);
+		},
+		// 更新书籍阅读进度
+		updateBookProgress (state, book) {
+			let index = indexOf(state.books, book.path, 'path');
+			state.books[index].progress = book.progress;
+			uni.setStorageSync(BOOKS, state.books);
+		},
+		//更新访问的文件夹路径
 		updatePath (state, path) {
 			state.path = path;
 			uni.setStorageSync(PATH, state.path);

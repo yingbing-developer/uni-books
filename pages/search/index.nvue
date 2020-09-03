@@ -1,6 +1,6 @@
 <template>
 	<view class="search" :style="{'background-color': skinColor.bgColor}">
-		<nav-bar title="添加书籍">
+		<nav-bar title="添加书籍" :bgColor="skinColor.navColor" :titleColor="skinColor.iconColor">
 			<!-- <view slot="right" @tap="showFilterBox">
 				<c-icon name="filter" size="25" :color="skinColor.iconColor"></c-icon>
 			</view> -->
@@ -271,7 +271,7 @@
 				// 如果是已经导入的文件，删除导入记录
 				let flag = this.isLead(this.list[index].path);
 				if ( flag > -1 ) {
-					this.deleteBook(this.bookList[flag].name);
+					this.deleteBook(this.bookList[flag].path);
 				}
 				//删除本地文件
 				plus.io.resolveLocalFileSystemURL('file://' + this.list[index].path, (entry) => {

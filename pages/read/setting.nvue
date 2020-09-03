@@ -3,24 +3,24 @@
 		<view class="mask" @touchmove="moveHandle" @tap="hide"></view>
 		<view class="read-board" ref="popup" :style="{transform: 'translateY(' + Math.abs(lateY) + 'px)'}" @touchmove="moveHandle">
 			<view class="read-board-line">
-				<view class="progress-btn progress-prev">
+				<view class="progress-btn progress-prev" @tap="prev3Page">
 					<c-icon name="arrow-left" size="30" color="#EFEFEF"></c-icon>
 				</view>
 				<view class="progress">
-					 <c-progress v-model="percent" itemShow></c-progress>
+					 <c-progress v-model="progress" itemShow></c-progress>
 				</view>
-				<view class="progress-btn progress-next">
+				<view class="progress-btn progress-next"  @tap="next3Page">
 					<c-icon name="arrow-right" size="30" color="#EFEFEF"></c-icon>
 				</view>
 			</view>
-			<view class="read-board-line">
+			<!-- <view class="read-board-line">
 				<view class="chapter-box">
 					<text class="chapter-text">上一章节</text>
 				</view>
 				<view class="chapter-box">
 					<text class="chapter-text">下一章节</text>
 				</view>
-			</view>
+			</view> -->
 			<view class="read-board-line">
 				<view class="half-box skin-box">
 					<view class="skin-mode light-mode" style="background-color: #BFAD8A;" @tap="changeSkin('default')">
@@ -34,6 +34,7 @@
 					<view class="font-btn" @tap="downFontSize">
 						<c-icon name="font-down" color="#8A8A8A"></c-icon>
 					</view>
+					<text class="font-text">{{readMode.fontSize}}</text>
 					<view class="font-btn" @tap="upFontSize">
 						<c-icon name="font-up" color="#8A8A8A"></c-icon>
 					</view>
@@ -52,35 +53,56 @@
 	const animation = weex.requireModule('animation');
 	import { mapGetters, mapMutations } from 'vuex'
 	import { skinMixin } from '@/common/mixin/index.js'
+	import { indexOf } from '@/common/js/util.js'
 	import CIcon from '@/components/c-icon/c-icon.nvue'
 	import CProgress from '@/components/progress/progress.nvue'
 	export default {
 		mixins: [skinMixin],
+		props: {
+			path: {
+				type: String,
+				default: ''
+			},
+			totalPage: {
+				type: Number,
+				default: 0
+			},
+			progress: {
+				type: String,
+				default: '0'
+			}
+		},
 		data () {
 			return {
 				isShow: false,
 				duration: 200,
-				percent: 100,
+				percent: 0,
 				scroll: [{
 					title: '上下滚动',
 					value: 'upDown'
 				},{
 					title: '左右翻页',
 					value: 'leftRight'
-				},{
-					title: '仿真翻页',
-					value: 'paging'
 				}]
 			}
 		},
 		computed: {
-			...mapGetters(['readMode']),
+			...mapGetters(['bookList', 'readMode']),
+			bookInfo () {
+				return this.bookList[indexOf(this.bookList, this.path, 'path')];
+			},
+			pageIndex () {
+				return this.bookInfo.pageIndex
+			},
 			lateY () {
 				return -((4 * 60) + (4 * 1));
 			}
 		},
+		created () {
+			this.percent = this.progress;
+		},
 		methods: {
-			...mapMutations(['changeFontSize', 'changeScrollMode']),
+			...mapMutations(['changeFontSize', 'changeScrollMode', 'updateBookPage']),
 			moveHandle () {
 				return true;
 			},
@@ -124,6 +146,47 @@
 					return;
 				}
 				this.changeFontSize(this.readMode.fontSize - 2);
+			},
+			prev3Page () {
+				if ( this.pageIndex == 1) {
+					uni.showToast({
+						icon: 'none',
+						title: '已经是第一页了'
+					})
+					return
+				}
+				let page = this.pageIndex - 3;
+				if ( page < 1 ) {
+					page = 1;
+				}
+				let book = {
+					path: this.path,
+					page: page
+				}
+				this.updateBookPage(book);
+			},
+			next3Page() {
+				if ( this.pageIndex == this.totalPage) {
+					uni.showToast({
+						icon: 'none',
+						title: '已经是最后一页了'
+					})
+					return
+				}
+				let page = this.pageIndex + 3;
+				if ( page > this.totalPage ) {
+					page = this.totalPage;
+				}
+				let book = {
+					path: this.path,
+					page: page
+				}
+				this.updateBookPage(book);
+			}
+		},
+		watch: {
+			progress (val) {
+				this.percent = val;
 			}
 		},
 		components: {
@@ -189,12 +252,17 @@
 		border-width: 1px;
 		border-style: solid;
 		border-color: #8A8A8A;
-		width: 98px;
+		flex: 1;
 		height: 38px;
 		border-radius: 5px;
 		margin: 0 5px;
 		justify-content: center;
 		align-items: center;
+	}
+	.font-text {
+		color: #8A8A8A;
+		font-size: 14px;
+		margin: 5px;
 	}
 	.scroll-box {
 		margin: 0 5px;
