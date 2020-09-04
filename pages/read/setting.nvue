@@ -3,13 +3,13 @@
 		<view class="mask" @touchmove="moveHandle" @tap="hide"></view>
 		<view class="read-board" ref="popup" :style="{transform: 'translateY(' + Math.abs(lateY) + 'px)'}" @touchmove="moveHandle">
 			<view class="read-board-line">
-				<view class="progress-btn progress-prev" @tap="prev3Page">
+				<view class="progress-btn progress-prev" @tap="prevPages">
 					<c-icon name="arrow-left" size="30" color="#EFEFEF"></c-icon>
 				</view>
 				<view class="progress">
 					 <c-progress v-model="progress" itemShow></c-progress>
 				</view>
-				<view class="progress-btn progress-next"  @tap="next3Page">
+				<view class="progress-btn progress-next"  @tap="nextPages">
 					<c-icon name="arrow-right" size="30" color="#EFEFEF"></c-icon>
 				</view>
 			</view>
@@ -147,7 +147,8 @@
 				}
 				this.changeFontSize(this.readMode.fontSize - 2);
 			},
-			prev3Page () {
+			//前五页
+			prevPages () {
 				if ( this.pageIndex == 1) {
 					uni.showToast({
 						icon: 'none',
@@ -155,17 +156,15 @@
 					})
 					return
 				}
-				let page = this.pageIndex - 3;
+				let page = this.pageIndex - 5;
+				//超过第一页,赋值为第一页
 				if ( page < 1 ) {
 					page = 1;
 				}
-				let book = {
-					path: this.path,
-					page: page
-				}
-				this.updateBookPage(book);
+				this.goPage(page);
 			},
-			next3Page() {
+			//后五页
+			nextPages() {
 				if ( this.pageIndex == this.totalPage) {
 					uni.showToast({
 						icon: 'none',
@@ -173,15 +172,20 @@
 					})
 					return
 				}
-				let page = this.pageIndex + 3;
+				let page = this.pageIndex + 5;
+				//超过最后一页,赋值为最后一页
 				if ( page > this.totalPage ) {
 					page = this.totalPage;
 				}
+				this.goPage(page);
+			},
+			goPage (page) {
 				let book = {
 					path: this.path,
 					page: page
 				}
 				this.updateBookPage(book);
+				this.$emit('pageTo', page);
 			}
 		},
 		watch: {

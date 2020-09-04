@@ -82,7 +82,7 @@ const store = new Vuex.Store({
 				let time = new Date().getTime();
 				state.books.push({
 					name: removeSuffix(books[i].name),
-					image: '',
+					image: '/static/cover/cover_' + Math.floor(Math.random()*6 + 1) + '.png',
 					creatime: time,
 					time: dateFormat(time).split(' ')[0],
 					path: books[i].path,

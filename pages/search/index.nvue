@@ -51,7 +51,7 @@
 			  </view>
 		  </view>
 		  <!-- 操作列表 -->
-		  <action-sheet ref="action" :list="actions" @select="selectItem" @cancel="actionIndex = ''"></action-sheet>
+		  <action-sheet ref="action" :list="actions" @select="selectItem"></action-sheet>
 		  <!-- 气泡弹窗 -->
 		  <bubble ref="bubble">
 				<block v-if="fileLength > 0">
@@ -218,6 +218,9 @@
 				//已经导入的文件操作列表
 				if ( this.isLead(this.list[index].path) > -1 ) {
 					this.actions = [{
+						title: '取消导入',
+						value: 'pop'
+					},{
 						title: '删除',
 						value: 'delete'
 					}]
@@ -250,6 +253,18 @@
 							icon: 'none'
 						})
 					}
+				}
+				//选择取消导入
+				if ( val == 'pop' ) {
+					uni.showModal({
+						title: '操作提示',
+						content: '是否将选中书籍从导入列表删除？',
+						success: (res) => {
+							if ( res.confirm ) {
+								this.deleteBook(this.list[this.actionIndex].path);
+							}
+						}
+					})
 				}
 				//用户选择删除操作
 				if ( val == 'delete' ) {

@@ -18,8 +18,8 @@
 		</nav-bar>
 		<waterfall :scrollable="scrollable" @scroll="scroll" column-count="<integer>" column-width="120" column-gap="10" left-gap="10" right-gap="10">
 		    <cell v-for="(item, index) in bookList" :key="item.id">
-				<view class="book" ref="list" @tap="routePush('/pages/read/index?path=' + item.path)">
-					<image class="book-img" src="../../static/logo.png" mode="aspectFill"></image>
+				<view class="book" ref="list" @tap="routePush('/pages/read/index?path=' + item.path)" @longpress="showAction(index)">
+					<image class="book-img" :src="item.image" mode="aspectFill"></image>
 					<view class="book-mask" :style="{opacity: skinColor.imgMask}"></view>
 					<view class="book-bottom">
 						<text class="book-name">{{item.name}}</text>
@@ -51,7 +51,10 @@
 				</view>
 			</view>
 		</waterfall>
+		<!-- 抽屉菜单 -->
 		<c-menu v-model="current" :translate="menuLate" :opacity="menuOpac" ref="leftMenu"></c-menu>
+		<!-- 操作列表 -->
+		<action-sheet ref="action" :list="actions" @select="selectAction"></action-sheet>
 	</view>
 </template>
 
@@ -59,6 +62,7 @@
 	import CIcon from '@/components/c-icon/c-icon.nvue'
 	import CMenu from '@/pages/menu/menu.nvue'
 	import NoData from '@/components/no-data/no-data.nvue'
+	import ActionSheet from '@/components/action-sheet/action-sheet.nvue'
 	import { skinMixin, menuTouchMixin } from '@/common/mixin/index.js'
 	import { mapGetters, mapMutations } from 'vuex'
 	const dom = weex.requireModule('dom') || {};
@@ -68,12 +72,24 @@
 			return {
 				current: 0,
 				oldOffsetY: 0,
+				//是否显示浮动按钮
 				btnShow: true,
-				routeDisabled: false
+				//是否禁用路由函数
+				routeDisabled: false,
+				//操作列表
+				actions: [],
+				//触发操作列表的下标
+				actionIndex: ''
 			}
 		},
 		computed: {
 			...mapGetters(['bookList'])
+		},
+		created () {
+			this.actions = [{
+				title: '删除',
+				value: 'delete'
+			}]
 		},
 		methods: {
 			...mapMutations(['deleteBook', 'clearBooks']),
@@ -92,7 +108,7 @@
 			},
 			clear () {
 				uni.showModal({
-					title: '提示',
+					title: '操作提示',
 					content: '是否清空所有书籍？',
 					success: (res) => {
 						if ( res.confirm ) {
@@ -100,6 +116,23 @@
 						}
 					}
 				})
+			},
+			showAction (index) {
+				this.actionIndex = index;
+				this.$refs.action.show();
+			},
+			selectAction (e) {
+				if ( e == 'delete' ) {
+					uni.showModal({
+						title: '操作提示',
+						content: '是否删除选中书籍？',
+						success: (res) => {
+							if ( res.confirm ) {
+								this.deleteBook(this.bookList[this.actionIndex].path);
+							}
+						}
+					})
+				}
 			},
 			changeCurrent () {
 				if ( this.current == 0 ) {
@@ -135,7 +168,8 @@
 		components: {
 			CIcon,
 			CMenu,
-			NoData
+			NoData,
+			ActionSheet
 		}
 	}
 </script>
@@ -167,13 +201,13 @@
 		left: 0;
 		right: 0;
 		height: 80rpx;
-		background-color: rgba(255,255,255,0.4);
+		background-color: rgba(0,0,0,0.5);
 		justify-content: center;
 		padding: 0 5px;
 	}
 	.book-name {
 		font-size: 22rpx;
-		color: #333333;
+		color: #FAFAFA;
 		lines:1;
 		text-overflow:ellipsis;
 	}
@@ -183,12 +217,12 @@
 	}
 	.book-time {
 		font-size: 18rpx;
-		color: #666666;
+		color: #eee;
 		margin-top: 5px;
 	}
 	.book-progress {
 		font-size: 18rpx;
-		color: #666666;
+		color: #eee;
 		margin-top: 5px;
 	}
 	.nav-left {

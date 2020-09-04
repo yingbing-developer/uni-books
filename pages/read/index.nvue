@@ -7,22 +7,20 @@
 			</view>
 		</nav-bar>
 		<view class="list-view" :class="{'opacClass': listShow}" ref="listView">
-			<scroll-view
-			:show-scrollbar="scrollMode == 'upDown'"
-			class="content"
-			:scroll-y="scrollMode == 'upDown'"
-			:scroll-top="scrollTop"
-			:style="{height: viewHeight + 'px'}"
-			@scroll="scroll">
-				<text
-				ref="text"
-				selectable
-				:style="{
-				'font-size': fontSize + 'px',
-				'line-height': (fontSize + 15) + 'px',
-				color: skinColor.readTextColor}"
-				>{{bookContent}}</text>
-			</scroll-view>
+			<view :style="{height: viewHeight + 'px'}">
+				<list @scroll="scroll" :scrollable="scrollMode == 'upDown'" :show-scrollbar="scrollMode == 'upDown'">
+					<cell v-for="(item, index) in bookContent" :key="item + index">
+						<view class="content" @disappear="ondisappear">
+							<text
+							ref="text"
+							:style="{
+							'font-size': fontSize + 'px',
+							'line-height': (fontSize + 15) + 'px',
+							color: skinColor.readTextColor}">{{item}}</text>
+						</view>
+					</cell>
+				</list>
+			</view>
 			<view class="touchBoard">
 				<view class="touch-box touch-left" v-if="scrollMode == 'leftRight'">
 					<view class="touch-item" @tap="prevPage"></view>
@@ -35,7 +33,12 @@
 				</view>
 			</view>
 		</view>
-		<read-setting :path="path" :totalPage="totalPage" :progress="progress" ref="readSetting"></read-setting>
+		<read-setting
+		:path="path"
+		:totalPage="totalPage"
+		:progress="progress"
+		ref="readSetting"
+		@pageTo="goPage"></read-setting>
 		<!-- 隐藏的一行文本用于获取一行字的真实高度 -->
 		<text
 		ref="lineHeight"
@@ -60,17 +63,13 @@
 				//是否显示文本容器
 				listShow: false,
 				//小说内容
-				bookContent: '',
+				bookContent: [],
 				//文本容器实际高度
 				listHeight: 0,
 				//字符实际行高
 				lineHeight: 0,
 				//文本内容实际高度
-				textHeight: 0,
-				//偏移值
-				scrollTop: 0,
-				//实时滚动值
-				scrollTopCurrent: 0
+				textHeight: 0
 			}
 		},
 		computed: {
@@ -110,7 +109,7 @@
 			},
 			//阅读进度
 			progress () {
-				return this.pageIndex > 1 ? (((this.pageIndex) / this.totalPage) * 100).toFixed(2) : '0.00';
+				return this.bookContent.length > 0 ? (((this.pageIndex - 1) * this.viewHeight) / this.textHeight * 100).toFixed(2) : '0.00';
 			}
 		},
 		created () {
@@ -121,18 +120,24 @@
 			// getContent () {
 			// 	let ReadTxt = plus.android.importClass('com.itstudy.io.GetText');
 			// 	let readTxt = new ReadTxt();
-			// 	this.bookContent = readTxt.getTextFromText(plus.io.convertLocalFileSystemURL(this.path));
-			// 	this.$nextTick(async () => {
-			// 		this.listHeight = await this.getDomHeight('listView');
-			// 		this.lineHeight = await this.getDomHeight('lineHeight');
-			// 		this.textHeight = await this.getDomHeight('text');
-			// 		//第一次加载内容时初始化页数，偏移值
-			// 		this.pageIndex = this.bookInfo.pageIndex;
-			// 		this.scrollTop = (this.pageIndex - 1) * this.viewHeight;
-			// 		//页面初始化完成后,显示内容
-			// 		setTimeout(() => {
-			// 			this.listShow = true;
-			// 		}, 50)
+			// 	let content = readTxt.getTextFromText(plus.io.convertLocalFileSystemURL(this.path));
+			// 	//将内容按每1000字依次存入数组
+			// 	this.$nextTick(() => {
+			// 		for ( let i = 0; i < Math.ceil(content.length / 1000); i++ ) {
+			// 			this.bookContent.push(content.substr(i * 1000, 1000));
+			// 		}
+			// 		this.$nextTick(async () => {
+			// 			this.listHeight = await this.getDomHeight('listView');
+			// 			this.lineHeight = await this.getDomHeight('lineHeight');
+			// 			for ( let i in this.bookContent ) {
+			// 				this.textHeight += await this.getDomHeight('text', i);
+			// 			}
+			// 			//第一次加载内容时初始化页数，偏移值
+			// 			this.scrollTo();
+			// 			setTimeout(() => {
+			// 				this.listShow = true;
+			// 			}, 50)
+			// 		})
 			// 	})
 			// },
 			getContent () {
@@ -141,14 +146,18 @@
 						let slice = file.slice(this.pageIndex, this.pageIndex + pageSize);
 						let reader = new plus.io.FileReader();
 						reader.onloadend = ( e ) => {
-							this.bookContent = e.target.result;
+							let result = e.target.result;
+							for ( let i = 0; i < Math.ceil(result.length / 1000); i++ ) {
+								this.bookContent.push(result.substr(i * 1000, 1000));
+							}
 							this.$nextTick(async () => {
 								this.listHeight = await this.getDomHeight('listView');
 								this.lineHeight = await this.getDomHeight('lineHeight');
-								this.textHeight = await this.getDomHeight('text');
+								for ( let i in this.bookContent ) {
+									this.textHeight += await this.getDomHeight('text', i);
+								}
 								//第一次加载内容时初始化页数，偏移值
-								this.pageIndex = this.bookInfo.pageIndex;
-								this.scrollTop = (this.pageIndex - 1) * this.viewHeight;
+								this.scrollTo();
 								setTimeout(() => {
 									this.listShow = true;
 								}, 50)
@@ -163,13 +172,15 @@
 				});
 			},
 			//获取元素高度
-			getDomHeight (query) {
+			getDomHeight (query, index) {
+				let el = index >= 0 ? this.$refs[query][index] : this.$refs[query];
 				return new Promise((resolve, reject) => {
-					dom.getComponentRect(this.$refs[query], (res) => {
+					dom.getComponentRect(el, (res) => {
 						resolve(res.size.height);
 					})
 				})
 			},
+			//上一页
 			prevPage () {
 				if ( this.pageIndex == 1 ) {
 					uni.showToast({
@@ -178,12 +189,9 @@
 					})
 					return;
 				}
-				let book = {
-					path: this.path,
-					page: this.pageIndex - 1
-				}
-				this.updateBookPage(book)
+				this.goPage(this.pageIndex - 1);
 			},
+			//下一页
 			nextPage () {
 				if ( this.pageIndex >= this.totalPage ) {
 					uni.showToast({
@@ -192,54 +200,73 @@
 					})
 					return;
 				}
+				this.goPage(this.pageIndex + 1);
+			},
+			//前往页面
+			goPage (page) {
 				let book = {
 					path: this.path,
-					page: this.pageIndex + 1
+					page: page
 				}
 				this.updateBookPage(book);
+				this.upProgress(this.progress);
+				this.scrollTo();
 			},
+			//更新书籍阅读进度
+			upProgress (progress) {
+				let book = {
+					path: this.path,
+					progress: progress
+				}
+				this.updateBookProgress(book);
+			},
+			//监听滚动事件
 			scroll (e) {
-				if ( this.scrollMode != 'upDown' ) {
+				//等待页面初始化完成
+				if ( !this.listShow ) {
 					return;
 				}
-				this.scrollTopCurrent = e.detail.scrollTop;
+				let offsetY = Math.abs(e.contentOffset.y);
+				let book = {
+					path: this.path,
+					page: offsetY % this.viewHeight > 0 ? parseInt(offsetY/ this.viewHeight) + 2 : parseInt(offsetY/ this.viewHeight) + 1
+				}
+				this.updateBookPage(book);
+				this.upProgress(this.progress);
+			},
+			//滚动到指定位置
+			scrollTo () {
+				dom.scrollToElement(this.$refs.text[0], {
+					offset: (this.pageIndex - 1) * this.viewHeight,
+					animated: false,
+				});
+			},
+			ondisappear (e) {
+				// console.log(e);
 			}
 		},
 		components: {
 			ReadSetting
 		},
 		watch: {
-			async fontSize (val) {
-				//字体大小更改，重新获取字符行高和文本内容实际高度
-				this.lineHeight = await this.getDomHeight('lineHeight');
-				this.textHeight = await this.getDomHeight('text');
-			},
-			scrollTopCurrent (val) {
-				//文本偏移距离更改,如果当前翻页为上下滚动,根据偏移距离计算页数
-				if ( this.scrollMode == 'upDown' ) {
-					let book = {
-						path: this.path,
-						page: val % this.viewHeight > 0 ? parseInt(val/ this.viewHeight) + 1 : parseInt(val/ this.viewHeight)
+			fontSize (val) {
+				//字体大小更改，等待文本重渲染后再次获取文本行高和文本内容实际高度
+				setTimeout( async () => {
+					this.lineHeight = await this.getDomHeight('lineHeight');
+					this.textHeight = 0;
+					for ( let i in this.bookContent ) {
+						this.textHeight += await this.getDomHeight('text', i);
 					}
-					this.updateBookPage(book)
-				}
-			},
-			pageIndex (val) {
-				//页数更改，更新书籍阅读进度
-				let book = {
-					path: this.path,
-					progress: this.progress
-				}
-				this.updateBookProgress(book);
-				//页数更改,如果当前翻页为左右翻页,根据页数计算偏移距离
-				if ( this.scrollMode == 'leftRight' ) {
-					this.scrollTop = (val - 1) * this.viewHeight;
-				}
+					//字体变小会引起总页数的减少，原本的当前页数可能会超过总页数，所以需要判断当前页数大于总页数，赋值为最后一页
+					if ( this.pageIndex > this.totalPage ) {
+						this.goPage(this.totalPage);
+					}
+				}, 50)
 			},
 			scrollMode (val) {
-				//翻页方式更改，如果改为左右翻页则根据页数计算偏移距离
+				//监听翻页方式更改，如果改为左右翻页则滚动到当前页
 				if ( val == 'leftRight' ) {
-					this.scrollTop = (this.pageIndex - 1) * this.viewHeight;
+					this.scrollTo();
 				}
 			}
 		}
@@ -269,6 +296,8 @@
 	}
 	.content {
 		padding: 0 20px;
+		align-items: center;
+		flex: 1;
 	}
 	.touchBoard {
 		position: absolute;
@@ -289,9 +318,9 @@
 		flex: 1;
 	}
 	.touch-center {
-		width: 300rpx;
+		width: 200rpx;
 	}
 	.touch-item {
-		height: 300rpx;
+		height: 200rpx;
 	}
 </style>

@@ -4,7 +4,7 @@
 		<view class="mask" ref="mask" @touchmove="moveEnable" :style="{'opacity': maskOpacity}" @tap="maskHide"></view>
 		<view class="popup" ref="popup" @touchmove="moveEnable" :style="{'background-color': skinColor.menuBgColor, 'transform': 'translateX(' + popuplate + 'rpx)'}" @tap="moveEnable">
 			<view class="top-img">
-				<image class="bg" src="../../static/logo.png" mode="aspectFill"></image>
+				<image class="bg" src="@/static/menuBack.png" mode="aspectFill"></image>
 				<view class="top-mask" :style="{opacity: skinColor.imgMask}"></view>
 			</view>
 			<!-- 列表切换 -->
