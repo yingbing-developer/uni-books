@@ -7,7 +7,6 @@
     "transformPx" : false,
     /* 5+App特有相关 */
     "app-plus" : {
-        "renderer" : "native",
         "usingComponents" : true,
         "nvueCompiler" : "uni-app",
         "compilerVersion" : 3,

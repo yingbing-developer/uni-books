@@ -2,18 +2,18 @@
 	<view class="nav-bar" :style="{'background-color': bgColor}">
 		<view class="bar" :style="{'height': barHeight}"></view>
 		<view class="nav">
-			<view class="left" :style="{width: lWidth + 'rpx'}">
+			<view class="left">
 				<view class="back" v-if="backShow" @tap="back">
 					<c-icon name="arrow-left" :size="30" :color="backColor"></c-icon>
 				</view>
 				<slot name="left">
 				</slot>
 			</view>
-			<view class="center" :style="{width: cWidth + 'rpx'}">
+			<view class="center">
 				<text class="title" :style="{'color': titleColor}">{{title}}</text>
 				<slot name="center"></slot>
 			</view>
-			<view class="right" :style="{width: rWidth + 'rpx'}">
+			<view class="right">
 				<slot name="right">
 				</slot>
 			</view>
@@ -44,18 +44,6 @@
 			titleColor: {
 				type: String,
 				default: '#FFFFFF'
-			},
-			lWidth: {
-				type: Number,
-				default: 100
-			},
-			cWidth: {
-				type: Number,
-				default: 420
-			},
-			rWidth: {
-				type: Number,
-				default: 0
 			}
 		},
 		data () {
@@ -85,6 +73,9 @@
 				uni.navigateBack({
 					delta: 1
 				})
+			},
+			test () {
+				console.log('test');
 			}
 		},
 		components: {
@@ -94,25 +85,55 @@
 </script>
 
 <style scoped>
+	.nav-bar {
+		/* #ifndef APP-NVUE */
+		display: flex;
+		width: 100vw;
+		/* #endif */
+		flex-direction: column;
+	}
 	.nav {
+		/* #ifndef APP-NVUE */
+		display: flex;
+		width: 100%;
+		box-sizing: border-box;
+		/* #endif */
 		height: 44px;
 		flex-direction: row;
 		padding-left: 20rpx;
 		padding-right: 20rpx;
 	}
 	.back {
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
+		flex-direction: row;
 		width: 44px;
-		justify-content: center;
-		align-items: flex-start;
 		height: 44px;
+		justify-content: flex-start;
+		align-items: center;
 		margin-right: 20px;
 	}
 	.title {
 		font-size: 20px;
 	}
 	.left, .center, .right {
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
 		flex-direction: row;
 		align-items: center;
+	}
+	.left {
+		width: 100rpx;
+	}
+	.center {
+		/* #ifdef APP-NVUE */
+		width: 420rpx;
+		/* #endif */
+		/* #ifndef APP-NVUE */
+		width: 56%;
+		/* #endif */
 	}
 	.right {
 		flex: 1;
