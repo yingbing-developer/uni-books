@@ -163,6 +163,10 @@
 				this.$refs.leftMenu.hide();
 				return true;
 			}
+			if ( this.$refs.action.isShow ) {
+				this.$refs.action.hide();
+				return true;
+			}
 			return false;
 		},
 		components: {

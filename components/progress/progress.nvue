@@ -1,13 +1,16 @@
 <template>
 	<view class="progress-box" :style="{height: itemSize + 'px'}">
 		<view class="gap" :style="{'width': (itemSize/2) + 'px'}"></view>
-		<view class="progress" :style="{'background-color': color}" ref="progress">
+		<!-- 进度条 -->
+		<view id="progress" class="progress" :style="{'background-color': color}" ref="progress" @touchstart="lineTouchstart">
 			<view class="active" :style="{'background-color': activeColor, width: activeWidth + 'px'}"></view>
 		</view>
 		<view v-if="!percentShow" class="gap" :style="{'width': (itemSize/2) + 'px'}"></view>
+		<!-- 进度 -->
 		<view v-if="percentShow" class="percent">
 			<text class="percent-text">{{percent}}%</text>
 		</view>
+		<!-- 圆点 -->
 		<view class="item"
 		@touchstart="touchstart"
 		@touchmove="touchmove"
@@ -23,7 +26,9 @@
 </template>
 
 <script>
+	// #ifdef APP-NVUE
 	const dom = weex.requireModule('dom');
+	// #endif
 	export default {
 		props: {
 			value: {
@@ -53,9 +58,16 @@
 		},
 		data () {
 			return {
+				//进度条总宽度
 				width: 0,
+				//进度条起始位置
+				start: 0,
+				//进度
 				percent: 0,
-				pointX: 0
+				//触摸起始点
+				pointX: 0,
+				//上次进度的记录
+				oldPercent: 0
 			}
 		},
 		computed: {
@@ -65,23 +77,62 @@
 		},
 		created () {
 			this.percent = this.value;
+			this.oldPercent = this.percent;
 		},
 		mounted () {
 			//获取整个进度条的宽度
 			setTimeout(() => {
+				// #ifdef APP-NVUE
 				dom.getComponentRect(this.$refs.progress, (res) => {
 					this.width = res.size.width;
 				})
+				// #endif
+				// #ifndef APP-NVUE
+				let view = uni.createSelectorQuery().in(this).select('#progress');
+				view.boundingClientRect((res) => {
+					this.width = res.width;
+					this.start = res.left;
+				}).exec();
+				// #endif
 			}, 30)
 		},
 		methods: {
+			//圆点触摸开始
 			touchstart (e) {
+				if ( e.touches.length > 1 ) {
+					return;
+				}
+				let touch = e.touches[0];
+				this.pointX = touch.pageX;
 			},
+			//圆点触摸移动
 			touchmove (e) {
-				console.log(e);
+				if ( e.touches.length > 1 ) {
+					return;
+				}
+				let touch = e.touches[0];
+				//触摸移动的距离加上进度条本身进度为当前进度
+				this.percent = parseFloat(((touch.pageX - this.pointX) / this.width * 100).toFixed(2)) + this.oldPercent;
+				if ( this.percent < 0 ) {
+					this.percent = 0
+				}
+				if ( this.percent > 100 ) {
+					this.percent = 100
+				}
 			},
+			//圆点触摸结束
 			touchend (e) {
-				
+				//记录下这次进度
+				this.oldPercent = this.percent;
+			},
+			//点击进度条本身触发
+			lineTouchstart (e) {
+				if ( e.touches.length > 1 ) {
+					return;
+				}
+				let touch = e.touches[0];
+				this.percent = parseFloat(((touch.pageX - this.start) / this.width * 100).toFixed(2));
+				this.oldPercent = this.percent;
 			}
 		},
 		watch: {
@@ -109,6 +160,9 @@
 
 <style scoped>
 	.progress-box {
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
 		position: relative;
 		align-items: center;
 		justify-content: center;
@@ -127,6 +181,10 @@
 		top: 0;
 	}
 	.percent {
+		/* #ifndef APP-NVUE */
+		display: flex;
+		flex-direction: column;
+		/* #endif */
 		width: 55px;
 		align-items: flex-end;
 	}

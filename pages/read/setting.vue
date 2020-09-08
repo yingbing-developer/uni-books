@@ -1,16 +1,16 @@
 <template>
 	<view class="read-menu" v-if="isShow">
 		<view class="mask" @touchmove="moveHandle" @tap="hide"></view>
-		<view class="read-board" ref="popup" :style="{transform: 'translateY(' + Math.abs(lateY) + 'px)'}" @touchmove="moveHandle">
+		<view class="read-board" ref="popup" :style="{transform: 'translateY(' + lateY + ')'}" @touchmove="moveHandle">
 			<view class="read-board-line">
 				<view class="progress-btn progress-prev" @tap="prevPages">
-					<c-icon name="arrow-left" size="30" color="#EFEFEF"></c-icon>
+					<c-icon name="arrow-left" :size="30" color="#EFEFEF"></c-icon>
 				</view>
 				<view class="progress">
 					 <c-progress v-model="progress" itemShow></c-progress>
 				</view>
 				<view class="progress-btn progress-next"  @tap="nextPages">
-					<c-icon name="arrow-right" size="30" color="#EFEFEF"></c-icon>
+					<c-icon name="arrow-right" :size="30" color="#EFEFEF"></c-icon>
 				</view>
 			</view>
 			<!-- <view class="read-board-line">
@@ -24,10 +24,10 @@
 			<view class="read-board-line">
 				<view class="half-box skin-box">
 					<view class="skin-mode light-mode" style="background-color: #BFAD8A;" @tap="changeSkin('default')">
-						<c-icon name="check-fill" size="30" color="#ED7B1F" v-if="skinMode == 'default'"></c-icon>
+						<c-icon name="check-fill" :size="30" color="#ED7B1F" v-if="skinMode == 'default'"></c-icon>
 					</view>
 					<view class="skin-mode night-mode" style="background-color: #393E41;" @tap="changeSkin('night')">
-						<c-icon name="check-fill" size="30" color="#ED7B1F" v-if="skinMode == 'night'"></c-icon>
+						<c-icon name="check-fill" :size="30" color="#ED7B1F" v-if="skinMode == 'night'"></c-icon>
 					</view>
 				</view>
 				<view class="half-box font-box">
@@ -50,7 +50,6 @@
 </template>
 
 <script>
-	const animation = weex.requireModule('animation');
 	import { mapGetters, mapMutations } from 'vuex'
 	import { skinMixin } from '@/common/mixin/index.js'
 	import { indexOf } from '@/common/js/util.js'
@@ -66,10 +65,6 @@
 			totalPage: {
 				type: Number,
 				default: 0
-			},
-			progress: {
-				type: String,
-				default: '0'
 			}
 		},
 		data () {
@@ -83,7 +78,9 @@
 				},{
 					title: '左右翻页',
 					value: 'leftRight'
-				}]
+				}],
+				lateY: '100%',
+				progress: 0
 			}
 		},
 		computed: {
@@ -93,9 +90,6 @@
 			},
 			pageIndex () {
 				return this.bookInfo.pageIndex
-			},
-			lateY () {
-				return -((4 * 60) + (4 * 1));
 			}
 		},
 		created () {
@@ -107,32 +101,16 @@
 				return true;
 			},
 			show () {
-				console.log('显示');
 				this.isShow = true;
 				this.$nextTick(() => {
-					animation.transition(this.$refs.popup, {
-					    styles: {
-							transform: 'translateY(0)'
-					    },
-					    duration: this.duration, //ms
-					    timingFunction: 'ease',
-					    needLayout:false,
-					    delay: 0 //ms
-					})
+					this.lateY = 0;
 				})
 			},
 			hide () {
-				animation.transition(this.$refs.popup, {
-				    styles: {
-						transform: 'translateY(' + Math.abs(this.lateY) + 'px)'
-				    },
-				    duration: this.duration, //ms
-				    timingFunction: 'ease',
-				    needLayout:false,
-				    delay: 0 //ms
-				}, (res) => {
+				this.lateY = '100%';
+				setTimeout(() => {
 					this.isShow = false;
-				})
+				}, 300)
 			},
 			//增大字体
 			upFontSize () {
@@ -215,12 +193,10 @@
 		bottom: 0;
 		left: 0;
 		right: 0;
+		transition: transform .3s;
 	}
 	.read-board-line {
-		/* #ifndef APP-NVUE */
 		display: flex;
-		/* #endif */
-		flex-direction: row;
 		padding: 0 10px;
 		border-bottom-width: 1px;
 		border-bottom-color: #3D3D3D;
@@ -229,49 +205,36 @@
 		align-items: center;
 	}
 	.progress-btn {
-		/* #ifndef APP-NVUE */
 		display: flex;
 		flex-direction: column;
-		/* #endif */
 		justify-content: center;
 		width: 45px;
 	}
 	.progress-prev {
-		/* #ifndef APP-NVUE */
 		display: flex;
 		flex-direction: column;
-		/* #endif */
 		align-items: flex-start;
 	}
 	.progress-next {
-		/* #ifndef APP-NVUE */
 		display: flex;
 		flex-direction: column;
-		/* #endif */
 		align-items: flex-end;
 	}
 	.progress {
-		/* #ifndef APP-NVUE */
 		display: flex;
 		flex-direction: column;
-		/* #endif */
 		flex: 1;
 		justify-content: center;
 	}
 	.half-box {
-		/* #ifndef APP-NVUE */
 		display: flex;
-		/* #endif */
 		flex: 1;
-		flex-direction: row;
 		justify-content: center;
 		align-items: center;
 	}
 	.skin-mode {
-		/* #ifndef APP-NVUE */
 		display: flex;
 		flex-direction: column;
-		/* #endif */
 		width: 100px;
 		height: 40px;
 		border-radius: 5px;
@@ -280,10 +243,8 @@
 		align-items: center;
 	}
 	.font-btn {
-		/* #ifndef APP-NVUE */
 		display: flex;
 		flex-direction: column;
-		/* #endif */
 		border-width: 1px;
 		border-style: solid;
 		border-color: #8A8A8A;
@@ -300,10 +261,8 @@
 		margin: 5px;
 	}
 	.scroll-box {
-		/* #ifndef APP-NVUE */
 		display: flex;
 		flex-direction: column;
-		/* #endif */
 		margin: 0 5px;
 		flex: 1;
 		border-width: 1px;
@@ -323,10 +282,8 @@
 		color: #EFEFEF;
 	}
 	.chapter-box {
-		/* #ifndef APP-NVUE */
 		display: flex;
 		flex-direction: column;
-		/* #endif */
 		margin: 0 5px;
 		flex: 1;
 		border-width: 1px;
