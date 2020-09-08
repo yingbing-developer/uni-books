@@ -8,14 +8,14 @@
 			</view>
 		</nav-bar>
 		<view class="list-view" ref="listView">
-			<scroll-view class="scroll-view" scroll-y="true">
-				<view class="content-box" id="scroll">
+			<scroll-view class="scroll-view" :scroll-y="scrollMode == 'upDown'" id="scroll">
+				<view class="content-box" id="contentBox">
 					<text
 					id="content"
 					class="content"
 					:style="{
 					'font-size': fontSize + 'px',
-					'line-height': lineHeight + 'px',
+					'lineHeight': (fontSize + 10) + 'px',
 					color: skinColor.readTextColor}"
 					></text>
 				</view>
@@ -66,9 +66,6 @@
 			},
 			fontSize () {
 				return this.readMode.fontSize;
-			},
-			lineHeight () {
-				return this.fontSize + 15
 			}
 		},
 		onBackPress (event) {
@@ -166,11 +163,16 @@
 					}
 				}, 50)
 			},
-			//设置行数的倍数的容器高度
+			//设置行数的倍数的容器高度和行高
 			setViewHeight () {
 				const scroll = document.getElementById('scroll');
-				this.viewHeight = parseInt(scroll.offsetHeight / (this.fontSize + 10)) * (this.fontSize + 10);
-				scroll.style.height = this.viewHeight + 'px';
+				const contentBox = document.getElementById('contentBox');
+				const content = document.getElementById('content');
+				// let lineHeight = this.fontSize + 10;
+				// this.viewHeight = parseInt(scroll.offsetHeight / lineHeight) * lineHeight;
+				this.viewHeight = parseInt(scroll.offsetHeight);
+				contentBox.style.height = this.viewHeight + 'px';
+				// content.style.lineHeight = lineHeight + 'px';
 			}
 		}
 	}
