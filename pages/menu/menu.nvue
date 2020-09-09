@@ -108,6 +108,7 @@
 			},
 			changeCurrent (val) {
 				this.current = val;
+				this.hide();
 			},
 			isActived (val) {
 				if ( val == this.current ) {

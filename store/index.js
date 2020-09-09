@@ -10,7 +10,7 @@ const store = new Vuex.Store({
     state: {
 		skin: uni.getStorageSync(SKIN) || 'default', //皮肤
 		books: uni.getStorageSync(BOOKS) || [],//导入的书籍列表
-		read: uni.getStorageSync(READ) || {scroll: 'upDown', fontSize: 20},//阅读模式包含字体大小，翻页方式
+		read: uni.getStorageSync(READ) || {scroll: 'upDown', fontSize: 20, light: 1},//阅读模式包含字体大小，翻页方式
 		path: uni.getStorageSync(PATH) || ''//上次访问的文件夹路径
 	},
 	getters: {
@@ -88,7 +88,9 @@ const store = new Vuex.Store({
 					path: books[i].path,
 					size: books[i].realSize,
 					progress: '0.00',
-					pageIndex: 1
+					started: 0,
+					lastReadTime: time,
+					isReaded: false
 				})
 			}
 			uni.setStorageSync(BOOKS, state.books);
@@ -101,21 +103,25 @@ const store = new Vuex.Store({
 				uni.setStorageSync(BOOKS, state.books)
 			}
 		},
-		//清空所有书籍
-		clearBooks (state) {
-			state.books = [];
-			uni.removeStorageSync(BOOKS);
-		},
-		// 更新书籍阅读页数
-		updateBookPage (state, book) {
-			let index = indexOf(state.books, book.path, 'path');
-			state.books[index].pageIndex = book.page;
+		//清空指定类型的所有书籍
+		clearBooks (state, type) {
+			state.books = state.books.filter((item) => {
+				if ( item.isReaded != type ) {
+					return item;
+				}
+			})
 			uni.setStorageSync(BOOKS, state.books);
 		},
 		// 更新书籍阅读进度
 		updateBookProgress (state, book) {
 			let index = indexOf(state.books, book.path, 'path');
 			state.books[index].progress = book.progress;
+			uni.setStorageSync(BOOKS, state.books);
+		},
+		// 更新书籍最后阅读时间
+		updateBookReadTime (state, path) {
+			let index = indexOf(state.books, path, 'path');
+			state.books[index].lastReadTime = new Date().getTime();
 			uni.setStorageSync(BOOKS, state.books);
 		},
 		//更新访问的文件夹路径
@@ -131,6 +137,11 @@ const store = new Vuex.Store({
 		//改变翻页模式
 		changeScrollMode (state, scroll) {
 			state.read.scroll = scroll;
+			uni.setStorageSync(READ, state.read);
+		},
+		//改变阅读页亮度
+		changeLight (state, light) {
+			state.read.light = light;
 			uni.setStorageSync(READ, state.read);
 		}
 	},

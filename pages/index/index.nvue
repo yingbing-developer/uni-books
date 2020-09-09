@@ -17,7 +17,7 @@
 			</view>
 		</nav-bar>
 		<waterfall :scrollable="scrollable" @scroll="scroll" column-count="<integer>" column-width="120" column-gap="10" left-gap="10" right-gap="10">
-		    <cell v-for="(item, index) in bookList" :key="item.id">
+		    <cell v-for="(item, index) in books" :key="item.id">
 				<view class="book" ref="list" @tap="routePush('/pages/read/index?path=' + item.path)" @longpress="showAction(index)">
 					<image class="book-img" :src="item.image" mode="aspectFill"></image>
 					<view class="book-mask" :style="{opacity: skinColor.imgMask}"></view>
@@ -31,7 +31,7 @@
 				</view>
 				<view v-if="index == bookList.length - 1" style="height: 10px;"></view>
 		    </cell>
-			<no-data v-if="bookList.length <= 0"></no-data>
+			<no-data v-if="books.length <= 0" :title="noDataTitle"></no-data>
 			<view class="fixed">
 				<view @tap="changeCurrent">
 					<fixed-button :show="btnShow">
@@ -39,7 +39,7 @@
 						<c-icon name="read" size="30" :color="skinColor.iconColor" v-if="current == 1"></c-icon>
 					</fixed-button>
 				</view>
-				<view @tap="clear" v-if="bookList.length > 0">
+				<view @tap="clear" v-if="books.length > 0">
 					<fixed-button :show="btnShow">
 						<c-icon name="waste-fill" size="25" :color="skinColor.iconColor"></c-icon>
 					</fixed-button>
@@ -83,7 +83,31 @@
 			}
 		},
 		computed: {
-			...mapGetters(['bookList'])
+			...mapGetters(['bookList']),
+			books () {
+				let books = [];
+				if ( this.current == 0 ) {
+					this.bookList.forEach((item) => {
+						if ( !item.isReaded ) {
+							books.push(item)
+						}
+					})
+				}
+				if ( this.current == 1 ) {
+					this.bookList.forEach((item) => {
+						if ( item.isReaded ) {
+							books.push(item)
+						}
+					})
+				}
+				//根据最后阅读的时间进行先后排序
+				return books.sort((a, b) => {
+					return b.lastReadTime - a.lastReadTime;
+				});
+			},
+			noDataTitle () {
+				return this.current == 0 ? '没有正在阅读的书籍哦！' : '没有读完的书籍哦！';
+			}
 		},
 		created () {
 			this.actions = [{
@@ -101,7 +125,7 @@
 					this.btnShow = true;
 				}
 				//如果列表y轴偏移为0，则显示浮动按钮
-				if ( e.contentOffset.y == 0 ) {
+				if ( e.contentOffset.y <= 0 ) {
 					this.btnShow = true;
 				}
 				this.oldOffsetY = e.contentOffset.y;
@@ -109,10 +133,11 @@
 			clear () {
 				uni.showModal({
 					title: '操作提示',
-					content: '是否清空所有书籍？',
+					content: '是否清空当前所有书籍？',
 					success: (res) => {
 						if ( res.confirm ) {
-							this.clearBooks();
+							let type = this.current == 0 ? false : true;
+							this.clearBooks(type);
 						}
 					}
 				})

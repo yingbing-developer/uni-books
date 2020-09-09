@@ -2,15 +2,21 @@
 	<view class="read-menu" v-if="isShow">
 		<view class="mask" @touchmove="moveHandle" @tap="hide"></view>
 		<view class="read-board" ref="popup" :style="{transform: 'translateY(' + lateY + ')'}" @touchmove="moveHandle">
+			
+			<!-- 阅读进度 -->
 			<view class="read-board-line">
-				<view class="progress-btn progress-prev" @tap="prevPages">
-					<c-icon name="arrow-left" :size="30" color="#EFEFEF"></c-icon>
+				<view class="progress-btn progress-prev">
+					<view @tap="prevPages">
+						<c-icon name="arrow-left" :size="30" color="#EFEFEF"></c-icon>
+					</view>
 				</view>
 				<view class="progress">
-					 <c-progress v-model="progress" itemShow></c-progress>
+					 <c-progress v-model="bookPercent" itemShow></c-progress>
 				</view>
-				<view class="progress-btn progress-next"  @tap="nextPages">
-					<c-icon name="arrow-right" :size="30" color="#EFEFEF"></c-icon>
+				<view class="progress-btn progress-next">
+					<view @tap="nextPages">
+						<c-icon name="arrow-right" :size="30" color="#EFEFEF"></c-icon>
+					</view>
 				</view>
 			</view>
 			<!-- <view class="read-board-line">
@@ -21,15 +27,32 @@
 					<text class="chapter-text">下一章节</text>
 				</view>
 			</view> -->
+			
+			<!-- 皮肤选择 -->
 			<view class="read-board-line">
-				<view class="half-box skin-box">
-					<view class="skin-mode light-mode" style="background-color: #BFAD8A;" @tap="changeSkin('default')">
-						<c-icon name="check-fill" :size="30" color="#ED7B1F" v-if="skinMode == 'default'"></c-icon>
+				<view class="skin-mode light-mode" style="background-color: #BFAD8A;" @tap="changeSkin('default')">
+					<c-icon name="check-fill" :size="30" color="#ED7B1F" v-if="skinMode == 'default'"></c-icon>
+				</view>
+				<view class="skin-mode night-mode" style="background-color: #393E41;" @tap="changeSkin('night')">
+					<c-icon name="check-fill" :size="30" color="#ED7B1F" v-if="skinMode == 'night'"></c-icon>
+				</view>
+			</view>
+			
+			<view class="read-board-line">
+				<!-- 亮度调整 -->
+				<view class="half-box">
+					<view class="light-btn">
+						<c-icon name="light" :size="30" color="#EFEFEF"></c-icon>
 					</view>
-					<view class="skin-mode night-mode" style="background-color: #393E41;" @tap="changeSkin('night')">
-						<c-icon name="check-fill" :size="30" color="#ED7B1F" v-if="skinMode == 'night'"></c-icon>
+					<view class="progress">
+						 <c-progress v-model="lightPercent" itemShow></c-progress>
+					</view>
+					<view class="light-btn">
+						<c-icon name="light-fill" :size="23" color="#EFEFEF"></c-icon>
 					</view>
 				</view>
+				
+				<!-- 字体调整 -->
 				<view class="half-box font-box">
 					<view class="font-btn" @tap="downFontSize">
 						<c-icon name="font-down" color="#8A8A8A"></c-icon>
@@ -40,6 +63,8 @@
 					</view>
 				</view>
 			</view>
+			
+			<!-- 翻页模式 -->
 			<view class="read-board-line scroll-line">
 				<view class="scroll-box" :class="{'scrollActived': readMode.scroll == item.value}" v-for="(item, index) in scroll" :key='index' @tap="changeScrollMode(item.value)">
 					<text class="scroll-text" :class="{'scrollActived': readMode.scroll == item.value}">{{item.title}}</text>
@@ -61,17 +86,14 @@
 			path: {
 				type: String,
 				default: ''
-			},
-			totalPage: {
-				type: Number,
-				default: 0
 			}
 		},
 		data () {
 			return {
 				isShow: false,
 				duration: 200,
-				percent: 0,
+				bookPercent: 0,
+				lightPercent: 0,
 				scroll: [{
 					title: '上下滚动',
 					value: 'upDown'
@@ -79,8 +101,7 @@
 					title: '左右翻页',
 					value: 'leftRight'
 				}],
-				lateY: '100%',
-				progress: 0
+				lateY: '100%'
 			}
 		},
 		computed: {
@@ -90,13 +111,20 @@
 			},
 			pageIndex () {
 				return this.bookInfo.pageIndex
+			},
+			progress () {
+				return parseFloat(this.bookInfo.progress);
+			},
+			light () {
+				return parseFloat(this.readMode.light) * 100;
 			}
 		},
 		created () {
-			this.percent = this.progress;
+			this.bookPercent = this.progress;
+			this.lightPercent = this.light;
 		},
 		methods: {
-			...mapMutations(['changeFontSize', 'changeScrollMode', 'updateBookPage']),
+			...mapMutations(['changeFontSize', 'changeScrollMode', 'updateBookPage', 'changeLight']),
 			moveHandle () {
 				return true;
 			},
@@ -169,7 +197,13 @@
 		},
 		watch: {
 			progress (val) {
-				this.percent = val;
+				this.bookPercent = val;
+			},
+			light (val) {
+				this.lightPercent = val;
+			},
+			lightPercent (val) {
+				this.changeLight((val / 100).toFixed(2));
 			}
 		},
 		components: {
@@ -232,10 +266,16 @@
 		justify-content: center;
 		align-items: center;
 	}
+	.light-btn {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		width: 35px;
+	}
 	.skin-mode {
 		display: flex;
 		flex-direction: column;
-		width: 100px;
+		width: 50%;
 		height: 40px;
 		border-radius: 5px;
 		margin: 0 5px;

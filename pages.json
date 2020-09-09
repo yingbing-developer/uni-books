@@ -27,8 +27,7 @@
 		{
 			"path": "pages/read/index",
 			"style": {
-				"navigationStyle": "custom",
-				"disableScroll": true // 不嵌套 scroller
+				"navigationStyle": "custom"
 			}
 		}
 	],

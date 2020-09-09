@@ -1,38 +1,46 @@
 <template>
-	<view class="read" :style="{'background-color': skinColor.readBackColor}">
+	<view class="read" :style="{'background-color': skinColor.readBackColor, filter: 'brightness(' + light + '%)'}">
+		
+		<!-- renderjs模块 -->
 		<view :prop="fontSize" :change:prop="dom.fontChange" id="dom"></view>
-		<nav-bar :bgColor="skinColor.readBackColor" :title="bookInfo.name" :titleColor="skinColor.readTextColor" :backColor="skinColor.readTextColor">
-			<view class="nav-right" slot="right">
-				<!-- <text class="nav-right-text" :style="{'color': skinColor.textColor}">{{pageIndex}}/{{totalPage}}</text> -->
-				<text class="nav-right-text" :style="{'color': skinColor.textColor}">80%</text>
-			</view>
-		</nav-bar>
-		<view class="list-view" ref="listView">
-			<scroll-view class="scroll-view" :scroll-y="scrollMode == 'upDown'" id="scroll">
-				<view class="content-box" id="contentBox">
-					<text
-					id="content"
-					class="content"
-					:style="{
-					'font-size': fontSize + 'px',
-					'lineHeight': (fontSize + 10) + 'px',
-					color: skinColor.readTextColor}"
-					></text>
-				</view>
-			</scroll-view>
-			<view class="touchBoard">
-				<view class="touch-box touch-left" v-if="scrollMode == 'leftRight'">
-					<view class="touch-item"></view>
-				</view>
-				<view class="touch-box touch-center">
-					<view class="touch-item" @tap="$refs.readSetting.show()"></view>
-				</view>
-				<view class="touch-box touch-right" v-if="scrollMode == 'leftRight'">
-					<view class="touch-item"></view>
-				</view>
+		
+		<view id="readTop" class="read-top" :style="{color: skinColor.readTextColor, 'background-color': skinColor.readBackColor}">
+			<gap-bar></gap-bar>
+			<view class="read-top-line">
+				<text>{{bookInfo.name}}</text>
+				<text>80%</text>
 			</view>
 		</view>
-		<read-setting ref="readSetting"></read-setting>
+		
+		<!-- 顶部间隔 -->
+		<view id="gapBar"></view>
+		
+		<!-- 文本内容区域 -->
+		<view
+		class="content-box"
+		id="contentBox"
+		:style="{
+		'font-size': fontSize + 'px',
+		'lineHeight': lineHeight + 'px',
+		color: skinColor.readTextColor}">
+			<text id="content" class="content"></text>
+		</view>
+		
+		<!-- 触摸区域 -->
+		<view class="touchBoard">
+			<view class="touch-box touch-left" v-if="scrollMode == 'leftRight'">
+				<view class="touch-item"></view>
+			</view>
+			<view class="touch-box touch-center">
+				<view class="touch-item" @tap="$refs.readSetting.show()"></view>
+			</view>
+			<view class="touch-box touch-right" v-if="scrollMode == 'leftRight'">
+				<view class="touch-item"></view>
+			</view>
+		</view>
+		
+		<!-- 阅读设置 -->
+		<read-setting :path="path" ref="readSetting"></read-setting>
 	</view>
 </template>
 
@@ -42,12 +50,16 @@
 	import { indexOf } from '@/common/js/util.js'
 	import ReadSetting from './setting.vue'
 	import NavBar from '@/components/nav-bar/nav-bar.nvue'
+	import GapBar from '@/components/nav-bar/nav-bar.nvue'
 	export default {
 		mixins: [skinMixin],
 		data () {
 			return {
 				boxHeight: 0
 			}
+		},
+		mounted () {
+			this.updateBookReadTime(this.path);
 		},
 		computed: {
 			...mapGetters(['readMode', 'bookList']),
@@ -66,7 +78,16 @@
 			},
 			fontSize () {
 				return this.readMode.fontSize;
+			},
+			lineHeight () {
+				return this.fontSize + 10;
+			},
+			light () {
+				return (100 - ((1 - this.readMode.light) * 50)).toFixed(2);
 			}
+		},
+		methods: {
+			...mapMutations(['updateBookReadTime'])
 		},
 		onBackPress (event) {
 			if ( this.$refs.readSetting.isShow ) {
@@ -76,6 +97,7 @@
 			return false;
 		},
 		components: {
+			GapBar,
 			NavBar,
 			ReadSetting
 		}
@@ -117,6 +139,7 @@
 							this.bookContent = e.target.result;
 							let result = e.target.result.split('');
 							let contentSync = null;
+							// content.textContent = this.bookContent;
 							for ( let i in result ) {
 								content.textContent = contentSync ? contentSync + result[i] : result[i];
 								if ( content.offsetHeight > this.viewHeight ) {
@@ -128,7 +151,7 @@
 								}
 							}
 						};
-						reader.readAsText( file, 'utf-8' );
+						reader.readAsText( file, 'gb2312' );
 					}, ( fail ) => {
 						console.log("Request file system failed: " + fail.message);
 					});
@@ -165,13 +188,12 @@
 			},
 			//设置行数的倍数的容器高度和行高
 			setViewHeight () {
-				const scroll = document.getElementById('scroll');
-				const contentBox = document.getElementById('contentBox');
+				const top = document.getElementById('readTop');
 				const content = document.getElementById('content');
+				const gap = document.getElementById('gapBar');
 				// let lineHeight = this.fontSize + 10;
-				// this.viewHeight = parseInt(scroll.offsetHeight / lineHeight) * lineHeight;
-				this.viewHeight = parseInt(scroll.offsetHeight);
-				contentBox.style.height = this.viewHeight + 'px';
+				this.viewHeight = window.screen.height - top.offsetHeight;
+				gap.style.height = top.offsetHeight + 'px';
 				// content.style.lineHeight = lineHeight + 'px';
 			}
 		}
@@ -181,25 +203,23 @@
 <style scoped>
 	.read {
 		width: 100vw;
-		height: 100vh;
+		min-height: 100vh;
 		display: flex;
 		flex-direction: column;
 		font-family: '微软雅黑';
 	}
-	.nav-right {
-		width: 100%;
-		text-align: right;
-		padding-right: 20px;
-	}
-	.nav-right-text {
+	.read-top {
 		font-size: 14px;
-	}
-	.list-view {
-		position: relative;
-		flex: 1;
+		padding: 0 20rpx;
+		position: fixed;
+		top: 0;
+		left: 0;
 		width: 100%;
+		box-sizing: border-box;
+	}
+	.read-top-line {
 		display: flex;
-		flex-direction: column;
+		justify-content: space-between;
 	}
 	.scroll-view {
 		flex: 1;
@@ -207,9 +227,7 @@
 	}
 	.content-box {
 		padding: 0 20rpx;
-		height: 100%;
 		display: flex;
-		align-items: center;
 	}
 	.content {
 		white-space: pre-wrap;
@@ -217,8 +235,7 @@
 		word-wrap:break-word;
 	}
 	.touchBoard {
-		pointer-events: auto;
-		position: absolute;
+		position: fixed;
 		top: 0;
 		left: 0;
 		right: 0;
