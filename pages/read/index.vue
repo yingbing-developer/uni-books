@@ -2,7 +2,7 @@
 	<view class="read" :style="{'background-color': skinColor.readBackColor, filter: 'brightness(' + light + '%)'}">
 		
 		<!-- renderjs模块 -->
-		<view :prop="fontSize" :change:prop="dom.fontChange" id="dom"></view>
+		<view :prop="readModeSync" :change:prop="dom.readChange" id="dom"></view>
 		
 		<view id="readTop" class="read-top" :style="{color: skinColor.readTextColor, 'background-color': skinColor.readBackColor}">
 			<gap-bar></gap-bar>
@@ -21,9 +21,8 @@
 		id="contentBox"
 		:style="{
 		'font-size': fontSize + 'px',
-		'lineHeight': lineHeight + 'px',
+		'line-height': (fontSize + 10) + 'px',
 		color: skinColor.readTextColor}">
-			<text id="content" class="content"></text>
 		</view>
 		
 		<!-- 触摸区域 -->
@@ -58,9 +57,6 @@
 				boxHeight: 0
 			}
 		},
-		mounted () {
-			this.updateBookReadTime(this.path);
-		},
 		computed: {
 			...mapGetters(['readMode', 'bookList']),
 			path () {
@@ -79,15 +75,22 @@
 			fontSize () {
 				return this.readMode.fontSize;
 			},
-			lineHeight () {
-				return this.fontSize + 10;
+			readModeSync () {
+				return this.readMode;
 			},
 			light () {
 				return (100 - ((1 - this.readMode.light) * 50)).toFixed(2);
 			}
 		},
+		mounted () {
+			this.updateBookReadTime(this.path);
+		},
 		methods: {
-			...mapMutations(['updateBookReadTime'])
+			...mapMutations(['updateBookReadTime']),
+			updateProgress (e) {
+				console.log('滚动的距离: ' + e.scrollTop);
+				
+			}
 		},
 		onBackPress (event) {
 			if ( this.$refs.readSetting.isShow ) {
@@ -112,23 +115,42 @@
 				bookContent: '',
 				//行数的倍数的容器高度
 				viewHeight: 0,
-				//每页文字的结束位置
-				endIndex: 0
+				//每页文字的开始位置
+				startIndex: [0],
+				count: 0
 			}
 		},
 		mounted () {
 			this.initDom.bind(this);
-			this.setViewHeight();
+			this.initView();
 			this.getContent();
+			window.onscroll = () => {
+				//为了保证兼容性，这里取两个值，哪个有值取哪一个
+				//scrollTop就是触发滚轮事件时滚轮的高度
+				let scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+				let scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
+				let clientHeight = document.documentElement.clientHeight || document.body.clientHeight;
+				if ( scrollHeight - scrollTop == clientHeight ) {
+					console.log('到达底部');
+				}
+				if ( scrollTop == 0 ) {
+					console.log('到达顶部');
+				}
+				UniViewJSBridge.publishHandler('onWxsInvokeCallMethod', {
+					cid: this._$id,
+					method: 'updateProgress',
+					args: {'scrollTop': scrollTop}
+				})
+			}
 		},
 		methods: {
 			initDom() {
 				myDom = dom.init(document.getElementById('dom'));
 				// 观测更新的数据在 view 层可以直接访问到
-				myDom.setOption(this.fontSize);
+				myDom.setOption(this.readModeSync);
 			},
+			//获取内容
 			getContent () {
-				const content = document.getElementById('content');
 				const pages = getCurrentPages();
 				const page = pages[pages.length - 1];
 				const path = page.options.path;
@@ -137,19 +159,7 @@
 						let reader = new plus.io.FileReader();
 						reader.onloadend = ( e ) => {
 							this.bookContent = e.target.result;
-							let result = e.target.result.split('');
-							let contentSync = null;
-							// content.textContent = this.bookContent;
-							for ( let i in result ) {
-								content.textContent = contentSync ? contentSync + result[i] : result[i];
-								if ( content.offsetHeight > this.viewHeight ) {
-									content.textContent = contentSync;
-									this.endIndex = i;
-									break;
-								} else {
-									contentSync = content.textContent;
-								}
-							}
+							this.paging();
 						};
 						reader.readAsText( file, 'gb2312' );
 					}, ( fail ) => {
@@ -159,42 +169,96 @@
 					console.log( "Request file system failed: " + fail.message );
 				});
 			},
-			fontChange (newVal, oldVal) {
-				const content = document.getElementById('content');
-				setTimeout(() => {
-					if ( oldVal < newVal ) {
-						for ( let i = this.endIndex; i > 0; i-- ) {
-							content.textContent = content.textContent.substr(0, i);
-							if ( content.offsetHeight <= this.viewHeight ) {
-								this.endIndex = i;
-								break;
-							}
+			//分页计算
+			paging () {
+				const contentBox = document.getElementById('contentBox');
+				let text = this.bookContent.substr(this.startIndex[this.count], 2000);
+				let result = text.split('');
+				let box = this.createContent();
+				contentBox.appendChild(box);
+				let content = document.getElementsByClassName('content')[this.count];
+				let contentSync = null;
+				for ( let i in result ) {
+					content.textContent = contentSync ? contentSync + result[i] : result[i];
+					if ( content.offsetHeight > this.viewHeight ) {
+						content.textContent = contentSync;
+						this.startIndex.push(i);
+						this.count++;
+						if ( this.count >= 3 ) {
+							this.count = 0;
+							break;
+						} else {
+							this.paging();
+							break;
 						}
 					} else {
-						let result = this.bookContent.split('');
-						let contentSync = content.textContent;
-						for ( let i = this.endIndex; i < result.length; i++ ) {
-							content.textContent = contentSync ? contentSync + result[i] : result[i];
-							if ( content.offsetHeight > this.viewHeight ) {
-								content.textContent = contentSync;
-								this.endIndex = i;
-								break;
-							} else {
-								contentSync = content.textContent;
+						contentSync = content.textContent;
+					}
+				}
+			},
+			readChange (newVal, oldVal) {
+				console.log(newVal);
+				//字体改变
+				if ( newVal.fontSize != oldVal.fontSize ) {
+					this.fontChange(newVal.fontSize, oldVal.fontSize);
+				}
+				//翻页方式改变
+				if ( newVal.scroll != oldVal.scroll ) {
+					this.scrollModeChange(newVal.scroll, oldVal.scroll)
+				}
+			},
+			fontChange (newVal, oldVal) {
+				const content = document.getElementsByClassName('content');
+				clearTimeout(this.timer);
+				this.timer = setTimeout(() => {
+					for ( let i in content ) {
+						//字体变大
+						if ( oldVal < newVal ) {
+							for ( let i = this.endIndex[i]; i > 0; i-- ) {
+								content[i].textContent = content[i].textContent.substr(0, i);
+								if ( content[i].offsetHeight <= this.viewHeight ) {
+									this.endIndex = i;
+									break;
+								}
+							}
+						} else {
+							//字体变小
+							let result = this.bookContent.split('');
+							let contentSync = content.textContent;
+							for ( let i = this.endIndex; i < result.length; i++ ) {
+								content.textContent = contentSync ? contentSync + result[i] : result[i];
+								if ( content.offsetHeight > this.viewHeight ) {
+									content.textContent = contentSync;
+									this.endIndex = i;
+									break;
+								} else {
+									contentSync = content.textContent;
+								}
 							}
 						}
 					}
 				}, 50)
 			},
-			//设置行数的倍数的容器高度和行高
-			setViewHeight () {
+			scrollModeChange (newVal, oldVal) {
+				
+			},
+			//初始化内容容器
+			initView () {
 				const top = document.getElementById('readTop');
-				const content = document.getElementById('content');
 				const gap = document.getElementById('gapBar');
-				// let lineHeight = this.fontSize + 10;
-				this.viewHeight = window.screen.height - top.offsetHeight;
+				const contentBox = document.getElementById('contentBox');
+				let lineHeight = this.readModeSync.fontSize + 10;
+				this.viewHeight = parseInt((window.screen.height - top.offsetHeight) / lineHeight) * lineHeight;
 				gap.style.height = top.offsetHeight + 'px';
-				// content.style.lineHeight = lineHeight + 'px';
+			},
+			createContent() {
+				const dom = document.createElement('text');
+				dom.style.whiteSpace = 'pre-wrap';
+				dom.style.wordBreak = 'break-all';
+				dom.style.wordWrap = 'break-word';
+				// dom.style.display = 'flex';
+				dom.setAttribute('class', 'content');
+				return dom;
 			}
 		}
 	}
@@ -227,12 +291,6 @@
 	}
 	.content-box {
 		padding: 0 20rpx;
-		display: flex;
-	}
-	.content {
-		white-space: pre-wrap;
-		word-break:break-all;
-		word-wrap:break-word;
 	}
 	.touchBoard {
 		position: fixed;

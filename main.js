@@ -4,6 +4,8 @@ import store from './store'//引入vuex
 
 Vue.config.productionTip = false
 
+Vue.prototype.$store = store
+
 App.mpType = 'app'
 
 const app = new Vue({
