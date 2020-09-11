@@ -10,7 +10,7 @@ const store = new Vuex.Store({
     state: {
 		skin: uni.getStorageSync(SKIN) || 'default', //皮肤
 		books: uni.getStorageSync(BOOKS) || [],//导入的书籍列表
-		read: uni.getStorageSync(READ) || {scroll: 'upDown', fontSize: 20, light: 1},//阅读模式包含字体大小，翻页方式
+		read: uni.getStorageSync(READ) || {scroll: 'scroll', fontSize: 20, light: 1},//阅读模式包含字体大小，翻页方式
 		path: uni.getStorageSync(PATH) || ''//上次访问的文件夹路径
 	},
 	getters: {
@@ -88,7 +88,7 @@ const store = new Vuex.Store({
 					path: books[i].path,
 					size: books[i].realSize,
 					progress: '0.00',
-					started: 0,
+					record: 0,
 					lastReadTime: time,
 					isReaded: false
 				})
@@ -116,6 +116,12 @@ const store = new Vuex.Store({
 		updateBookProgress (state, book) {
 			let index = indexOf(state.books, book.path, 'path');
 			state.books[index].progress = book.progress;
+			uni.setStorageSync(BOOKS, state.books);
+		},
+		// 更新书籍阅读位置
+		updateBookRecord (state, book) {
+			let index = indexOf(state.books, book.path, 'path');
+			state.books[index].record = book.record;
 			uni.setStorageSync(BOOKS, state.books);
 		},
 		// 更新书籍最后阅读时间

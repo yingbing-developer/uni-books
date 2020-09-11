@@ -1,7 +1,7 @@
 <template>
-	<view class="read-menu" v-if="isShow">
-		<view class="mask" @touchmove="moveHandle" @tap="hide"></view>
-		<view class="read-board" ref="popup" :style="{transform: 'translateY(' + lateY + ')'}" @touchmove="moveHandle">
+	<view class="read-menu" v-if="isShow" @touchmove.stop.prevent="">
+		<view class="mask" @tap="hide"></view>
+		<view class="read-board" ref="popup" :style="{transform: 'translateY(' + lateY + ')'}">
 			
 			<!-- 阅读进度 -->
 			<view class="read-board-line">
@@ -19,24 +19,24 @@
 					</view>
 				</view>
 			</view>
-			<!-- <view class="read-board-line">
-				<view class="chapter-box">
+			<view class="read-board-line">
+				<view class="chapter-box btn-actived">
 					<text class="chapter-text">上一章节</text>
 				</view>
-				<view class="chapter-box">
+				<view class="chapter-box btn-actived">
 					<text class="chapter-text">下一章节</text>
 				</view>
-			</view> -->
+			</view>
 			
 			<!-- 皮肤选择 -->
-			<view class="read-board-line">
+			<!-- <view class="read-board-line">
 				<view class="skin-mode light-mode" style="background-color: #BFAD8A;" @tap="changeSkin('default')">
 					<c-icon name="check-fill" :size="30" color="#ED7B1F" v-if="skinMode == 'default'"></c-icon>
 				</view>
 				<view class="skin-mode night-mode" style="background-color: #393E41;" @tap="changeSkin('night')">
 					<c-icon name="check-fill" :size="30" color="#ED7B1F" v-if="skinMode == 'night'"></c-icon>
 				</view>
-			</view>
+			</view> -->
 			
 			<view class="read-board-line">
 				<!-- 亮度调整 -->
@@ -65,12 +65,42 @@
 			</view>
 			
 			<!-- 翻页模式 -->
-			<view class="read-board-line scroll-line">
+			<!-- <view class="read-board-line scroll-line">
 				<view class="scroll-box" :class="{'scrollActived': readMode.scroll == item.value}" v-for="(item, index) in scroll" :key='index' @tap="changeScrollMode(item.value)">
 					<text class="scroll-text" :class="{'scrollActived': readMode.scroll == item.value}">{{item.title}}</text>
 				</view>
+			</view> -->
+			
+			<view class="read-board-line bottom-line">
+				<view class="bottom-box">
+					<view class="bottom-item" @tap="$refs.catalog.show()">
+						<c-icon name="menu" :size="28" color="#8A8A8A"></c-icon>
+						<text class="bottom-name">目录</text>
+					</view>
+				</view>
+				<view class="bottom-box">
+					<view class="bottom-item" v-if="readMode.scroll == 'paging'" @tap="changeScrollMode('scroll')">
+						<c-icon name="scroll" :size="28" color="#8A8A8A"></c-icon>
+						<text class="bottom-name">滚动</text>
+					</view>
+					<view class="bottom-item" v-if="readMode.scroll == 'scroll'" @tap="changeScrollMode('paging')">
+						<c-icon name="paging" :size="28" color="#8A8A8A"></c-icon>
+						<text class="bottom-name">翻页</text>
+					</view>
+				</view>
+				<view class="bottom-box">
+					<view class="bottom-item" v-if="skinMode == 'default'" @tap="changeSkin('night')">
+						<c-icon name="night" :size="28" color="#8A8A8A"></c-icon>
+						<text class="bottom-name">夜间</text>
+					</view>
+					<view class="bottom-item" v-if="skinMode == 'night'" @tap="changeSkin('default')">
+						<c-icon name="light" :size="30" color="#8A8A8A"></c-icon>
+						<text class="bottom-name">日间</text>
+					</view>
+				</view>
 			</view>
 		</view>
+		<catalog :catalog="catalog" ref="catalog" @selectCatalog="selectCatalog"></catalog>
 	</view>
 </template>
 
@@ -80,12 +110,19 @@
 	import { indexOf } from '@/common/js/util.js'
 	import CIcon from '@/components/c-icon/c-icon.nvue'
 	import CProgress from '@/components/progress/progress.nvue'
+	import Catalog from './catalog.vue'
 	export default {
 		mixins: [skinMixin],
 		props: {
 			path: {
 				type: String,
 				default: ''
+			},
+			catalog: {
+				type: Array,
+				default () {
+					return new Array();
+				}
 			}
 		},
 		data () {
@@ -125,16 +162,17 @@
 		},
 		methods: {
 			...mapMutations(['changeFontSize', 'changeScrollMode', 'updateBookPage', 'changeLight']),
-			moveHandle () {
-				return true;
-			},
 			show () {
 				this.isShow = true;
-				this.$nextTick(() => {
+				setTimeout(() => {
 					this.lateY = 0;
-				})
+				}, 50)
 			},
 			hide () {
+				if ( this.$refs.catalog.isShow ) {
+					this.$refs.catalog.hide();
+					return;
+				}
 				this.lateY = '100%';
 				setTimeout(() => {
 					this.isShow = false;
@@ -153,6 +191,10 @@
 					return;
 				}
 				this.changeFontSize(this.readMode.fontSize - 2);
+			},
+			//跳往章节
+			selectCatalog (index) {
+				this.$emit('selectCatalog', index);
 			},
 			//前五页
 			prevPages () {
@@ -208,12 +250,20 @@
 		},
 		components: {
 			CIcon,
-			CProgress
+			CProgress,
+			Catalog
 		}
 	}
 </script>
 
 <style scoped>
+	.btn-actived:active {
+		background-color: #8A8A8A!important;
+		
+	}
+	.btn-actived:active .chapter-text {
+		color: #EFEFEF!important;
+	}
 	.mask {
 		position: fixed;
 		top: 0;
@@ -337,5 +387,29 @@
 	.chapter-text {
 		font-size: 14px;
 		color: #8A8A8A;
+	}
+	.bottom-line {
+		justify-content: space-between;
+		height: 65px;
+	}
+	.bottom-box {
+		flex: 1;
+		height: 100%;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+	}
+	.bottom-item {
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		align-items: center;
+		height: 100%;
+		box-sizing: border-box;
+		padding: 8px 0;
+	}
+	.bottom-name {
+		color: #8A8A8A;
+		font-size: 16px;
 	}
 </style>
