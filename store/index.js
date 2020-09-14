@@ -124,6 +124,12 @@ const store = new Vuex.Store({
 			state.books[index].record = book.record;
 			uni.setStorageSync(BOOKS, state.books);
 		},
+		// 更新书籍阅读状态
+		updateBookReadStatus (state, book) {
+			let index = indexOf(state.books, book.path, 'path');
+			state.books[index].isReaded = book.isReaded;
+			uni.setStorageSync(BOOKS, state.books);
+		},
 		// 更新书籍最后阅读时间
 		updateBookReadTime (state, path) {
 			let index = indexOf(state.books, path, 'path');

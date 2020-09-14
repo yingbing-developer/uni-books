@@ -8,7 +8,7 @@
 			<gap-bar></gap-bar>
 			<view class="read-top-line">
 				<text>{{bookInfo.name}}</text>
-				<text>80%</text>
+				<text>{{bookInfo.progress}}%</text>
 			</view>
 		</view>
 		
@@ -18,7 +18,6 @@
 		<!-- 文本内容区域 -->
 		<view class="box-view">
 			<view
-			class="content-box"
 			:class="{'noWrap': readMode.scroll == 'paging'}"
 			id="contentBox"
 			:style="{
@@ -30,14 +29,14 @@
 		
 		<!-- 触摸区域 -->
 		<view class="touchBoard">
-			<view class="touch-box touch-left" v-if="scrollMode == 'leftRight'">
-				<view class="touch-item"></view>
+			<view class="touch-box touch-left" v-if="scrollMode == 'paging'">
+				<view class="touch-item touch-prev"></view>
 			</view>
 			<view class="touch-box touch-center">
 				<view class="touch-item" @tap="$refs.readSetting.show()"></view>
 			</view>
-			<view class="touch-box touch-right" v-if="scrollMode == 'leftRight'">
-				<view class="touch-item"></view>
+			<view class="touch-box touch-right" v-if="scrollMode == 'paging'">
+				<view class="touch-item touch-next"></view>
 			</view>
 		</view>
 		
@@ -93,16 +92,30 @@
 			this.updateBookReadTime(this.path);
 		},
 		methods: {
-			...mapMutations(['updateBookReadTime', 'updateBookRecord']),
+			...mapMutations(['updateBookReadStatus', 'updateBookProgress', 'updateBookReadTime', 'updateBookRecord']),
+			//更新阅读进度
 			updateProgress (e) {
-				console.log('滚动的距离: ' + e.scrollTop);
+				let book = {
+					path: this.path,
+					progress: e.progress
+				}
+				this.updateBookProgress(book)
 			},
+			//更新阅读记录
 			updateRecord (e) {
 				let book = {
 					path: this.path,
-					record: 0
+					record: e.record
 				}
 				this.updateBookRecord(book);
+			},
+			//更新阅读状态
+			updateReadStatus (e) {
+				let book = {
+					path: this.path,
+					isReaded: e.status
+				}
+				this.updateBookReadStatus(book);
 			},
 			//填充章节目录
 			setCatalog (e) {
@@ -111,6 +124,13 @@
 			//跳往章节
 			selectCatalog (e) {
 				console.log(e);
+			},
+			//弹窗
+			toast (e) {
+				uni.showToast({
+					title: e.title,
+					icon: 'none'
+				})
 			}
 		},
 		onBackPress (event) {
@@ -147,6 +167,7 @@
 		},
 		mounted () {
 			this.initDom.bind(this);
+			this.initMonitor();
 			this.initView();
 			this.getContent();
 			// window.onscroll = () => {
@@ -169,6 +190,26 @@
 			// }
 		},
 		methods: {
+			//初始化监听
+			initMonitor () {
+				//上一页
+				document.getElementsByClassName('touch-prev')[0].addEventListener('click', () => {
+					if ( this.nowIndex[0] > 0 ) {
+						this.setPrevPage();
+					} else {
+						this.toast('已经是最前面了');
+					}
+				})
+				//下一页
+				document.getElementsByClassName('touch-next')[0].addEventListener('click', () => {
+					if ( this.nowIndex[1] < this.bookContent.length ) {
+						this.setNowPage(this.nowIndex[1]);
+					} else {
+						this.toast('已经是最后面了');
+					}
+				})
+			},
+			//初始化数据
 			initDom() {
 				myDom = dom.init(document.getElementById('dom'));
 				// 观测更新的数据在 view 层可以直接访问到
@@ -184,8 +225,10 @@
 						let reader = new plus.io.FileReader();
 						reader.onloadend = ( e ) => {
 							this.bookContent = e.target.result;
-							this.setNowPage();
-							this.setPrevPage();
+							this.setNowPage(this.domProp.record);
+							// if ( this.nowIndex[0] > 0 ) {
+							// 	this.setPrevPage();
+							// }
 							this.getCatalog();
 						};
 						reader.readAsText( file, 'gb2312' );
@@ -214,60 +257,103 @@
 				})
 			},
 			//设置当前页内容
-			setNowPage () {
+			setNowPage (index) {
+				//改变当前页面内容开始位置，并且更新阅读记录
+				this.nowIndex[0] = index;
+				this.updateRecord(this.nowIndex[0]);
+				//截取内容
 				let text = this.bookContent.substr(this.nowIndex[0], 1500);
 				let result = text.split('');
-				let box = this.createContent();
-				let content = document.getElementsByClassName('content')[1];
+				
+				//创建新的文本容器，插入节点中
+				const box = this.createContent();
+				const contentBox = document.getElementById('contentBox');
+				contentBox.appendChild(box);
+				const contents = document.getElementsByClassName('content');
+				
+				//如果为翻页模式移除原本的内容
+				if ( this.domProp.scrollMode == 'paging' && contents.length > 1 ) {
+					contentBox.removeChild(contents[0])
+				}
+				
+				//获取新插入的文本容器
+				const content = contents[contents.length - 1];
 				let contentSync = null;
+				//遍历文本一个字符一个字符的插入
 				for ( let i in result ) {
 					content.textContent = contentSync ? contentSync + result[i] : result[i];
 					if ( content.offsetHeight > this.viewHeight ) {
 						content.textContent = contentSync;
-						this.nowIndex[1] = i - 1 + this.nowIndex[0];
-						this.setNextPage();
+						//当前页内容最后的位置
+						this.nowIndex[1] = parseInt(i) + this.nowIndex[0];
 						break;
 					} else {
+						//如果文本遍历完了，但文本高度没有超过容器高度则表示这是最后一页
+						if ( i == result.length - 1 ) {
+							//当前页内容最后的位置
+							this.nowIndex[1] = parseInt(i) + 1 + this.nowIndex[0];
+							this.updateReadStatus(true);
+						}
 						contentSync = content.textContent;
 					}
 				}
 			},
 			//设置上一页内容
 			setPrevPage () {
-				this.prevIndex[1] = this.nowIndex[0];
-				let index = this.prevIndex[1] - 1500 > 0 ? this.prevIndex[1] - 1500 : 0;
-				let text = this.bookContent.substr(index, this.prevIndex[1]);
+				this.updateReadStatus(false);
+				
+				//将内容的开始位置变为结束位置
+				this.nowIndex[1] = this.nowIndex[0];
+				
+				//截取结束位置前1500个字，如果没有1500个字，则截取到首位
+				let index = this.nowIndex[1] - 1500 > 0 ? this.nowIndex[1] - 1500 : 0;
+				let text = this.bookContent.substring(index, this.nowIndex[1]);
 				let result = text.split('');
-				const content = document.getElementsByClassName('content')[0];
+				
+				//创建新的文本容器
+				const box = this.createContent();
+				const contentBox = document.getElementById('contentBox');
+				let content = document.getElementsByClassName('content')[0];
+				//插入当前文本的前方
+				contentBox.insertBefore(box, content);
+				
+				//如果为翻页模式，则移除当前的文本容器
+				if ( this.domProp.scrollMode == 'paging' ) {
+					contentBox.removeChild(content);
+					content = document.getElementsByClassName('content')[0];
+				}
+				
+				//遍历截取的文本内容，从文本的末尾开始循环放入新建的文本容器
 				let contentSync = null;
-				for ( let i = result.length ; i > 0; i--) {
+				for ( let i = result.length - 1; i >= 0; i--) {
 					content.textContent = contentSync ? result[i] + contentSync : result[i];
 					if ( content.offsetHeight > this.viewHeight ) {
 						content.textContent = contentSync;
-						this.prevIndex[0] = this.prevIndex[1] - i;
+						this.nowIndex[0] = this.nowIndex[1] - ( result.length - 1 - parseInt(i) );
 						break;
 					} else {
 						contentSync = content.textContent;
 					}
-				}
-			},
-			//设置下一页内容
-			setNextPage () {
-				this.nextIndex[0] = this.nowIndex[1];
-				let text = this.bookContent.substr(this.nextIndex[0], 1500);
-				let result = text.split('');
-				const content = document.getElementsByClassName('content')[2];
-				let contentSync = null;
-				for ( let i in result) {
-					content.textContent = contentSync ? contentSync + result[i] : result[i];
-					if ( content.offsetHeight > this.viewHeight ) {
-						content.textContent = contentSync;
-						this.nextIndex[1] = i - 1 + this.nextIndex[0];
-						break;
-					} else {
+					//如果文本遍历完后，文本高度还是小于等于规定的高度,则请求新的文本补全整个页面
+					if ( i == 0 && content.offsetHeight <= this.viewHeight ) {
+						this.nowIndex[0] = 0;
+						text = this.bookContent.substr(this.nowIndex[1], 1500);
+						let ment = text.split('');
 						contentSync = content.textContent;
+						content.textContent = '';
+						for ( let j in ment ) {
+							content.textContent = contentSync ? contentSync + ment[j] : ment[j];
+							if ( content.offsetHeight > this.viewHeight ) {
+								content.textContent = contentSync;
+								this.nowIndex[1] = this.nowIndex[1] + parseInt(j);
+								break;
+							} else {
+								contentSync = content.textContent;
+							}
+						}
 					}
 				}
+				this.updateRecord(this.nowIndex[0]);
 			},
 			//阅读设置改变
 			readChange (newVal, oldVal) {
@@ -285,29 +371,37 @@
 				}
 			},
 			fontChange (newVal, oldVal) {
-				const content = document.getElementsByClassName('content');
+				const content = document.getElementsByClassName('content')[0];
+				this.initLine();
 				clearTimeout(this.timer);
 				this.timer = setTimeout(() => {
-					for ( let i in content ) {
-						//字体变大
-						if ( oldVal < newVal ) {
-							for ( let j = this.endIndex[i]; j > 0; j-- ) {
-								content[i].textContent = content[i].textContent.substr(0, i);
-								if ( content[i].offsetHeight <= this.viewHeight ) {
-									this.startIndex[i + 1] = j;
-									break;
-								}
+					//字体变大
+					if ( oldVal < newVal ) {
+						let contentSync = content.textContent;
+						for ( let j = content.textContent.length - 1; j >= 0; j-- ) {
+							content.textContent = content.textContent.substr(0, j);
+							if ( content.offsetHeight <= this.viewHeight ) {
+								content.textContent = contentSync;
+								this.nowIndex[1] = this.nowIndex[0] + content.textContent.length;
+								break;
+							} else {
+								contentSync = content.textContent;
 							}
-						} else {
-							//字体变小
-							let result = this.bookContent.split('');
-							let contentSync = content.textContent;
-							for ( let i = this.endIndex; i < result.length; i++ ) {
-								content.textContent = contentSync ? contentSync + result[i] : result[i];
-								if ( content.offsetHeight > this.viewHeight ) {
-									content.textContent = contentSync;
-									this.endIndex = i;
-									break;
+						}
+					} else {
+						//字体变小
+						let text = this.bookContent.substr(this.nowIndex[1], 400);
+						let result = text.split('');
+						let contentSync = content.textContent;
+						for ( let j in result ) {
+							content.textContent = contentSync ? contentSync + result[j] : result[j];
+							if ( content.offsetHeight > this.viewHeight ) {
+								content.textContent = contentSync;
+								this.nowIndex[1] = this.nowIndex[1] + parseInt(j);
+								break;
+							} else {
+								if ( j >= result.length - 1 ) {
+									this.nowIndex[1] = result.length - 1;
 								} else {
 									contentSync = content.textContent;
 								}
@@ -317,7 +411,7 @@
 				}, 50)
 			},
 			scrollModeChange (newVal, oldVal) {
-				const content = document.getElementsByClassName('content');
+				// const content = document.getElementsByClassName('content');
 				// if ( newVal == 'upDown' ) {
 				// 	for ( let i in content ) {
 				// 		content[i].style.position = 'relative';
@@ -335,30 +429,33 @@
 			recordChange (newVal, oldVal) {
 				
 			},
-			//初始化
+			//初始化容器
 			initView () {
 				const top = document.getElementById('readTop');
 				const gap = document.getElementById('gapBar');
 				const contentBox = document.getElementById('contentBox');
 				//设置分页的首位索引
 				// this.nowIndex[0] = this.domProp.record;
-				this.nowIndex[0] = 1000;
+				// this.nowIndex[0] = 1000;
 				//设置页面
-				let count = 3;
-				while (count > 0) {
-					let box = this.createContent();
-					contentBox.appendChild(box);
-					count--;
-				}
-				//设置行高
-				let lineHeight = this.domProp.fontSize + 10;
-				this.viewHeight = parseInt((window.screen.height - top.offsetHeight) / lineHeight) * lineHeight;
+				// let count = 3;
+				// while (count > 0) {
+				// 	let box = this.createContent();
+				// 	contentBox.appendChild(box);
+				// 	count--;
+				// }
+				this.initLine();
 				//设置顶部间隔高度
 				gap.style.height = top.offsetHeight + 'px';
 			},
+			//设置行高和规定高度
+			initLine () {
+				const top = document.getElementById('readTop');
+				let lineHeight = this.domProp.fontSize + 10;
+				this.viewHeight = parseInt((window.screen.height - top.offsetHeight) / lineHeight) * lineHeight;
+			},
 			createContent() {
 				const dom = document.createElement('text');
-				const top = document.getElementById('readTop');
 				dom.style.whiteSpace = 'pre-wrap';
 				dom.style.wordBreak = 'break-all';
 				dom.style.wordWrap = 'break-word';
@@ -366,6 +463,39 @@
 				dom.style.display = 'inline-block';
 				dom.setAttribute('class', 'content');
 				return dom;
+			},
+			toast (title) {
+				UniViewJSBridge.publishHandler('onWxsInvokeCallMethod', {
+					cid: this._$id,
+					method: 'toast',
+					args: {'title': title}
+				})
+			},
+			//更新阅读记录
+			updateRecord (record) {
+				UniViewJSBridge.publishHandler('onWxsInvokeCallMethod', {
+					cid: this._$id,
+					method: 'updateRecord',
+					args: {'record': record}
+				})
+				this.updateProgress();
+			},
+			//更新阅读进度
+			updateProgress () {
+				let progress = parseFloat(((this.nowIndex[0] / this.bookContent.length) * 100).toFixed(2));
+				UniViewJSBridge.publishHandler('onWxsInvokeCallMethod', {
+					cid: this._$id,
+					method: 'updateProgress',
+					args: {'progress': progress}
+				})
+			},
+			//更新阅读状态
+			updateReadStatus (status) {
+				UniViewJSBridge.publishHandler('onWxsInvokeCallMethod', {
+					cid: this._$id,
+					method: 'updateReadStatus',
+					args: {'status': status}
+				})
 			}
 		}
 	}
@@ -391,9 +521,6 @@
 	}
 	.box-view {
 		overflow-x: hidden;
-	}
-	.content-box {
-		
 	}
 	.noWrap {
 		white-space: nowrap;
@@ -421,5 +548,6 @@
 	.touch-item {
 		width: 100%;
 		height: 200rpx;
+		border: 1px solid #21C088;
 	}
 </style>
