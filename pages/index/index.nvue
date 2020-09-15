@@ -25,7 +25,7 @@
 						<text class="book-name">{{item.name}}</text>
 						<view class="b-bottom">
 							<text class="book-time">{{item.time}}</text>
-							<text class="book-progress">{{item.progress}}%</text>
+							<text class="book-progress">{{ item | progress }}%</text>
 						</view>
 					</view>
 				</view>
@@ -80,6 +80,15 @@
 				actions: [],
 				//触发操作列表的下标
 				actionIndex: ''
+			}
+		},
+		filters: {
+			progress (value) {
+				if ( value.record == 0 ) {
+					return 0
+				} else {
+					return ((value.record / value.length) * 100).toFixed(2);
+				}
 			}
 		},
 		computed: {

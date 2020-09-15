@@ -6,8 +6,15 @@
 				<view class="title" :style="{color: skinColor.titleColor}">
 					章节目录
 				</view>
-				<scroll-view class="scroll-view" scroll-y="true" >
-					<view class="list actived" v-for="(item, index) in catalog" :key='index' :style="{color: skinColor.menuTitleColor}" @tap="selectCatalog(item.index)">
+				<scroll-view class="scroll-view" scroll-y="true" :scroll-into-view="'catalog_' + scrollTo">
+					<view
+					class="list actived"
+					:id="'catalog_' + index"
+					v-for="(item, index) in catalog"
+					:class="{catalog_actived: scrollTo == index}"
+					:key='index'
+					:style="{color: skinColor.menuTitleColor}"
+					@tap="selectCatalog(item.index)">
 						{{item.title}}
 					</view>
 				</scroll-view>
@@ -23,6 +30,8 @@
 
 <script>
 	import { skinMixin } from '@/common/mixin/index.js'
+	import { indexOf } from '@/common/js/util.js'
+	import { mapGetters, mapMutations } from 'vuex'
 	export default {
 		mixins: [skinMixin],
 		props: {
@@ -31,25 +40,49 @@
 				default () {
 					return new Array();
 				}
+			},
+			path: {
+				type: String,
+				default: ''
 			}
 		},
 		data () {
 			return {
 				isShow: false,
-				lateY: '-100%',
+				lateY: '100%',
 				opac: 0
 			}
 		},
+		computed: {
+			...mapGetters(['bookList']),
+			bookInfo () {
+				return this.bookList[indexOf(this.bookList, this.path, 'path')];
+			},
+			scrollTo () {
+				for ( let i in this.catalog ) {
+					if ( i < this.catalog.length - 1 ) {
+						if ( this.bookInfo.record >= this.catalog[i].index && this.bookInfo.record < this.catalog[parseInt(i) + 1].index ) {
+							return i
+						}
+					} else {
+						if ( this.bookInfo.record >= this.catalog[i].index) {
+							return i
+						}
+					}
+				}
+			}
+		},
 		methods: {
+			...mapMutations(['updateBookRecord']),
 			show () {
 				this.isShow = true;
 				setTimeout(() => {
 					this.lateY = 0;
 					this.opac = 0.4;
-				}, 50)
+				}, 100)
 			},
 			hide () {
-				this.lateY = '-100%';
+				this.lateY = '100%';
 				this.opac = 0;
 				setTimeout(() => {
 					this.isShow = false;
@@ -57,7 +90,11 @@
 			},
 			//跳往章节
 			selectCatalog (index) {
-				this.$emit('selectCatalog', index);
+				let book = {
+					path: this.path,
+					record: index
+				}
+				this.updateBookRecord(book);
 			}
 		}
 	}
@@ -82,7 +119,7 @@
 	}
 	.popup {
 		position: absolute;
-		left: 0;
+		right: 0;
 		top: 0;
 		bottom: 0;
 		width: 400rpx;
@@ -101,6 +138,9 @@
 	.list {
 		padding: 15rpx 10rpx;
 		font-size: 28rpx;
+	}
+	.catalog_actived {
+		color: #DD524D!important;
 	}
 	.nocata {
 		height: 100%;

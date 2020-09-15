@@ -8,7 +8,7 @@
 			<gap-bar></gap-bar>
 			<view class="read-top-line">
 				<text>{{bookInfo.name}}</text>
-				<text>{{bookInfo.progress}}%</text>
+				<text>{{progress}}%</text>
 			</view>
 		</view>
 		
@@ -41,7 +41,7 @@
 		</view>
 		
 		<!-- 阅读设置 -->
-		<read-setting @selectCatalog="selectCatalog" :catalog="catalog" :path="path" ref="readSetting"></read-setting>
+		<read-setting :catalog="catalog" :path="path" ref="readSetting"></read-setting>
 	</view>
 </template>
 
@@ -84,6 +84,13 @@
 					record: this.bookInfo.record
 				};
 			},
+			progress () {
+				if ( this.bookInfo.record == 0 ) {
+					return 0
+				} else {
+					return parseFloat(((this.bookInfo.record / this.bookInfo.length) * 100).toFixed(2))
+				}
+			},
 			light () {
 				return (100 - ((1 - this.readMode.light) * 50)).toFixed(2);
 			}
@@ -92,30 +99,20 @@
 			this.updateBookReadTime(this.path);
 		},
 		methods: {
-			...mapMutations(['updateBookReadStatus', 'updateBookProgress', 'updateBookReadTime', 'updateBookRecord']),
-			//更新阅读进度
-			updateProgress (e) {
-				let book = {
-					path: this.path,
-					progress: e.progress
-				}
-				this.updateBookProgress(book)
-			},
+			...mapMutations(['updateBookReadStatus', 'updateBookLength', 'updateBookReadTime', 'updateBookRecord']),
 			//更新阅读记录
 			updateRecord (e) {
-				let book = {
+				this.updateBookRecord({
 					path: this.path,
 					record: e.record
-				}
-				this.updateBookRecord(book);
+				});
 			},
 			//更新阅读状态
 			updateReadStatus (e) {
-				let book = {
+				this.updateBookReadStatus({
 					path: this.path,
 					isReaded: e.status
-				}
-				this.updateBookReadStatus(book);
+				});
 			},
 			//填充章节目录
 			setCatalog (e) {
@@ -124,6 +121,13 @@
 			//跳往章节
 			selectCatalog (e) {
 				console.log(e);
+			},
+			//设置文本总长度
+			updatetLength (e) {
+				this.updateBookLength({
+					path: this.path,
+					length: e.length
+				})
 			},
 			//弹窗
 			toast (e) {
@@ -203,7 +207,8 @@
 				//下一页
 				document.getElementsByClassName('touch-next')[0].addEventListener('click', () => {
 					if ( this.nowIndex[1] < this.bookContent.length ) {
-						this.setNowPage(this.nowIndex[1]);
+						this.updateRecord(this.nowIndex[1]);
+						this.setNowPage();
 					} else {
 						this.toast('已经是最后面了');
 					}
@@ -225,10 +230,9 @@
 						let reader = new plus.io.FileReader();
 						reader.onloadend = ( e ) => {
 							this.bookContent = e.target.result;
-							this.setNowPage(this.domProp.record);
-							// if ( this.nowIndex[0] > 0 ) {
-							// 	this.setPrevPage();
-							// }
+							this.updateLength();
+							this.nowIndex[0] = this.domProp.record;
+							this.setNowPage();
 							this.getCatalog();
 						};
 						reader.readAsText( file, 'gb2312' );
@@ -241,7 +245,7 @@
 			},
 			//获取章节目录
 			getCatalog () {
-				const reg = new RegExp(/(\s第?\s*[一二两三四五六七八九十○零百千万亿0-9１２３４５６７８９０]{1,6}\s*[章回卷节折篇幕集部][^\n]*)[_,-]?/g);
+				const reg = new RegExp(/(第?[一二两三四五六七八九十○零百千万亿0-9１２３４５６７８９０]{1,6}[章回卷节折篇幕集部]?[.\s][^\n]*)[_,-]?/g);
 				let match = '';
 				let catalog = [];
 				while ((match = reg.exec(this.bookContent)) != null) {
@@ -257,10 +261,8 @@
 				})
 			},
 			//设置当前页内容
-			setNowPage (index) {
-				//改变当前页面内容开始位置，并且更新阅读记录
-				this.nowIndex[0] = index;
-				this.updateRecord(this.nowIndex[0]);
+			setNowPage () {
+				this.updateReadStatus(false);
 				//截取内容
 				let text = this.bookContent.substr(this.nowIndex[0], 1500);
 				let result = text.split('');
@@ -427,7 +429,8 @@
 				// }
 			},
 			recordChange (newVal, oldVal) {
-				
+				this.nowIndex[0] = newVal;
+				this.setNowPage();
 			},
 			//初始化容器
 			initView () {
@@ -478,16 +481,6 @@
 					method: 'updateRecord',
 					args: {'record': record}
 				})
-				this.updateProgress();
-			},
-			//更新阅读进度
-			updateProgress () {
-				let progress = parseFloat(((this.nowIndex[0] / this.bookContent.length) * 100).toFixed(2));
-				UniViewJSBridge.publishHandler('onWxsInvokeCallMethod', {
-					cid: this._$id,
-					method: 'updateProgress',
-					args: {'progress': progress}
-				})
 			},
 			//更新阅读状态
 			updateReadStatus (status) {
@@ -495,6 +488,14 @@
 					cid: this._$id,
 					method: 'updateReadStatus',
 					args: {'status': status}
+				})
+			},
+			//更新文本总长度
+			updateLength () {
+				UniViewJSBridge.publishHandler('onWxsInvokeCallMethod', {
+					cid: this._$id,
+					method: 'updatetLength',
+					args: {'length': this.bookContent.length}
 				})
 			}
 		}

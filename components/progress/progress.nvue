@@ -72,7 +72,7 @@
 		},
 		computed: {
 			activeWidth () {
-				return (this.width * (this.percent/100));
+				return (this.width * (parseFloat(this.percent)/100));
 			}
 		},
 		created () {

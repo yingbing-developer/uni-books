@@ -87,7 +87,7 @@ const store = new Vuex.Store({
 					time: dateFormat(time).split(' ')[0],
 					path: books[i].path,
 					size: books[i].realSize,
-					progress: '0.00',
+					length: 0,
 					record: 0,
 					lastReadTime: time,
 					isReaded: false
@@ -112,10 +112,10 @@ const store = new Vuex.Store({
 			})
 			uni.setStorageSync(BOOKS, state.books);
 		},
-		// 更新书籍阅读进度
-		updateBookProgress (state, book) {
+		// 更新书籍文本长度
+		updateBookLength (state, book) {
 			let index = indexOf(state.books, book.path, 'path');
-			state.books[index].progress = book.progress;
+			state.books[index].length = book.length;
 			uni.setStorageSync(BOOKS, state.books);
 		},
 		// 更新书籍阅读位置

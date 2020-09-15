@@ -11,7 +11,7 @@
 					</view>
 				</view>
 				<view class="progress">
-					 <c-progress v-model="bookPercent" itemShow></c-progress>
+					 <c-progress :value="progress" @input="upProgress" itemShow></c-progress>
 				</view>
 				<view class="progress-btn progress-next">
 					<view @tap="nextPages">
@@ -20,10 +20,10 @@
 				</view>
 			</view>
 			<view class="read-board-line">
-				<view class="chapter-box btn-actived">
+				<view class="chapter-box btn-actived" @tap="prevChapter">
 					<text class="chapter-text">上一章节</text>
 				</view>
-				<view class="chapter-box btn-actived">
+				<view class="chapter-box btn-actived" @tap="nextChapter">
 					<text class="chapter-text">下一章节</text>
 				</view>
 			</view>
@@ -54,11 +54,11 @@
 				
 				<!-- 字体调整 -->
 				<view class="half-box font-box">
-					<view class="font-btn" @tap="downFontSize">
+					<view class="font-btn actived" @tap="downFontSize">
 						<c-icon name="font-down" color="#8A8A8A"></c-icon>
 					</view>
 					<text class="font-text">{{readMode.fontSize}}</text>
-					<view class="font-btn" @tap="upFontSize">
+					<view class="font-btn actived" @tap="upFontSize">
 						<c-icon name="font-up" color="#8A8A8A"></c-icon>
 					</view>
 				</view>
@@ -100,7 +100,7 @@
 				</view>
 			</view>
 		</view>
-		<catalog :catalog="catalog" ref="catalog" @selectCatalog="selectCatalog"></catalog>
+		<catalog :path="path" :catalog="catalog" ref="catalog"></catalog>
 	</view>
 </template>
 
@@ -129,14 +129,13 @@
 			return {
 				isShow: false,
 				duration: 200,
-				bookPercent: 0,
 				lightPercent: 0,
 				scroll: [{
 					title: '上下滚动',
-					value: 'upDown'
+					value: 'scroll'
 				},{
 					title: '左右翻页',
-					value: 'leftRight'
+					value: 'paging'
 				}],
 				lateY: '100%'
 			}
@@ -149,24 +148,41 @@
 			pageIndex () {
 				return this.bookInfo.pageIndex
 			},
-			progress () {
-				return parseFloat(this.bookInfo.progress);
-			},
 			light () {
 				return parseFloat(this.readMode.light) * 100;
+			},
+			progress () {
+				if ( this.bookInfo.record == 0 ) {
+					return 0
+				} else {
+					return parseFloat(((this.bookInfo.record / this.bookInfo.length) * 100).toFixed(2))
+				}
+			},
+			//当前章节
+			chapterNow () {
+				for ( let i in this.catalog ) {
+					if ( i < this.catalog.length - 1 ) {
+						if ( this.bookInfo.record >= this.catalog[i].index && this.bookInfo.record < this.catalog[parseInt(i) + 1].index ) {
+							return parseInt(i)
+						}
+					} else {
+						if ( this.bookInfo.record >= this.catalog[i].index) {
+							return parseInt(i)
+						}
+					}
+				}
 			}
 		},
 		created () {
-			this.bookPercent = this.progress;
 			this.lightPercent = this.light;
 		},
 		methods: {
-			...mapMutations(['changeFontSize', 'changeScrollMode', 'updateBookPage', 'changeLight']),
+			...mapMutations(['changeFontSize', 'changeScrollMode', 'updateBookPage', 'changeLight', 'updateBookRecord']),
 			show () {
 				this.isShow = true;
 				setTimeout(() => {
 					this.lateY = 0;
-				}, 50)
+				}, 100)
 			},
 			hide () {
 				if ( this.$refs.catalog.isShow ) {
@@ -192,55 +208,72 @@
 				}
 				this.changeFontSize(this.readMode.fontSize - 2);
 			},
-			//跳往章节
-			selectCatalog (index) {
-				this.$emit('selectCatalog', index);
+			//上个章节
+			prevChapter () {
+				if ( this.catalog[this.chapterNow - 1] ) {
+					this.updateBookRecord({
+						path: this.path,
+						record: this.catalog[this.chapterNow - 1].index
+					});
+				} else {
+					uni.showToast({
+						icon: 'none',
+						title: '前面已经没有章节了'
+					})
+				}
 			},
-			//前五页
+			//下个章节
+			nextChapter () {
+				if ( this.catalog[this.chapterNow + 1] ) {
+					this.updateBookRecord({
+						path: this.path,
+						record: this.catalog[this.chapterNow + 1].index
+					});
+				} else {
+					uni.showToast({
+						icon: 'none',
+						title: '后面已经没有章节了'
+					})
+				}
+			},
+			//后退0.1%
 			prevPages () {
-				if ( this.pageIndex == 1) {
+				let percent = this.progress - 0.1;
+				if ( percent < 0 ) {
+					percent = 0;
 					uni.showToast({
-						icon: 'none',
-						title: '已经是第一页了'
+						title: '前面已经没有了',
+						icon: 'none'
 					})
-					return
 				}
-				let page = this.pageIndex - 5;
-				//超过第一页,赋值为第一页
-				if ( page < 1 ) {
-					page = 1;
-				}
-				this.goPage(page);
+				this.upRecord(percent);
 			},
-			//后五页
+			//前进0.1%
 			nextPages() {
-				if ( this.pageIndex == this.totalPage) {
+				let percent = this.progress + 0.1;
+				if ( percent > 100 ) {
+					percent = 100;
 					uni.showToast({
-						icon: 'none',
-						title: '已经是最后一页了'
+						title: '后面已经没有了',
+						icon: 'none'
 					})
-					return
 				}
-				let page = this.pageIndex + 5;
-				//超过最后一页,赋值为最后一页
-				if ( page > this.totalPage ) {
-					page = this.totalPage;
-				}
-				this.goPage(page);
+				this.upRecord(percent);
 			},
-			goPage (page) {
-				let book = {
-					path: this.path,
-					page: page
+			upRecord (percent) {
+				if ( this.timer ) {
+					clearTimeout(this.timer);
 				}
-				this.updateBookPage(book);
-				this.$emit('pageTo', page);
+				this.timer = setTimeout(() => {
+					let record = parseInt((percent / 100) * this.bookInfo.length);
+					this.updateBookRecord({
+						path: this.path,
+						record: record
+					})
+				}, 200)
 			}
 		},
 		watch: {
-			progress (val) {
-				this.bookPercent = val;
-			},
 			light (val) {
 				this.lightPercent = val;
 			},
@@ -285,14 +318,14 @@
 		border-bottom-width: 1px;
 		border-bottom-color: #3D3D3D;
 		border-bottom-style: solid;
-		height: 60px;
+		height: 100rpx;
 		align-items: center;
 	}
 	.progress-btn {
 		display: flex;
 		flex-direction: column;
 		justify-content: center;
-		width: 45px;
+		width: 90rpx;
 	}
 	.progress-prev {
 		display: flex;
@@ -320,13 +353,13 @@
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		width: 35px;
+		width: 70rpx;
 	}
 	.skin-mode {
 		display: flex;
 		flex-direction: column;
 		width: 50%;
-		height: 40px;
+		height: 80rpx;
 		border-radius: 5px;
 		margin: 0 5px;
 		justify-content: center;
@@ -339,7 +372,7 @@
 		border-style: solid;
 		border-color: #8A8A8A;
 		flex: 1;
-		height: 38px;
+		height: 70rpx;
 		border-radius: 5px;
 		margin: 0 5px;
 		justify-content: center;
@@ -347,7 +380,7 @@
 	}
 	.font-text {
 		color: #8A8A8A;
-		font-size: 14px;
+		font-size: 28rpx;
 		margin: 5px;
 	}
 	.scroll-box {
@@ -358,13 +391,13 @@
 		border-width: 1px;
 		border-style: solid;
 		border-color: #8A8A8A;
-		height: 35px;
+		height: 70rpx;
 		justify-content: center;
 		align-items: center;
 		border-radius: 5px;
 	}
 	.scroll-text {
-		font-size: 14px;
+		font-size: 28rpx;
 		color: #8A8A8A;
 	}
 	.scrollActived {
@@ -379,18 +412,18 @@
 		border-width: 1px;
 		border-style: solid;
 		border-color: #8A8A8A;
-		height: 38px;
+		height: 65rpx;
 		justify-content: center;
 		align-items: center;
 		border-radius: 5px;
 	}
 	.chapter-text {
-		font-size: 14px;
+		font-size: 28rpx;
 		color: #8A8A8A;
 	}
 	.bottom-line {
 		justify-content: space-between;
-		height: 65px;
+		height: 110rpx;
 	}
 	.bottom-box {
 		flex: 1;
@@ -410,6 +443,6 @@
 	}
 	.bottom-name {
 		color: #8A8A8A;
-		font-size: 16px;
+		font-size: 28rpx;
 	}
 </style>
