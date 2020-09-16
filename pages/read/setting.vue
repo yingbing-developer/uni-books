@@ -79,6 +79,12 @@
 					</view>
 				</view>
 				<view class="bottom-box">
+					<view class="bottom-item" @tap="$refs.catalog.show()">
+						<c-icon name="pushpin-fill" :size="28" color="#8A8A8A"></c-icon>
+						<text class="bottom-name">书签</text>
+					</view>
+				</view>
+				<!-- <view class="bottom-box">
 					<view class="bottom-item" v-if="readMode.scroll == 'paging'" @tap="changeScrollMode('scroll')">
 						<c-icon name="scroll" :size="28" color="#8A8A8A"></c-icon>
 						<text class="bottom-name">滚动</text>
@@ -87,7 +93,7 @@
 						<c-icon name="paging" :size="28" color="#8A8A8A"></c-icon>
 						<text class="bottom-name">翻页</text>
 					</view>
-				</view>
+				</view> -->
 				<view class="bottom-box">
 					<view class="bottom-item" v-if="skinMode == 'default'" @tap="changeSkin('night')">
 						<c-icon name="night" :size="28" color="#8A8A8A"></c-icon>

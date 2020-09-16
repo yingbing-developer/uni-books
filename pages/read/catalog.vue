@@ -1,6 +1,6 @@
 <template>
-	<view class="catalog" @touchmove.stop.prevent="" v-if="isShow">
-		<view class="mask" @tap="hide" :style="{opacity: opac}"></view>
+	<view class="catalog">
+		<view class="mask" @tap="hide" :style="{opacity: opac}" @touchmove.stop.prevent="" v-if="isShow"></view>
 		<view class="popup" :style="{'background-color': skinColor.menuBgColor, transform: 'translateX(' + lateY + ')'}">
 			<block v-if="catalog.length > 0">
 				<view class="title" :style="{color: skinColor.titleColor}">
@@ -79,7 +79,7 @@
 				setTimeout(() => {
 					this.lateY = 0;
 					this.opac = 0.4;
-				}, 100)
+				}, 20)
 			},
 			hide () {
 				this.lateY = '100%';
@@ -101,6 +101,7 @@
 
 <style scoped>
 	.catalog {
+		pointer-events: none;
 		position: fixed;
 		top: 0;
 		left: 0;

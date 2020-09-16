@@ -10,7 +10,7 @@ const store = new Vuex.Store({
     state: {
 		skin: uni.getStorageSync(SKIN) || 'default', //皮肤
 		books: uni.getStorageSync(BOOKS) || [],//导入的书籍列表
-		read: uni.getStorageSync(READ) || {scroll: 'scroll', fontSize: 20, light: 1},//阅读模式包含字体大小，翻页方式
+		read: uni.getStorageSync(READ) || {scroll: 'paging', fontSize: 20, light: 1},//阅读模式包含字体大小，翻页方式
 		path: uni.getStorageSync(PATH) || ''//上次访问的文件夹路径
 	},
 	getters: {
