@@ -79,7 +79,7 @@
 					</view>
 				</view>
 				<view class="bottom-box">
-					<view class="bottom-item" @tap="$refs.catalog.show()">
+					<view class="bottom-item" @tap="$refs.pushpin.show()">
 						<c-icon name="pushpin-fill" :size="28" color="#8A8A8A"></c-icon>
 						<text class="bottom-name">书签</text>
 					</view>
@@ -106,7 +106,12 @@
 				</view>
 			</view>
 		</view>
-		<catalog :path="path" :catalog="catalog" ref="catalog"></catalog>
+		
+		<!-- 目录 -->
+		<catalog :path="path" title="章节目录" :catalog="catalog" ref="catalog" showClear></catalog>
+		
+		<!-- 书签 -->
+		<catalog :path="path" title="书签" :catalog="pushpin" ref="pushpin" showClear></catalog>
 	</view>
 </template>
 
@@ -147,7 +152,7 @@
 			}
 		},
 		computed: {
-			...mapGetters(['bookList', 'readMode']),
+			...mapGetters(['bookList', 'readMode', 'pushpinList']),
 			bookInfo () {
 				return this.bookList[indexOf(this.bookList, this.path, 'path')];
 			},
@@ -177,6 +182,16 @@
 						}
 					}
 				}
+			},
+			//书签
+			pushpin () {
+				let arr = []
+				arr = this.pushpinList.filter((item) => {
+					if ( item.path == this.path ) {
+						return item;
+					}
+				})
+				return arr;
 			}
 		},
 		created () {

@@ -1,10 +1,11 @@
 <template>
-	<view class="catalog">
-		<view class="mask" @tap="hide" :style="{opacity: opac}" @touchmove.stop.prevent="" v-if="isShow"></view>
+	<view class="catalog" @touchmove.stop.prevent="" v-if="isShow">
+		<view class="mask" @tap.stop="hide" :style="{opacity: opac}"></view>
 		<view class="popup" :style="{'background-color': skinColor.menuBgColor, transform: 'translateX(' + lateY + ')'}">
 			<block v-if="catalog.length > 0">
 				<view class="title" :style="{color: skinColor.titleColor}">
-					章节目录
+					<text class="title-text">{{title}}</text>
+					<text class="clear" v-if="showClear">清空</text>
 				</view>
 				<scroll-view class="scroll-view" scroll-y="true" :scroll-into-view="'catalog_' + scrollTo">
 					<view
@@ -21,7 +22,7 @@
 			</block>
 			<view class="scroll-view" v-else>
 				<view class="nocata" :style="{color: skinColor.menuTitleColor}">
-					暂无章节目录
+					暂无{{title}}
 				</view>
 			</view>
 		</view>
@@ -44,6 +45,14 @@
 			path: {
 				type: String,
 				default: ''
+			},
+			title: {
+				type: String,
+				default: ''
+			},
+			showClear: {
+				type: Boolean,
+				default: false
 			}
 		},
 		data () {
@@ -101,7 +110,6 @@
 
 <style scoped>
 	.catalog {
-		pointer-events: none;
 		position: fixed;
 		top: 0;
 		left: 0;
@@ -129,7 +137,16 @@
 	}
 	.title {
 		padding: 40rpx 10rpx;
+		display: flex;
+		justify-content: space-between;
+	}
+	.title-text {
 		font-size: 35rpx;
+	}
+	.clear {
+		color: #DD524D;
+		font-size: 25rpx;
+		margin-right: 10rpx;
 	}
 	.scroll-view {
 		flex: 1;

@@ -6,12 +6,14 @@ const SKIN = 'UNI_BOOK_SKIN'
 const BOOKS = 'UNI_BOOK_LIST'
 const PATH = 'UNI_BOOK_PATH'
 const READ = 'UNI_BOOK_READ'
+const PIN = 'UNI_BOOK_PIN'
 const store = new Vuex.Store({
     state: {
 		skin: uni.getStorageSync(SKIN) || 'default', //皮肤
 		books: uni.getStorageSync(BOOKS) || [],//导入的书籍列表
 		read: uni.getStorageSync(READ) || {scroll: 'paging', fontSize: 20, light: 1},//阅读模式包含字体大小，翻页方式
-		path: uni.getStorageSync(PATH) || ''//上次访问的文件夹路径
+		path: uni.getStorageSync(PATH) || '',//上次访问的文件夹路径
+		pushpin: uni.getStorageSync(PIN) || []//书签
 	},
 	getters: {
 		//当前皮肤模式
@@ -62,6 +64,9 @@ const store = new Vuex.Store({
 		},
 		bookList (state) {
 			return state.books;
+		},
+		pushpinList (state) {
+			return state.pushpin;
 		},
 		pathHistory (state) {
 			return state.path;
@@ -155,6 +160,20 @@ const store = new Vuex.Store({
 		changeLight (state, light) {
 			state.read.light = light;
 			uni.setStorageSync(READ, state.read);
+		},
+		//保存书签
+		savePushpin (state, pin) {
+			state.pushpin.push(pin);
+			uni.setStorageSync(PIN, state.pushpin);
+		},
+		//清空书签
+		clearPushpin (state, path) {
+			state.pushpin = state.pushpin.filter((item) => {
+				if ( item.path != path ) {
+					return item
+				}
+			});
+			uni.setStorageSync(PIN, state.pushpin);
 		}
 	},
     actions: {}
