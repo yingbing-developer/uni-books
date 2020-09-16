@@ -113,12 +113,7 @@
 				let touch = e.touches[0];
 				//触摸移动的距离加上进度条本身进度为当前进度
 				this.percent = parseFloat(((touch.pageX - this.pointX) / this.width * 100).toFixed(2)) + this.oldPercent;
-				if ( this.percent < 0 ) {
-					this.percent = 0
-				}
-				if ( this.percent > 100 ) {
-					this.percent = 100
-				}
+				this.setPercent();
 			},
 			//圆点触摸结束
 			touchend (e) {
@@ -133,6 +128,16 @@
 				let touch = e.touches[0];
 				this.percent = parseFloat(((touch.pageX - this.start) / this.width * 100).toFixed(2));
 				this.oldPercent = this.percent;
+				this.setPercent();
+			},
+			setPercent () {
+				if ( this.percent < 0 ) {
+					this.percent = 0
+				}
+				if ( this.percent > 100 ) {
+					this.percent = 100
+				}
+				this.$emit('input', this.percent);
 			}
 		},
 		watch: {
@@ -144,15 +149,6 @@
 					val = 100
 				}
 				this.percent = val;
-			},
-			percent (val) {
-				if ( val < 0 ) {
-					val = 0
-				}
-				if ( val > 100 ) {
-					val = 100
-				}
-				this.$emit('input', val);
 			}
 		}
 	}

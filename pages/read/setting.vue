@@ -11,7 +11,7 @@
 					</view>
 				</view>
 				<view class="progress">
-					 <c-progress :value="progress" @input="upProgress" itemShow></c-progress>
+					 <c-progress :value="progress" @input="upRecord" itemShow></c-progress>
 				</view>
 				<view class="progress-btn progress-next">
 					<view @tap="nextPages">

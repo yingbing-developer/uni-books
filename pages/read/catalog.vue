@@ -90,11 +90,10 @@
 			},
 			//跳往章节
 			selectCatalog (index) {
-				let book = {
+				this.updateBookRecord({
 					path: this.path,
 					record: index
-				}
-				this.updateBookRecord(book);
+				});
 			}
 		}
 	}

@@ -221,7 +221,7 @@
 				myDom.setOption(this.domProp);
 			},
 			//获取内容
-			getContent () {
+			async getContent () {
 				const pages = getCurrentPages();
 				const page = pages[pages.length - 1];
 				const path = page.options.path;
@@ -280,8 +280,23 @@
 				
 				//获取新插入的文本容器
 				const content = contents[contents.length - 1];
-				let contentSync = null;
 				//遍历文本一个字符一个字符的插入
+				// for ( let i in result ) {
+				// 	content.textContent += result[i];
+				// 	if ( ( parseInt(i) + 1) % 10 == 0 ) {
+				// 		if ( content.offsetHeight > this.viewHeight ) {
+				// 			for ( let j = content.textContent.length - 1; j >= 0; j-- ) {
+				// 				content.textContent = content.textContent.substr(0, j);
+				// 				if ( content.offsetHeight <= this.viewHeight ) {
+				// 					//当前页内容最后的位置
+				// 					this.nowIndex[1] = this.nowIndex[0] + content.textContent.length;
+				// 					break;
+				// 				}
+				// 			}
+				// 		}
+				// 	}
+				// }
+				let contentSync = null;
 				for ( let i in result ) {
 					content.textContent = contentSync ? contentSync + result[i] : result[i];
 					if ( content.offsetHeight > this.viewHeight ) {
@@ -549,6 +564,8 @@
 	.touch-item {
 		width: 100%;
 		height: 200rpx;
-		border: 1px solid #21C088;
+	}
+	.touch-prev, .touch-next {
+		height: 70%;
 	}
 </style>
