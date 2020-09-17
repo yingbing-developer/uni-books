@@ -7,7 +7,7 @@
 					<text class="title-text">{{title}}</text>
 					<text class="clear" v-if="showClear">清空</text>
 				</view>
-				<scroll-view class="scroll-view" scroll-y="true" :scroll-into-view="'catalog_' + scrollTo">
+				<scroll-view class="scroll-view" scroll-y="true" :scroll-into-view="'catalog_' + scrollTo" v-if="ready">
 					<view
 					class="list actived"
 					:id="'catalog_' + index"
@@ -59,7 +59,8 @@
 			return {
 				isShow: false,
 				lateY: '100%',
-				opac: 0
+				opac: 0,
+				ready: false
 			}
 		},
 		computed: {
@@ -88,11 +89,15 @@
 				setTimeout(() => {
 					this.lateY = 0;
 					this.opac = 0.4;
+					setTimeout(() => {
+						this.ready = true;
+					}, 320)
 				}, 20)
 			},
 			hide () {
 				this.lateY = '100%';
 				this.opac = 0;
+				this.ready = false;
 				setTimeout(() => {
 					this.isShow = false;
 				}, 300)

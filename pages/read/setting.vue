@@ -73,13 +73,13 @@
 			
 			<view class="read-board-line bottom-line">
 				<view class="bottom-box">
-					<view class="bottom-item" @tap="$refs.catalog.show()">
+					<view class="bottom-item" @tap="openSubNvue('catalog')">
 						<c-icon name="menu" :size="28" color="#8A8A8A"></c-icon>
 						<text class="bottom-name">目录</text>
 					</view>
 				</view>
 				<view class="bottom-box">
-					<view class="bottom-item" @tap="$refs.pushpin.show()">
+					<view class="bottom-item" @tap="openSubNvue('pushpin')">
 						<c-icon name="pushpin-fill" :size="28" color="#8A8A8A"></c-icon>
 						<text class="bottom-name">书签</text>
 					</view>
@@ -108,10 +108,10 @@
 		</view>
 		
 		<!-- 目录 -->
-		<catalog :path="path" title="章节目录" :catalog="catalog" ref="catalog" showClear></catalog>
+		<!-- <catalog :path="path" title="章节目录" :catalog="catalog" ref="catalog" showClear></catalog> -->
 		
 		<!-- 书签 -->
-		<catalog :path="path" title="书签" :catalog="pushpin" ref="pushpin" showClear></catalog>
+		<!-- <catalog :path="path" title="书签" :catalog="pushpin" ref="pushpin" showClear></catalog> -->
 	</view>
 </template>
 
@@ -121,7 +121,7 @@
 	import { indexOf } from '@/common/js/util.js'
 	import CIcon from '@/components/c-icon/c-icon.nvue'
 	import CProgress from '@/components/progress/progress.nvue'
-	import Catalog from './catalog.vue'
+	// import Catalog from './catalog.vue'
 	export default {
 		mixins: [skinMixin],
 		props: {
@@ -206,10 +206,10 @@
 				}, 100)
 			},
 			hide () {
-				if ( this.$refs.catalog.isShow ) {
-					this.$refs.catalog.hide();
-					return;
-				}
+				// if ( this.$refs.catalog.isShow ) {
+				// 	this.$refs.catalog.hide();
+				// 	return;
+				// }
 				this.lateY = '100%';
 				setTimeout(() => {
 					this.isShow = false;
@@ -292,6 +292,18 @@
 						record: record
 					})
 				}, 200)
+			},
+			openSubNvue (type) {
+				const subNVue = uni.getSubNVueById('catalog')
+				 //向子窗体传值
+				// subNvue.postMessage({
+				//     catalog: this.catalog
+				// })
+				// 打开 nvue 子窗体 
+				subNVue.show('slide-in-right', 300, function(){  
+				    // 打开后进行一些操作...  
+				    //   
+				});
 			}
 		},
 		watch: {
@@ -305,7 +317,7 @@
 		components: {
 			CIcon,
 			CProgress,
-			Catalog
+			// Catalog
 		}
 	}
 </script>

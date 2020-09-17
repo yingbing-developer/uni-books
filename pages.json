@@ -27,7 +27,21 @@
 		{
 			"path": "pages/read/index",
 			"style": {
-				"navigationStyle": "custom"
+				"navigationStyle": "custom",
+				"app-plus": {
+				    "subNVues":[{
+				        "id": "catalog", // 唯一标识
+				        "path": "pages/read/catalog.nvue", // 页面路径
+				        "type": "popup",  //这里不需要
+				        "style": {
+							"position": "dock",
+				            "dock": "right",
+							"mask": "rgba(0,0,0,0.3)",
+				            "width": "400upx",
+				            "height": "100%"
+				        }
+				    }]
+				}
 			}
 		}
 	],

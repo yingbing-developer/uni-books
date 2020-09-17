@@ -1,0 +1,88 @@
+<template>
+    <div class="catalog" :style="{'background-color': skinColor.menuBgColor}">
+		<block v-if="catalog.length > 0">
+			<view class="title" :style="{color: skinColor.titleColor}">
+				<text class="title-text">{{title}}</text>
+				<text class="clear" v-if="showClear">清空</text>
+			</view>
+			<list>
+				<cell v-for="(item, index) in catalog" :key='index'>
+					<view
+					class="list actived"
+					ref="catalog"
+					:class="{catalog_actived: scrollTo == index}"
+					:style="{color: skinColor.menuTitleColor}">
+						{{item.title}}
+					</view>
+				</cell>
+			</list>
+		</block>
+		<view class="nodata-view" v-else>
+			<text class="nodata" :style="{color: skinColor.menuTitleColor}">暂无{{title}}</text>
+		</view>
+    </div>
+</template>
+
+<script>
+	import { skinMixin } from '@/common/mixin/index.js';
+    export default {
+		mixins: [skinMixin],
+		data() {
+			return {
+				catalog: [],
+			}
+		},
+		created() {
+			// const subNVue = uni.getSubNVueById('subNvue');
+			// subNvue.onMessage((data) => {
+			// 	this.catalog = data.catalog;
+			//     console.log('监听来自所属页面的 message' + JSON.stringify(data));
+			// })
+		},
+        methods: {
+			toMineInfo(){
+				
+			},
+            hideDrawer() {
+                uni.getCurrentSubNVue().hide('auto')
+            },
+			clickitem(e) {
+				uni.$emit('drawer-page', e);
+			}
+        }
+    }
+</script>
+
+<style scoped>
+	.catalog {
+		flex: 1;
+	}
+	.title {
+		padding: 40rpx 10rpx;
+		flex-direction: row;
+		justify-content: space-between;
+	}
+	.title-text {
+		font-size: 35rpx;
+	}
+	.clear {
+		color: #DD524D;
+		font-size: 25rpx;
+		margin-right: 10rpx;
+	}
+	.list {
+		padding: 15rpx 10rpx;
+		font-size: 28rpx;
+	}
+	.catalog_actived {
+		color: #DD524D!important;
+	}
+	.nodata-view {
+		flex: 1;
+		align-items: center;
+		justify-content: center;
+	}
+	.nodata {
+		font-size: 28rpx;
+	}
+</style>
