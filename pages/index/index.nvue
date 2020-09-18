@@ -5,17 +5,21 @@
 				<c-icon name="menu" size="25" :color="skinColor.iconColor"></c-icon>
 			</view>
 			<view class="nav-right" slot="right">
+				<view style="opacity: 0;">
+					<c-icon name="more" size="25" :color="skinColor.iconColor"></c-icon>
+				</view>
 				<view @tap="routePush('/pages/search/index')">
 					<c-icon name="search" size="25" :color="skinColor.iconColor"></c-icon>
 				</view>
-				<view>
+				<view @tap="opearteFilter">
 					<c-icon name="filter" size="25" :color="skinColor.iconColor"></c-icon>
 				</view>
-				<view>
+				<!-- <view>
 					<c-icon name="more" size="25" :color="skinColor.iconColor"></c-icon>
-				</view>
+				</view> -->
 			</view>
 		</nav-bar>
+		<c-search v-if="showFilter" @confirm="setNameFilter"></c-search>
 		<waterfall :scrollable="scrollable" @scroll="scroll" column-count="<integer>" column-width="120" column-gap="10" left-gap="10" right-gap="10">
 		    <cell v-for="(item, index) in books" :key="item.id">
 				<view class="book" ref="list" @tap="routePush('/pages/read/index?path=' + item.path)" @longpress="showAction(index)">
@@ -61,6 +65,7 @@
 <script>
 	import CIcon from '@/components/c-icon/c-icon.nvue'
 	import CMenu from '@/pages/menu/menu.nvue'
+	import CSearch from '@/components/search/search.nvue'
 	import NoData from '@/components/no-data/no-data.nvue'
 	import ActionSheet from '@/components/action-sheet/action-sheet.nvue'
 	import { skinMixin, menuTouchMixin } from '@/common/mixin/index.js'
@@ -79,7 +84,11 @@
 				//操作列表
 				actions: [],
 				//触发操作列表的下标
-				actionIndex: ''
+				actionIndex: '',
+				//名称过滤
+				nameFilter: '',
+				//是否显示过滤器
+				showFilter: false
 			}
 		},
 		filters: {
@@ -97,14 +106,14 @@
 				let books = [];
 				if ( this.current == 0 ) {
 					this.bookList.forEach((item) => {
-						if ( !item.isReaded ) {
+						if ( !item.isReaded && item.name.indexOf(this.nameFilter) > -1 ) {
 							books.push(item)
 						}
 					})
 				}
 				if ( this.current == 1 ) {
 					this.bookList.forEach((item) => {
-						if ( item.isReaded ) {
+						if ( item.isReaded && item.name.indexOf(this.nameFilter) > -1  ) {
 							books.push(item)
 						}
 					})
@@ -175,6 +184,14 @@
 					this.current = 0;
 				}
 			},
+			//打开/隐藏名称过滤器
+			opearteFilter () {
+				this.showFilter = !this.showFilter;
+			},
+			//设置名称过滤
+			setNameFilter (e) {
+				this.nameFilter = e;
+			},
 			scrollTop () {
 				dom.scrollToElement(this.$refs['list'][0]);
 			},
@@ -207,7 +224,8 @@
 			CIcon,
 			CMenu,
 			NoData,
-			ActionSheet
+			ActionSheet,
+			CSearch,
 		}
 	}
 </script>

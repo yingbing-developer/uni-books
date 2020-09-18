@@ -41,7 +41,7 @@
 		</view>
 		
 		<!-- 阅读设置 -->
-		<read-setting :catalog="catalog" :path="path" ref="readSetting"></read-setting>
+		<read-setting :markTitle="markTitle" :catalog="catalog" :path="path" ref="readSetting"></read-setting>
 	</view>
 </template>
 
@@ -56,7 +56,8 @@
 		mixins: [skinMixin],
 		data () {
 			return {
-				catalog: []
+				catalog: [],
+				markTitle: ''
 			}
 		},
 		computed: {
@@ -119,16 +120,16 @@
 			setCatalog (e) {
 				this.catalog = e.catalog;
 			},
-			//跳往章节
-			selectCatalog (e) {
-				console.log(e);
-			},
 			//设置文本总长度
 			updatetLength (e) {
 				this.updateBookLength({
 					path: this.path,
 					length: e.length
 				})
+			},
+			//设置书签的前50个字
+			setMarkTitle (e) {
+				this.markTitle = e.title;
 			},
 			//弹窗
 			toast (e) {
@@ -139,9 +140,11 @@
 			}
 		},
 		onBackPress (event) {
-			if ( this.$refs.readSetting.isShow ) {
-				this.$refs.readSetting.hide();
-				return true;
+			if ( event.from == 'backbutton' ) {
+				if ( this.$refs.readSetting.isShow ) {
+					this.$refs.readSetting.hide();
+					return true;
+				}
 			}
 			return false;
 		},
@@ -221,39 +224,39 @@
 				// 观测更新的数据在 view 层可以直接访问到
 				myDom.setOption(this.domProp);
 			},
-			//获取内容
-			getContent () {
-				plus.io.resolveLocalFileSystemURL('file://' + this.domProp.path, ( entry ) => {
-					entry.file( ( file ) => {
-						let reader = new plus.io.FileReader();
-						reader.onloadend = ( e ) => {
-							this.bookContent = e.target.result;
-							this.updateLength();
-							this.nowIndex[0] = this.domProp.record;
-							this.setNowPage();
-							this.getCatalog();
-						};
-						reader.readAsText( file, 'gb2312' );
-					}, ( fail ) => {
-						console.log("Request file system failed: " + fail.message);
-					});
-				}, ( fail ) => {
-					console.log( "Request file system failed: " + fail.message );
-				});
-			},
-			//获取内容
+			//获取内容 调试用
 			// getContent () {
-			// 	const contentBox = document.getElementById('contentBox');
-			// 	let ReadTxt = plus.android.importClass('com.itstudy.io.GetText');
-			// 	let readTxt = new ReadTxt();
-			// 	this.bookContent = readTxt.getTextFromText(plus.io.convertLocalFileSystemURL(this.domProp.path));
-			// 	this.$nextTick(() => {
-			// 		this.updateLength();
-			// 		this.nowIndex[0] = this.domProp.record;
-			// 		this.setNowPage();
-			// 		this.getCatalog();
-			// 	})
+			// 	plus.io.resolveLocalFileSystemURL('file://' + this.domProp.path, ( entry ) => {
+			// 		entry.file( ( file ) => {
+			// 			let reader = new plus.io.FileReader();
+			// 			reader.onloadend = ( e ) => {
+			// 				this.bookContent = e.target.result;
+			// 				this.updateLength();
+			// 				this.nowIndex[0] = this.domProp.record;
+			// 				this.setNowPage();
+			// 				this.getCatalog();
+			// 			};
+			// 			reader.readAsText( file, 'gb2312' );
+			// 		}, ( fail ) => {
+			// 			console.log("Request file system failed: " + fail.message);
+			// 		});
+			// 	}, ( fail ) => {
+			// 		console.log( "Request file system failed: " + fail.message );
+			// 	});
 			// },
+			//获取内容 正式用
+			getContent () {
+				const contentBox = document.getElementById('contentBox');
+				let ReadTxt = plus.android.importClass('com.itstudy.io.GetText');
+				let readTxt = new ReadTxt();
+				this.bookContent = readTxt.getTextFromText(plus.io.convertLocalFileSystemURL(this.domProp.path));
+				this.$nextTick(() => {
+					this.updateLength();
+					this.nowIndex[0] = this.domProp.record;
+					this.setNowPage();
+					this.getCatalog();
+				})
+			},
 			//获取章节目录
 			getCatalog () {
 				const reg = new RegExp(/(第?[一二两三四五六七八九十○零百千万亿0-9１２３４５６７８９０]{1,6}[章回卷节折篇幕集部]?[.\s][^\n]*)[_,-]?/g);
@@ -325,6 +328,7 @@
 						contentSync = content.textContent;
 					}
 				}
+				this.setMarkTitle();
 			},
 			//设置上一页内容
 			setPrevPage () {
@@ -382,6 +386,7 @@
 					}
 				}
 				this.updateRecord(this.nowIndex[0]);
+				this.setMarkTitle();
 			},
 			//阅读设置改变
 			readChange (newVal, oldVal) {
@@ -518,6 +523,15 @@
 					cid: this._$id,
 					method: 'updatetLength',
 					args: {'length': this.bookContent.length}
+				})
+			},
+			//设置标签的前50个字
+			setMarkTitle () {
+				const title = document.getElementsByClassName('content')[0].textContent;
+				UniViewJSBridge.publishHandler('onWxsInvokeCallMethod', {
+					cid: this._$id,
+					method: 'setMarkTitle',
+					args: {'title': title.substr(0, 50)}
 				})
 			}
 		}

@@ -1,8 +1,23 @@
 <template>
 	<view class="read-menu" v-if="isShow" @touchmove.stop.prevent="">
 		<view class="mask" @tap="hide"></view>
-		<view class="read-board" ref="popup" :style="{transform: 'translateY(' + lateY + ')'}">
-			
+		
+		<!-- 顶部 -->
+		<view class="read-top" :style="{transform: 'translateY(' + topLateY + ')'}">
+			<nav-bar :title="bookInfo.name" bgColor="#333333" titleColor="#EFEFEF">
+				<view class="nav-right" slot="right">
+					<view @tap="addBookmark">
+						<c-icon name="bookmark" :size="28" color="#EFEFEF"></c-icon>
+					</view>
+				</view>
+			</nav-bar>
+		</view>
+		
+		<!-- 底部设置 -->
+		<view class="read-board" :style="{transform: 'translateY(' + bottomLateY + ')'}">
+			<view class="percent">
+				{{progress}}%
+			</view>
 			<!-- 阅读进度 -->
 			<view class="read-board-line">
 				<view class="progress-btn progress-prev">
@@ -79,7 +94,7 @@
 					</view>
 				</view>
 				<view class="bottom-box">
-					<view class="bottom-item" @tap="openSubNvue('pushpin')">
+					<view class="bottom-item" @tap="openSubNvue('bookmark')">
 						<c-icon name="pushpin-fill" :size="28" color="#8A8A8A"></c-icon>
 						<text class="bottom-name">书签</text>
 					</view>
@@ -106,12 +121,6 @@
 				</view>
 			</view>
 		</view>
-		
-		<!-- 目录 -->
-		<!-- <catalog :path="path" title="章节目录" :catalog="catalog" ref="catalog" showClear></catalog> -->
-		
-		<!-- 书签 -->
-		<!-- <catalog :path="path" title="书签" :catalog="pushpin" ref="pushpin" showClear></catalog> -->
 	</view>
 </template>
 
@@ -121,11 +130,15 @@
 	import { indexOf } from '@/common/js/util.js'
 	import CIcon from '@/components/c-icon/c-icon.nvue'
 	import CProgress from '@/components/progress/progress.nvue'
-	// import Catalog from './catalog.vue'
+	import NavBar from '@/components/nav-bar/nav-bar.nvue'
 	export default {
 		mixins: [skinMixin],
 		props: {
 			path: {
+				type: String,
+				default: ''
+			},
+			markTitle: {
 				type: String,
 				default: ''
 			},
@@ -148,11 +161,12 @@
 					title: '左右翻页',
 					value: 'paging'
 				}],
-				lateY: '100%'
+				topLateY: '-100%',
+				bottomLateY: '100%'
 			}
 		},
 		computed: {
-			...mapGetters(['bookList', 'readMode', 'pushpinList']),
+			...mapGetters(['bookList', 'readMode', 'bookmarks']),
 			bookInfo () {
 				return this.bookList[indexOf(this.bookList, this.path, 'path')];
 			},
@@ -184,9 +198,9 @@
 				}
 			},
 			//书签
-			pushpin () {
+			bookmark () {
 				let arr = []
-				arr = this.pushpinList.filter((item) => {
+				arr = this.bookmarks.filter((item) => {
 					if ( item.path == this.path ) {
 						return item;
 					}
@@ -198,19 +212,24 @@
 			this.lightPercent = this.light;
 		},
 		methods: {
-			...mapMutations(['changeFontSize', 'changeScrollMode', 'updateBookPage', 'changeLight', 'updateBookRecord']),
+			...mapMutations(['changeFontSize', 'changeScrollMode', 'changeLight', 'updateBookRecord', 'saveBookmark', 'clearBookmark']),
 			show () {
 				this.isShow = true;
+				uni.$on('setting', (data) => {
+					//清空书签
+					if ( data.type == 'clearMark' ) {
+						this.clearMark();
+					}
+				})
 				setTimeout(() => {
-					this.lateY = 0;
+					this.topLateY = 0;
+					this.bottomLateY = 0;
 				}, 100)
 			},
 			hide () {
-				// if ( this.$refs.catalog.isShow ) {
-				// 	this.$refs.catalog.hide();
-				// 	return;
-				// }
-				this.lateY = '100%';
+				this.topLateY = '-100%';
+				this.bottomLateY = '100%';
+				uni.$off('setting');
 				setTimeout(() => {
 					this.isShow = false;
 				}, 300)
@@ -245,10 +264,11 @@
 			},
 			//下个章节
 			nextChapter () {
-				if ( this.catalog[this.chapterNow + 1] ) {
+				let flag = this.chapterNow >= 0 ? this.catalog[this.chapterNow + 1] : this.catalog[0];
+				if ( flag ) {
 					this.updateBookRecord({
 						path: this.path,
-						record: this.catalog[this.chapterNow + 1].index
+						record: flag.index
 					});
 				} else {
 					uni.showToast({
@@ -281,6 +301,32 @@
 				}
 				this.upRecord(percent);
 			},
+			//添加书签
+			addBookmark () {
+				this.saveBookmark({
+					path: this.path,
+					index: this.bookInfo.record,
+					title: this.markTitle
+				})
+			},
+			//清空书签
+			clearMark () {
+				uni.showModal({
+					title: '清空提示！',
+					content: '确认要清空本书籍保存的书签吗？',
+					success: (res) => {
+						if ( res.confirm ) {
+							this.clearBookmark(this.path);
+							uni.$emit('page-popup', {
+								path: this.path,
+							    title: '书签',
+							    list: this.bookmark,
+								showClear: this.bookmark.length > 0 ? true : false
+							});
+						}
+					}
+				})
+			},
 			upRecord (percent) {
 				if ( this.timer ) {
 					clearTimeout(this.timer);
@@ -293,17 +339,18 @@
 					})
 				}, 200)
 			},
+			//打开子窗体
 			openSubNvue (type) {
-				const subNVue = uni.getSubNVueById('catalog')
-				 //向子窗体传值
-				// subNvue.postMessage({
-				//     catalog: this.catalog
-				// })
-				// 打开 nvue 子窗体 
-				subNVue.show('slide-in-right', 300, function(){  
-				    // 打开后进行一些操作...  
-				    //   
+				const subNvue = uni.getSubNVueById('catalog');
+				//向子窗体传值
+				uni.$emit('page-popup', {  
+					path: this.path,
+				    title: type == 'catalog' ? '章节' : type == 'bookmark' ? '书签' : '',
+				    list: type == 'catalog' ? this.catalog : type == 'bookmark' ? this.bookmark : [],
+					showClear: type == 'bookmark' && this.bookmark.length > 0 ? true : false
 				});
+				// 打开 nvue 子窗体 
+				subNvue.show('slide-in-right', 400);
 			}
 		},
 		watch: {
@@ -317,7 +364,7 @@
 		components: {
 			CIcon,
 			CProgress,
-			// Catalog
+			NavBar
 		}
 	}
 </script>
@@ -337,6 +384,19 @@
 		right: 0;
 		bottom: 0;
 	}
+	.read-top {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		transition: transform .3s;
+	}
+	.nav-right {
+		display: flex;
+		justify-content: flex-end;
+		align-items: center;
+		flex: 1;
+	}
 	.read-board {
 		position: fixed;
 		background-color: #333333;
@@ -344,6 +404,34 @@
 		left: 0;
 		right: 0;
 		transition: transform .3s;
+	}
+	.percent {
+		position: absolute;
+		background-color: #333333;
+		color: #EFEFEF;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 25rpx;
+		border-radius: 5rpx;
+		width: 110rpx;
+		height: 70rpx;
+		top: -100rpx;
+		left: 50%;
+		transform: translateX(-50%);
+	}
+	.percent::after {
+		content: '';
+		display: block;
+		position: absolute;
+		left: 50%;
+		bottom: -20rpx;
+		transform: translateX(-50%);
+		width: 0;
+		height: 0;
+		border-left: 10rpx solid transparent;
+		border-right: 10rpx solid transparent;
+		border-top: 20rpx solid #333333;
 	}
 	.read-board-line {
 		display: flex;

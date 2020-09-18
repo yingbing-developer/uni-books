@@ -34,11 +34,13 @@
 				        "path": "pages/read/catalog.nvue", // 页面路径
 				        "type": "popup",  //这里不需要
 				        "style": {
-							"position": "dock",
-				            "dock": "right",
+							"position": "absolute",
+				            "right": "0",
+							"top": "0",
 							"mask": "rgba(0,0,0,0.3)",
-				            "width": "400upx",
-				            "height": "100%"
+				            "width": "500upx",
+				            "height": "100%",
+							"background": "transparent"
 				        }
 				    }]
 				}

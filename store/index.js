@@ -6,14 +6,14 @@ const SKIN = 'UNI_BOOK_SKIN'
 const BOOKS = 'UNI_BOOK_LIST'
 const PATH = 'UNI_BOOK_PATH'
 const READ = 'UNI_BOOK_READ'
-const PIN = 'UNI_BOOK_PIN'
+const MARK = 'UNI_BOOK_MARK'
 const store = new Vuex.Store({
     state: {
 		skin: uni.getStorageSync(SKIN) || 'default', //皮肤
 		books: uni.getStorageSync(BOOKS) || [],//导入的书籍列表
 		read: uni.getStorageSync(READ) || {scroll: 'paging', fontSize: 20, light: 1},//阅读模式包含字体大小，翻页方式
 		path: uni.getStorageSync(PATH) || '',//上次访问的文件夹路径
-		pushpin: uni.getStorageSync(PIN) || []//书签
+		bookmark: uni.getStorageSync(MARK) || []//书签
 	},
 	getters: {
 		//当前皮肤模式
@@ -50,12 +50,12 @@ const store = new Vuex.Store({
 					itemColor: '#3D3D3D',
 					navColor: '#3C3C3C',
 					iconColor: '#777777',
-					gapColor: '#8F8F8F',
+					gapColor: '#3F3F3F',
 					menuBgColor: '#373737',
 					menuIconColor: '#777777',
 					menuTitleColor: '#8F8F8F',
 					menuActiveColor: '#FAFAFA',
-					menuActiveBgColor: '#CACACA',
+					menuActiveBgColor: '#3F3F3F',
 					imgMask: 0.45,
 					readBackColor: '#393E41',
 					readTextColor: '#95A3A6'
@@ -65,8 +65,8 @@ const store = new Vuex.Store({
 		bookList (state) {
 			return state.books;
 		},
-		pushpinList (state) {
-			return state.pushpin;
+		bookmarks (state) {
+			return state.bookmark;
 		},
 		pathHistory (state) {
 			return state.path;
@@ -162,18 +162,33 @@ const store = new Vuex.Store({
 			uni.setStorageSync(READ, state.read);
 		},
 		//保存书签
-		savePushpin (state, pin) {
-			state.pushpin.push(pin);
-			uni.setStorageSync(PIN, state.pushpin);
+		saveBookmark (state, mark) {
+			//检测此书签是否重复
+			let flag = state.bookmark.some((item) => {
+				return item.index == mark.index
+			})
+			if ( !flag ) {
+				state.bookmark.push(mark);
+				uni.setStorageSync(MARK, state.bookmark);
+				uni.showToast({
+					icon: 'none',
+					title: '添加书签成功'
+				})
+			} else {
+				uni.showToast({
+					icon: 'none',
+					title: '已添加过此书签'
+				})
+			}
 		},
 		//清空书签
-		clearPushpin (state, path) {
-			state.pushpin = state.pushpin.filter((item) => {
+		clearBookmark (state, path) {
+			state.bookmark = state.bookmark.filter((item) => {
 				if ( item.path != path ) {
 					return item
 				}
 			});
-			uni.setStorageSync(PIN, state.pushpin);
+			uni.setStorageSync(MARK, state.bookmark);
 		}
 	},
     actions: {}

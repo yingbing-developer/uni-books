@@ -1,53 +1,94 @@
 <template>
     <div class="catalog" :style="{'background-color': skinColor.menuBgColor}">
-		<block v-if="catalog.length > 0">
-			<view class="title" :style="{color: skinColor.titleColor}">
-				<text class="title-text">{{title}}</text>
-				<text class="clear" v-if="showClear">清空</text>
-			</view>
-			<list>
-				<cell v-for="(item, index) in catalog" :key='index'>
-					<view
-					class="list actived"
-					ref="catalog"
-					:class="{catalog_actived: scrollTo == index}"
-					:style="{color: skinColor.menuTitleColor}">
-						{{item.title}}
-					</view>
-				</cell>
-			</list>
-		</block>
+		<view class="title">
+			<text class="title-text">{{title}}目录</text>
+		</view>
+		<view class="line" :style="{'background-color': skinColor.gapColor}">
+			<text class="line-text" :style="{color: skinColor.titleColor}">共{{list.length}}个{{title}}</text>
+			<text class="clear" v-if="showClear" @tap="clear">清空</text>
+		</view>
+		<list v-if="list.length > 0">
+			<cell v-for="(item, index) in list" :key='item.index'>
+				<view class="list actived" ref="list" @tap="clickItem(index)">
+					<text
+					class="list_text"
+					:style="{color: scrollTo == index ? '#DD524D' : skinColor.menuTitleColor}"
+					>{{item.title | removeBlank}}</text>
+				</view>
+			</cell>
+		</list>
 		<view class="nodata-view" v-else>
-			<text class="nodata" :style="{color: skinColor.menuTitleColor}">暂无{{title}}</text>
+			<text class="nodata" :style="{color: skinColor.menuTitleColor}">暂无{{title}}目录</text>
 		</view>
     </div>
 </template>
 
 <script>
 	import { skinMixin } from '@/common/mixin/index.js';
+	import { indexOf } from '@/common/js/util.js'
+	import { mapGetters, mapMutations } from 'vuex'
+	const dom = weex.requireModule('dom')
     export default {
 		mixins: [skinMixin],
 		data() {
 			return {
-				catalog: [],
+				list: [],
+				title: '',
+				path: '',
+				showClear: false
 			}
 		},
-		created() {
-			// const subNVue = uni.getSubNVueById('subNvue');
-			// subNvue.onMessage((data) => {
-			// 	this.catalog = data.catalog;
-			//     console.log('监听来自所属页面的 message' + JSON.stringify(data));
-			// })
+		filters: {
+			removeBlank (value) {
+				return value.replace(' ', '');
+			}
+		},
+		computed: {
+			...mapGetters(['bookList']),
+			bookInfo () {
+				return this.bookList[indexOf(this.bookList, this.path, 'path')];
+			},
+			scrollTo () {
+				for ( let i in this.list ) {
+					if ( i < this.list.length - 1 ) {
+						if ( this.bookInfo.record >= this.list[i].index && this.bookInfo.record < this.list[parseInt(i) + 1].index ) {
+							return i
+						}
+					} else {
+						if ( this.bookInfo.record >= this.list[i].index) {
+							return i
+						}
+					}
+				}
+			}
+		},
+		beforeCreate() {
+			uni.$on('page-popup', (data) => {  
+			    this.list = data.list;
+				this.title = data.title;
+				this.path = data.path;
+				this.showClear = data.showClear || false
+				setTimeout(() => {
+					dom.scrollToElement(this.$refs['list'][this.scrollTo], {animated: false});
+				}, 50);
+			})  
+		},
+		beforeDestroy () {
+			uni.$off('page-popup');
 		},
         methods: {
-			toMineInfo(){
-				
+			...mapMutations(['updateBookRecord']),
+			clickItem (index) {
+				this.updateBookRecord({
+					path: this.path,
+					record: this.list[index].index
+				});
+				dom.scrollToElement(this.$refs['list'][index], {animated: false});
 			},
-            hideDrawer() {
-                uni.getCurrentSubNVue().hide('auto')
-            },
-			clickitem(e) {
-				uni.$emit('drawer-page', e);
+			clear () {
+				uni.$emit('setting', {
+					type: 'clearMark'
+				});
 			}
         }
     }
@@ -58,24 +99,30 @@
 		flex: 1;
 	}
 	.title {
-		padding: 40rpx 10rpx;
+		padding: 40rpx 0;
+		align-items: center;
+	}
+	.title-text {
+		font-size: 32rpx;
+		color: #DD524D;
+	}
+	.line {
+		padding: 20rpx 30rpx;
 		flex-direction: row;
 		justify-content: space-between;
 	}
-	.title-text {
-		font-size: 35rpx;
+	.line-text {
+		font-size: 25rpx;
 	}
 	.clear {
 		color: #DD524D;
 		font-size: 25rpx;
-		margin-right: 10rpx;
 	}
 	.list {
-		padding: 15rpx 10rpx;
-		font-size: 28rpx;
+		padding: 15rpx 30rpx;
 	}
-	.catalog_actived {
-		color: #DD524D!important;
+	.list_text {
+		font-size: 28rpx;
 	}
 	.nodata-view {
 		flex: 1;
