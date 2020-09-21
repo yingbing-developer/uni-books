@@ -7,7 +7,7 @@
 			<nav-bar :title="bookInfo.name" bgColor="#333333" titleColor="#EFEFEF">
 				<view class="nav-right" slot="right">
 					<view @tap="addBookmark">
-						<c-icon name="bookmark" :size="28" color="#EFEFEF"></c-icon>
+						<c-icon name="bookmark" :size="42" color="#EFEFEF"></c-icon>
 					</view>
 				</view>
 			</nav-bar>
@@ -22,7 +22,7 @@
 			<view class="read-board-line">
 				<view class="progress-btn progress-prev">
 					<view @tap="prevPages">
-						<c-icon name="arrow-left" :size="30" color="#EFEFEF"></c-icon>
+						<c-icon name="arrow-left" :size="45" color="#EFEFEF"></c-icon>
 					</view>
 				</view>
 				<view class="progress">
@@ -30,7 +30,7 @@
 				</view>
 				<view class="progress-btn progress-next">
 					<view @tap="nextPages">
-						<c-icon name="arrow-right" :size="30" color="#EFEFEF"></c-icon>
+						<c-icon name="arrow-right" :size="45" color="#EFEFEF"></c-icon>
 					</view>
 				</view>
 			</view>
@@ -57,13 +57,13 @@
 				<!-- 亮度调整 -->
 				<view class="half-box">
 					<view class="light-btn">
-						<c-icon name="light" :size="30" color="#EFEFEF"></c-icon>
+						<c-icon name="light" :size="45" color="#EFEFEF"></c-icon>
 					</view>
 					<view class="progress">
 						 <c-progress v-model="lightPercent" itemShow></c-progress>
 					</view>
 					<view class="light-btn">
-						<c-icon name="light-fill" :size="23" color="#EFEFEF"></c-icon>
+						<c-icon name="light-fill" :size="34.5" color="#EFEFEF"></c-icon>
 					</view>
 				</view>
 				
@@ -89,13 +89,13 @@
 			<view class="read-board-line bottom-line">
 				<view class="bottom-box">
 					<view class="bottom-item" @tap="openSubNvue('catalog')">
-						<c-icon name="menu" :size="28" color="#8A8A8A"></c-icon>
+						<c-icon name="menu" :size="42" color="#8A8A8A"></c-icon>
 						<text class="bottom-name">目录</text>
 					</view>
 				</view>
 				<view class="bottom-box">
 					<view class="bottom-item" @tap="openSubNvue('bookmark')">
-						<c-icon name="pushpin-fill" :size="28" color="#8A8A8A"></c-icon>
+						<c-icon name="pushpin-fill" :size="42" color="#8A8A8A"></c-icon>
 						<text class="bottom-name">书签</text>
 					</view>
 				</view>
@@ -111,11 +111,11 @@
 				</view> -->
 				<view class="bottom-box">
 					<view class="bottom-item" v-if="skinMode == 'default'" @tap="changeSkin('night')">
-						<c-icon name="night" :size="28" color="#8A8A8A"></c-icon>
+						<c-icon name="night" :size="42" color="#8A8A8A"></c-icon>
 						<text class="bottom-name">夜间</text>
 					</view>
 					<view class="bottom-item" v-if="skinMode == 'night'" @tap="changeSkin('default')">
-						<c-icon name="light" :size="30" color="#8A8A8A"></c-icon>
+						<c-icon name="light" :size="45" color="#8A8A8A"></c-icon>
 						<text class="bottom-name">日间</text>
 					</view>
 				</view>
@@ -337,7 +337,7 @@
 						path: this.path,
 						record: record
 					})
-				}, 200)
+				}, 20)
 			},
 			//打开子窗体
 			openSubNvue (type) {
@@ -560,7 +560,7 @@
 		align-items: center;
 		height: 100%;
 		box-sizing: border-box;
-		padding: 8px 0;
+		padding: 12rpx 0;
 	}
 	.bottom-name {
 		color: #8A8A8A;

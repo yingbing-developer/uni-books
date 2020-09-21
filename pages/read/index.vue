@@ -7,8 +7,8 @@
 		<view id="readTop" class="read-top" :style="{color: skinColor.readTextColor, 'background-color': skinColor.readBackColor}">
 			<gap-bar></gap-bar>
 			<view class="read-top-line">
-				<text>{{bookInfo.name}}</text>
-				<text>{{progress}}%</text>
+				<text class="read-top-text" style="width: 80%;">{{bookInfo.name}}</text>
+				<text class="read-top-text">{{progress}}%</text>
 			</view>
 		</view>
 		
@@ -178,6 +178,10 @@
 			this.initMonitor();
 			this.initView();
 			this.getContent();
+			window.οnresize= () => {  
+				this.initLine();
+				this.setNowPage();
+			} 
 			// window.onscroll = () => {
 			// 	//为了保证兼容性，这里取两个值，哪个有值取哪一个
 			// 	//scrollTop就是触发滚轮事件时滚轮的高度
@@ -225,38 +229,38 @@
 				myDom.setOption(this.domProp);
 			},
 			//获取内容 调试用
-			// getContent () {
-			// 	plus.io.resolveLocalFileSystemURL('file://' + this.domProp.path, ( entry ) => {
-			// 		entry.file( ( file ) => {
-			// 			let reader = new plus.io.FileReader();
-			// 			reader.onloadend = ( e ) => {
-			// 				this.bookContent = e.target.result;
-			// 				this.updateLength();
-			// 				this.nowIndex[0] = this.domProp.record;
-			// 				this.setNowPage();
-			// 				this.getCatalog();
-			// 			};
-			// 			reader.readAsText( file, 'gb2312' );
-			// 		}, ( fail ) => {
-			// 			console.log("Request file system failed: " + fail.message);
-			// 		});
-			// 	}, ( fail ) => {
-			// 		console.log( "Request file system failed: " + fail.message );
-			// 	});
-			// },
-			//获取内容 正式用
 			getContent () {
-				const contentBox = document.getElementById('contentBox');
-				let ReadTxt = plus.android.importClass('com.itstudy.io.GetText');
-				let readTxt = new ReadTxt();
-				this.bookContent = readTxt.getTextFromText(plus.io.convertLocalFileSystemURL(this.domProp.path));
-				this.$nextTick(() => {
-					this.updateLength();
-					this.nowIndex[0] = this.domProp.record;
-					this.setNowPage();
-					this.getCatalog();
-				})
+				plus.io.resolveLocalFileSystemURL('file://' + this.domProp.path, ( entry ) => {
+					entry.file( ( file ) => {
+						let reader = new plus.io.FileReader();
+						reader.onloadend = ( e ) => {
+							this.bookContent = e.target.result;
+							this.updateLength();
+							this.nowIndex[0] = this.domProp.record;
+							this.setNowPage();
+							this.getCatalog();
+						};
+						reader.readAsText( file, 'gb2312' );
+					}, ( fail ) => {
+						console.log("Request file system failed: " + fail.message);
+					});
+				}, ( fail ) => {
+					console.log( "Request file system failed: " + fail.message );
+				});
 			},
+			//获取内容 正式用
+			// getContent () {
+			// 	const contentBox = document.getElementById('contentBox');
+			// 	let ReadTxt = plus.android.importClass('com.itstudy.io.GetText');
+			// 	let readTxt = new ReadTxt();
+			// 	this.bookContent = readTxt.getTextFromText(plus.io.convertLocalFileSystemURL(this.domProp.path));
+			// 	this.$nextTick(() => {
+			// 		this.updateLength();
+			// 		this.nowIndex[0] = this.domProp.record;
+			// 		this.setNowPage();
+			// 		this.getCatalog();
+			// 	})
+			// },
 			//获取章节目录
 			getCatalog () {
 				const reg = new RegExp(/(第?[一二两三四五六七八九十○零百千万亿0-9１２３４５６７８９０]{1,6}[章回卷节折篇幕集部]?[.\s][^\n]*)[_,-]?/g);
@@ -464,16 +468,6 @@
 				const top = document.getElementById('readTop');
 				const gap = document.getElementById('gapBar');
 				const contentBox = document.getElementById('contentBox');
-				//设置分页的首位索引
-				// this.nowIndex[0] = this.domProp.record;
-				// this.nowIndex[0] = 1000;
-				//设置页面
-				// let count = 3;
-				// while (count > 0) {
-				// 	let box = this.createContent();
-				// 	contentBox.appendChild(box);
-				// 	count--;
-				// }
 				this.initLine();
 				//设置顶部间隔高度
 				gap.style.height = top.offsetHeight + 'px';
@@ -482,7 +476,8 @@
 			initLine () {
 				const top = document.getElementById('readTop');
 				let lineHeight = this.domProp.fontSize + 10;
-				this.viewHeight = parseInt((window.screen.height - top.offsetHeight) / lineHeight) * lineHeight;
+				let windowHeight = document.body.offsetHeight || window.innerHeight;
+				this.viewHeight = parseInt((windowHeight - top.offsetHeight) / lineHeight) * lineHeight;
 			},
 			createContent() {
 				const dom = document.createElement('text');
@@ -555,6 +550,13 @@
 	.read-top-line {
 		display: flex;
 		justify-content: space-between;
+		align-items: center;
+	}
+	.read-top-text {
+		font-size: 22rpx;
+		white-space:nowrap;/* 规定文本是否折行 */  
+		overflow: hidden;/* 规定超出内容宽度的元素隐藏 */
+		text-overflow: ellipsis;
 	}
 	.box-view {
 		overflow-x: hidden;

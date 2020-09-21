@@ -1,14 +1,14 @@
 <template>
-	<view class="menu" v-if="isShow" @touchstart="touchstart" @touchmove="touchmove" @touchend="touchend">
+	<view class="menu" v-if="isShow" @touchstart="touchstart" @touchmove="touchmove" @touchend="touchend" @touchmove.stop.prevent="">
 		<!-- 遮罩层 -->
-		<view class="mask" ref="mask" @touchmove="moveEnable" :style="{'opacity': maskOpacity}" @tap="maskHide"></view>
-		<view class="popup" ref="popup" @touchmove="moveEnable" :style="{'background-color': skinColor.menuBgColor, 'transform': 'translateX(' + popuplate + 'rpx)'}" @tap="moveEnable">
+		<view class="mask" ref="mask" :style="{'opacity': maskOpacity}" @tap="maskHide"></view>
+		<view class="popup" ref="popup" :style="{'background-color': skinColor.menuBgColor, 'transform': 'translateX(' + popuplate + 'rpx)'}" @tap="moveEnable">
 			<view class="top-img">
 				<image class="bg" src="@/static/menuBack.png" mode="aspectFill"></image>
 				<view class="top-mask" :style="{opacity: skinColor.imgMask}"></view>
 			</view>
 			<!-- 列表切换 -->
-			<view class="list actived" :style="isActived(index)" @tap="changeCurrent(index)" v-for="(item, index) in navs" :key="index">
+			<view class="list actived" :style="{'background-color': current == index ? skinColor.menuActiveBgColor : ''}" @tap="changeCurrent(index)" v-for="(item, index) in navs" :key="index">
 				<view class="icon">
 					<c-icon :name="item.icon" :size="item.size" :color="current == index ? skinColor.menuActiveColor : skinColor.menuIconColor"></c-icon>
 				</view>
@@ -18,7 +18,7 @@
 			<!-- 夜间模式切换 -->
 			<view class="list actived" @tap="changeMode">
 				<view class="icon">
-					<c-icon :name="modeIcon" size="25" :color="skinColor.menuIconColor"></c-icon>
+					<c-icon :name="modeIcon" size="37.5" :color="skinColor.menuIconColor"></c-icon>
 				</view>
 				<text class="title" :style="{color: skinColor.menuTitleColor}">{{modeName}}</text>
 			</view>
@@ -69,20 +69,20 @@
 				mulriple: 1,
 				navs: [{
 					icon: 'books-fill',
-					size: 23,
+					size: 34.5,
 					title: '阅读中'
 				},{
 					icon: 'history-fill',
-					size: 25,
+					size: 37.5,
 					title: '已读完'
 				}],
 				options:[{
 					icon: 'setting-fill',
-					size: 23,
+					size: 34.5,
 					title: '设置'
 				},{
 					icon: 'about',
-					size: 22,
+					size: 33,
 					title: '关于'
 				}]
 			}
@@ -110,17 +110,12 @@
 				this.current = val;
 				this.hide();
 			},
-			isActived (val) {
-				if ( val == this.current ) {
-					return {'background-color': this.skinColor.menuActiveBgColor}
-				}
-			},
 			changeMode () {
 				const skin = this.skinMode == 'default' ? 'night' : 'default';
 				this.changeSkin(skin);
 			},
 			maskHide () {
-				if ( this.popuplate < 0 ) {
+				if ( !this.isShow ) {
 					return;
 				} else {
 					this.hide();
@@ -280,7 +275,7 @@
 	.top-img {
 		height: 350rpx;
 		position: relative;
-		margin-bottom: 10px;
+		margin-bottom: 15rpx;
 	}
 	.bg {
 		position: absolute;
@@ -300,13 +295,13 @@
 	}
 	.hr {
 		height: 1px;
-		/* background-color: #E0E0E0; */		margin-top: 10px;
-		margin-bottom: 10px;
+		/* background-color: #E0E0E0; */		margin-top: 15rpx;
+		margin-bottom: 15rpx;
 	}
 	.list {
 		flex-direction: row;
 		align-items: center;
-		height: 60px;
+		height: 90rpx;
 	}
 	.list-right {
 		flex: 1;
@@ -319,11 +314,11 @@
 		background-color: #343434;
 	}
 	.icon {
-		width: 35px;
-		margin-left: 20px;
-		margin-right: 35px;
+		width: 52.5rpx;
+		margin-left: 30rpx;
+		margin-right: 52.5rpx;
 	}
 	.title {
-		font-size: 18;
+		font-size: 27rpx;
 	}
 </style>

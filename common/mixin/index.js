@@ -27,19 +27,14 @@ export const menuTouchMixin = {
 			}
 			const touch = e.touches[0];
 			this.pointX = touch.pageX;
-			if ( this.pointX <= 10 ) {
-				this.scrollable = false;
-				this.$refs.leftMenu.open();
-				this.timer = setInterval(() => {
-					this.touchTime += 0.1;
-				}, 100)
-			}
+			this.scrollable = false;
+			this.$refs.leftMenu.open();
+			this.timer = setInterval(() => {
+				this.touchTime += 0.1;
+			}, 100)
 		},
 		touchmove (e) {
 			if ( e.touches.length > 1 ) {
-				return;
-			}
-			if ( this.pointX > 10 ) {
 				return;
 			}
 			const touch = e.touches[0];
@@ -47,9 +42,6 @@ export const menuTouchMixin = {
 			this.menuOpac = this.menuLate / Math.abs(this.$refs.leftMenu.anima.late) * this.$refs.leftMenu.anima.opac;
 		},
 		touchend (e) {
-			if ( this.pointX > 10 ) {
-				return;
-			}
 			if ( this.timer ) {
 				clearInterval(this.timer);
 			}

@@ -127,12 +127,12 @@
 		background-color: #FAFAFA;
 	}
 	.list {
-		height: 60px;
+		height: 90rpx;
 		align-items: center;
 		justify-content: center;
 	}
 	.list-text {
-		font-size: 18px;
+		font-size: 27rpx;
 		color: #333333;
 	}
 </style>

@@ -4,7 +4,7 @@
 		<view class="nav">
 			<view class="left">
 				<view class="back" v-if="backShow" @tap="back">
-					<c-icon name="arrow-left" :size="30" :color="backColor"></c-icon>
+					<c-icon name="arrow-left" :size="45" :color="backColor"></c-icon>
 				</view>
 				<slot name="left">
 				</slot>
@@ -98,7 +98,7 @@
 		width: 100%;
 		box-sizing: border-box;
 		/* #endif */
-		height: 44px;
+		height: 100rpx;
 		flex-direction: row;
 		padding-left: 20rpx;
 		padding-right: 20rpx;
@@ -108,14 +108,16 @@
 		display: flex;
 		/* #endif */
 		flex-direction: row;
-		width: 44px;
-		height: 44px;
+		width: 66rpx;
+		height: 66rpx;
 		justify-content: flex-start;
 		align-items: center;
-		margin-right: 20px;
+		margin-right: 60rpx;
 	}
 	.title {
-		font-size: 20px;
+		font-size: 35rpx;
+		text-overflow: ellipsis;
+		lines: 1;
 	}
 	.left, .center, .right {
 		/* #ifndef APP-NVUE */

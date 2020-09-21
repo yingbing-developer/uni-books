@@ -1,5 +1,5 @@
 <template>
-	<text class="iconfont" :style="{'font-size': size + 'px', color: color}">{{icons[name]}}</text>
+	<text class="iconfont" :style="{'font-size': size + 'rpx', color: color}">{{icons[name]}}</text>
 </template>
 
 <script>
@@ -15,7 +15,7 @@
 			},
 			size: {
 				type: Number,
-				default: 18
+				default: 27
 			},
 			color: {
 				type: String,

@@ -70,14 +70,14 @@
 
 <style scoped>
 	.button {
-		width: 50px;
-		height: 50px;
+		width: 90rpx;
+		height: 90rpx;
 		transform: scale(0);
-		border-radius: 50px;
+		border-radius: 100rpx;
 		box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 		justify-content: center;
 		align-items: center;
-		margin-top: 5px;
-		margin-bottom: 5px;
+		margin-top: 7.5rpx;
+		margin-bottom: 7.5px;
 	}
 </style>

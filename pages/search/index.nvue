@@ -2,12 +2,12 @@
 	<view class="search" :style="{'background-color': skinColor.bgColor}">
 		<nav-bar title="添加书籍" :bgColor="skinColor.navColor" :titleColor="skinColor.iconColor">
 			<!-- <view slot="right" @tap="showFilterBox">
-				<c-icon name="filter" size="25" :color="skinColor.iconColor"></c-icon>
+				<c-icon name="filter" size="37.5" :color="skinColor.iconColor"></c-icon>
 			</view> -->
 			<view class="nav-right" slot="right">
 				<text class="nav-text" :style="{'color': skinColor.iconColor}" v-if="checkes.length > 0">选中({{checkes.length}}/{{fileLength}})</text>
 				<view @tap="$refs.bubble.show()">
-					<c-icon name="more" size="25" :color="skinColor.iconColor"></c-icon>
+					<c-icon name="more" size="37.5" :color="skinColor.iconColor"></c-icon>
 				</view>
 			</view>
 		</nav-bar>
@@ -16,9 +16,9 @@
 		    <!-- 注意事项: 不能使用 index 作为 key 的唯一标识 -->
 			<!-- 返回项 -->
 			<cell>
-				<view @tap="backParent(pathHistory)" class="list" :style="{'border-bottom-color': skinColor.gapColor}">
+				<view @tap="backParent()" class="list" :style="{'border-bottom-color': skinColor.gapColor}">
 					<view class="list-icon">
-						<c-icon name="folder" size="50" color="#FFCA28"></c-icon>
+						<c-icon name="folder" size="75" color="#FFCA28"></c-icon>
 					</view>
 					<view class="list-right-back">
 						<text class="list-title" :style="{'color': skinColor.titleColor}">..</text>
@@ -27,10 +27,10 @@
 			</cell>
 			<!-- 文件列表 -->
 		    <cell v-for="(item, index) in list" :key="item.name">
-				<view v-if="item.name.indexOf(nameFilter) > -1" @tap="getFileSystem(item.path, 1)" @longpress="showAction(index)" class="list" :style="{'border-bottom-color': skinColor.gapColor, 'background-color': checkes.indexOf(item.name) > -1 ? skinColor.menuActiveBgColor : ''}">
+				<view v-if="item.name.indexOf(nameFilter) > -1" @tap="clickFolder(item.path)" @longpress="showAction(index)" class="list" :style="{'border-bottom-color': skinColor.gapColor, 'background-color': checkes.indexOf(item.path) > -1 ? skinColor.menuActiveBgColor : ''}">
 					<view class="list-icon" @tap.stop="check(index)">
-						<c-icon name="folder" size="50" color="#FFCA28" v-if="item.type == 'folder'"></c-icon>
-						<c-icon name="txt" size="40" color="#FFCA28" v-else></c-icon>
+						<c-icon name="folder" size="75" color="#FFCA28" v-if="item.type == 'folder'"></c-icon>
+						<c-icon name="txt" size="60" color="#FFCA28" v-else></c-icon>
 					</view>
 					<view class="list-right">
 						<view class="lr-top">
@@ -78,6 +78,10 @@
 	import BubbleItem from '@/components/bubble-item/bubble-item.nvue'
 	import { dateFormat, suffix, indexOf } from '@/common/js/util.js'
 	import { mapGetters, mapMutations } from 'vuex'
+	const environment = plus.android.importClass("android.os.Environment");
+	const File = plus.android.importClass("java.io.File");
+	const FileFilter = plus.android.importClass("java.io.FileFilter");
+	const FileInputStream = plus.android.importClass("java.io.FileInputStream");
 	export default {
 		mixins: [skinMixin],
 		data () {
@@ -98,37 +102,23 @@
 			...mapGetters(['bookList', 'pathHistory'])
 		},
 		created () {
-			this.getRoots();
-			this.getFileSystem(this.pathHistory || '/sdcard');
+			if( environment.getExternalStorageState() !== environment.MEDIA_MOUNTED ) {
+				uni.showToast({
+					title: '没有找到SD卡',
+					icon: 'none'
+				})
+			} else {
+				this.getFileSystem(this.pathHistory);
+			}
 		},
 		methods: {
 			...mapMutations(['addBooks', 'deleteBook', 'updatePath']),
-			//获取系统文件根目录
-			getRoots () {
-				let url = '';
-				if ( plus.os.name == 'Android' ) {
-					url = 'file:///storage'
-				}
-				if ( plus.os.name == 'IOS' ) {
-					url = 'file:///var'
-				}
-				plus.io.resolveLocalFileSystemURL(url, (entry) => {
-					let directoryReader = entry.createReader();
-					directoryReader.readEntries(async ( entries ) => {
-						for ( let i in entries ) {
-							if ( entries[i].name == 'emulated' ) {
-								// let obj = await this.getFileInfo('');
-							}
-						}
-					})
-				})
-			},
 			//全选文件
 			selectAll () {
 				this.checkes = [];
 				for ( let i in this.list ) {
 					if ( this.list[i].type != 'folder' ) {
-						this.checkes.push(this.list[i].name)
+						this.checkes.push(this.list[i].path)
 					}
 				}	
 				this.$refs.bubble.hide();
@@ -162,12 +152,12 @@
 				if ( this.list[index].type == 'folder') {
 					return;
 				}
-				const name = this.list[index].name;
-				let flag = this.checkes.indexOf(name);
+				const path = this.list[index].path;
+				let flag = this.checkes.indexOf(path);
 				if ( flag > -1 ) {
 					this.checkes.splice(flag, 1);
 				} else {
-					this.checkes.push(name);
+					this.checkes.push(path);
 				}
 			},
 			//导入文件
@@ -273,131 +263,141 @@
 						content: '确认删除文件吗?',
 						success: (res) => {
 							if ( res.confirm ) {
-								this.deleteFile(this.list[this.actionIndex].name);
+								this.deleteFile(this.list[this.actionIndex].path);
 							}
 						}
 					})
 				}
 			},
 			//删除文件
-			deleteFile (name) {
-				//根据文件名称或获取保存的数据下标
-				let index = indexOf(this.list, name, 'name');
+			deleteFile (path) {
 				// 如果是已经导入的文件，删除导入记录
-				let flag = this.isLead(this.list[index].path);
-				if ( flag > -1 ) {
-					this.deleteBook(this.bookList[flag].path);
+				let fd = new File(path);
+				if (fd != null && fd.exists()){
+					fd.delete();
+					uni.showToast({
+						title: '删除成功'
+					});
+					let flag = this.isLead(path);
+					if ( flag > -1 ) {
+						this.deleteBook(path);
+					}
+					//删除当前页面显示的数据
+					let index = indexOf(this.list, path, 'path');
+					this.list.splice(index, 1);
+					//文件数量减1
+					this.fileLength--;
+					//如果被删除的文件被选择,则删除选择的列表数据
+					let i = this.checkes.indexOf(path);
+					if ( i > -1 ) {
+						this.checkes.splice(i, 1);
+					}
 				}
-				//删除本地文件
-				plus.io.resolveLocalFileSystemURL('file://' + this.list[index].path, (entry) => {
-					entry.remove((entry) => {
-						let newIndex = indexOf(this.list, name, 'name');
-						//删除数组的数据
-						this.list.splice(newIndex, 1);
-						//文件数量减1
-						this.fileLength--;
-						//如果被删除的文件被选择,则删除选择的列表数据
-						let i = this.checkes.indexOf(name);
-						if ( i > -1 ) {
-							this.checkes.splice(i, 1);
-						}
-					}, (fail) => {
-						console.log( "Request file system failed: " + fail.message );
-					})
-				}, (fail) => {
-					console.log( "Request file system failed: " + fail.message );
-				})
 			},
 			//返回上级目录
-			backParent (url) {
-				plus.io.resolveLocalFileSystemURL('file://' + url, ( entry ) => {
-					entry.getParent((parentEntry) => {
-						this.getFileSystem(parentEntry.fullPath);
-					}, (fail) => {
-						console.log( "Request file system failed: " + fail.message );
-					})
-				}, ( fail ) => {
-					console.log( "Request file system failed: " + fail.message );
-				});
-			},
-			//根据url路径获取文件系统对象,type为1表示访问为-1表示后退为0表示不记录
-			getFileSystem (url) {
-				plus.io.resolveLocalFileSystemURL('file://' + url, ( entry ) => {
-					//如果当前访问的是文件则返回
-					if ( entry.isFile ) {
-						return;
-					}
-					//访问文件夹时更新文件历史记录
-					this.updatePath(url);
-					this.checkes = [];
-					this.list = [];
-					//读取当前路径下的子文件和子文件夹
-					let directoryReader = entry.createReader();
-					directoryReader.readEntries(async ( entries ) => {
-						let obj = '';
-						let length = 0;
-						let file = [];
-						let folder = [];
-						for ( let i in entries ) {
-							if ( entries[i].isFile ) {
-								//是否是txt文件
-								if ( this.types.indexOf(suffix(entries[i].name)) > -1 ) {
-									obj = await this.getFileInfo(entries[i]);
-									file.push(obj);
-									//计算当前路径文件的数量
-									length += 1;
-								}
-							} else {
-								//文件夹
-								obj = await this.getFileInfo(entries[i]);
-								folder.push(obj);
-							}
-						}
-						//文件以时间大小降序排列,即时间靠后的排前面
-						file.sort((a, b) => {
-							return b.creatime - a.creatime;
+			backParent () {
+				let fd = new File(this.pathHistory);
+				if ( fd != null && fd.exists() ) {
+					let parent = plus.android.invoke(fd, 'getParent');
+					if ( parent ) {
+						this.getFileSystem(parent);
+					} else {
+						uni.showToast({
+							icon: 'none',
+							title: '没有上级文件夹了'
 						})
-						this.list = folder.concat(file);
-						this.fileLength = length;
-					}, (fail) => {
-						console.log( "Request file system failed: " + fail.message );
-					});
-				}, ( fail ) => {
-					console.log( "Request file system failed: " + fail.message );
-				});
+					}
+				} else {
+					this.getFileSystem();
+				}
 			},
-			getFileInfo (entry) {
-				return new Promise((resolve, reject) => {
-					entry.getMetadata((metadata ) => {
-						const obj = {
-							name: entry.name,
-							size: this.countSize(metadata.size),
-							realSize: metadata.size,
-							path: entry.fullPath,
-							time: dateFormat(metadata.modificationTime),
-							creatime: metadata.modificationTime,
-							type: entry.isFile ? suffix(entry.name) : 'folder'
-						}
-						resolve(obj);
-					}, (fail) => {
-						reject( "Request file system failed: " + fail.message );
-					})
+			//点击文件夹访问
+			clickFolder (path) {
+				//如果为文件不能访问
+				let index = indexOf(this.list, path, 'path');
+				if ( this.list[index].type != 'folder' ) {
+					return;
+				}
+				this.getFileSystem(path);
+			},
+			//根据path路径获取文件系统对象,type为1表示访问为-1表示后退为0表示不记录
+			getFileSystem (path) {
+				let fd = path ? new File(path) : environment.getExternalStorageDirectory();
+				let entry = fd != null && fd.exists() ? fd : environment.getExternalStorageDirectory();
+				if ( path ) {
+					this.updatePath(path);
+				}
+				let list = plus.android.invoke(entry, "listFiles");
+				let len = list.length;
+				let file = [];
+				let folder = [];
+				let fileLength = 0;
+				for(let i=0; i<len; i++){
+				    // 过滤隐藏文件  
+				    if ( !plus.android.invoke(list[i],"isHidden") ){
+						let name = plus.android.invoke(list[i], 'getName');
+						if ( plus.android.invoke(list[i],"isDirectory") ){
+							folder.push({
+								name: name,
+								type: 'folder',
+								size: '0B',
+								time: dateFormat(plus.android.invoke(list[i],"lastModified")),
+								creatime: plus.android.invoke(list[i],"lastModified"),
+								path: plus.android.invoke(list[i],"getPath")
+							})
+						    // 文件夹
+						} else{
+							//是否是txt文件
+						    if ( this.types.indexOf(suffix(name)) > -1 ) {
+						    	file.push({
+									name: name,
+									type: suffix(name),
+									size: this.readFileSize(list[i]),
+									time: dateFormat(plus.android.invoke(list[i],"lastModified")),
+									creatime: plus.android.invoke(list[i],"lastModified"),
+									path: plus.android.invoke(list[i],"getPath")
+								})
+						    	//计算当前路径文件的数量
+						    	fileLength += 1;
+						    }
+						}  
+				    }
+				}
+				file.sort((a, b) => {
+					return b.creatime - a.creatime;
 				})
+				this.list = folder.concat(file);
+				this.fileLength = fileLength;
+				let ff = new FileFilter((item) => {
+					if ( plus.android.invoke(item,"isDirectory") ){
+						return {
+							name: plus.android.invoke(item, 'getName'),
+							type: 'folder',
+							size: '0B',
+							time: dateFormat(plus.android.invoke(item,"lastModified")),
+							creatime: plus.android.invoke(item,"lastModified"),
+							path: plus.android.invoke(item,"getPath")
+						}
+					}
+				})
+				console.log(plus.android.invoke(list, "ff"));
 			},
-			//计算文件大小
-			countSize (size) {
-				if ( size < 1024 ) {
-					return size + 'B';
+			readFileSize (file) {
+			    let fileSize = new FileInputStream(file);
+				let size = fileSize.available() != 'null' ? fileSize.available() : 0;
+				let fileSizeString;
+				if(size == 0){
+					fileSizeString = "0B";
+				}else if(size < 1024){
+					fileSizeString = size + "B";
+				}else if(size < 1048576){
+					fileSizeString = (size/1024).toFixed(2) + "KB";
+				}else if (size < 1073741824){
+					fileSizeString = (size/1048576).toFixed(2) + "MB";
+				}else{
+					fileSizeString = (size/1073741824).toFixed(2) + "GB";
 				}
-				if ( size >= 1024 && size < 1048576 ) {
-					return (size / 1024).toFixed(2) + 'KB';
-				}
-				if ( size >= 1048576 && size < 1073741824  ) {
-					return (size / 1048576).toFixed(2) + 'MB';
-				}
-				if ( size >= 1073741824 ) {
-					return (size / 1073741824).toFixed(2) + 'GB';
-				}
+				return fileSizeString;
 			},
 			//根据文件路径判断当前文件是否已经导入,返回下标
 			isLead (path) {
@@ -435,24 +435,24 @@
 		align-items: center;
 	}
 	.nav-text {
-		font-size: 18px;
-		margin-right: 10px;
+		font-size: 30rpx;
+		margin-right: 22.5rpx;
 	}
 	.list {
 		flex-direction: row;
 		border-bottom-width: 1px;
 		border-bottom-style: solid;
-		padding-left: 10px;
-		padding-right: 10px;
-		padding-top: 10px;
-		padding-bottom: 10px;
-		height: 72px;
+		padding-left: 15rpx;
+		padding-right: 15rpx;
+		padding-top: 15rpx;
+		padding-bottom: 15rpx;
+		height: 108rpx;
 	}
 	.list-icon {
 		justify-content: center;
 		align-items: center;
-		margin-right: 10px;
-		width: 50px;
+		margin-right: 15rpx;
+		width: 75rpx;
 	}
 	.list-right {
 		flex: 1;
@@ -468,7 +468,7 @@
 		align-items: center;
 	}
 	.list-title {
-		font-size: 20px;
+		font-size: 30rpx;
 		lines: 1;
 		text-overflow: ellipsis;
 	}
@@ -477,21 +477,21 @@
 		justify-content: space-between;
 	}
 	.list-text {
-		font-size: 16px;
+		font-size: 24rpx;
 	}
 	.btn-box {
-		padding: 10px 20px;
+		padding: 15rpx 30rpx;
 		border-top-width: 1px;
 		border-top-style: solid;
 	}
 	.btn {
-		height: 50px;
+		height: 75rpx;
 		justify-content: center;
 		align-items: center;
 		background-color: #007AFF;
 	}
 	.btn-text {
-		font-size: 18px;
+		font-size: 27rpx;
 		color: #F1F1F1;
 	}
 </style>

@@ -1,15 +1,11 @@
 <template>
-	<view class="progress-box" :style="{height: itemSize + 'px'}">
-		<view class="gap" :style="{'width': (itemSize/2) + 'px'}"></view>
+	<view class="progress-box" :style="{height: itemSize + 'rpx'}">
+		<view class="gap" :style="{'width': (itemSize/2) + 'rpx'}"></view>
 		<!-- 进度条 -->
 		<view id="progress" class="progress" :style="{'background-color': color}" ref="progress" @touchstart="lineTouchstart">
 			<view class="active" :style="{'background-color': activeColor, width: activeWidth + 'px'}"></view>
 		</view>
-		<view v-if="!percentShow" class="gap" :style="{'width': (itemSize/2) + 'px'}"></view>
-		<!-- 进度 -->
-		<view v-if="percentShow" class="percent">
-			<text class="percent-text">{{percent}}%</text>
-		</view>
+		<view class="gap" :style="{'width': (itemSize/2) + 'rpx'}"></view>
 		<!-- 圆点 -->
 		<view class="item"
 		@touchstart="touchstart"
@@ -18,9 +14,9 @@
 		:style="{
 			'background-color': activeColor,
 			'transform': 'translateX(' + activeWidth + 'px)',
-			'width': itemSize + 'px',
-			'height': itemSize + 'px',
-			'border-radius': itemSize + 'px'
+			'width': itemSize + 'rpx',
+			'height': itemSize + 'rpx',
+			'border-radius': itemSize + 'rpx'
 		}"></view>
 	</view>
 </template>
@@ -37,7 +33,8 @@
 			},
 			itemSize: {
 				type: Number,
-				default: 15
+				default: 40
+				
 			},
 			color: {
 				type: String,
@@ -46,10 +43,6 @@
 			activeColor: {
 				type: String,
 				default: '#ED7B1F'
-			},
-			percentShow: {
-				type: Boolean,
-				default: false
 			},
 			itemShow: {
 				type: Boolean,
@@ -166,26 +159,14 @@
 	}
 	.progress {
 		flex: 1;
-		height: 2.5px;
+		height: 13rpx;
 	}
 	.active {
-		height: 2.5px;
+		height: 13rpx;
 	}
 	.item {
 		position: absolute;
 		left: 0;
 		top: 0;
-	}
-	.percent {
-		/* #ifndef APP-NVUE */
-		display: flex;
-		flex-direction: column;
-		/* #endif */
-		width: 55px;
-		align-items: flex-end;
-	}
-	.percent-text {
-		font-size: 14px;
-		color: #EFEFEF;
 	}
 </style>

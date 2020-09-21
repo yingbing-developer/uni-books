@@ -111,10 +111,10 @@
 	.popup {
 		position: absolute;
 		top: 0;
-		right: 10px;
-		width: 200px;
+		right: 15rpx;
+		width: 300rpx;
 		transform: scale(0);
 		background-color: #FAFAFA;
-		border-radius: 3px;
+		border-radius: 4.5rpx;
 	}
 </style>

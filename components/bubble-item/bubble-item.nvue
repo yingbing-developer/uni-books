@@ -17,13 +17,13 @@
 
 <style scoped>
 	.bubble-item {
-		height: 50px;
+		height: 75rpx;
 		align-items: flex-start;
 		justify-content: center;
-		padding-left: 40px;
+		padding-left: 60rpx;
 	}
 	.list-text {
-		font-size: 18px;
+		font-size: 27rpx;
 		color: #333333;
 	}
 </style>
