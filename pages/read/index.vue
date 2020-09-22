@@ -165,12 +165,7 @@
 				//行数的倍数的容器高度
 				viewHeight: 0,
 				//当前页文字的开始和结束位置
-				nowIndex: [0,0],
-				//上一页文字的开始和结束位置
-				prevIndex: [0,0],
-				//下一页文字的开始和结束位置
-				nextIndex: [0,0],
-				count: 0
+				nowIndex: [0,0]
 			}
 		},
 		mounted () {
@@ -216,7 +211,6 @@
 				document.getElementsByClassName('touch-next')[0].addEventListener('click', () => {
 					if ( this.nowIndex[1] < this.bookContent.length ) {
 						this.updateRecord(this.nowIndex[1]);
-						this.setNowPage();
 					} else {
 						this.toast('已经是最后面了');
 					}
@@ -229,38 +223,38 @@
 				myDom.setOption(this.domProp);
 			},
 			//获取内容 调试用
-			getContent () {
-				plus.io.resolveLocalFileSystemURL('file://' + this.domProp.path, ( entry ) => {
-					entry.file( ( file ) => {
-						let reader = new plus.io.FileReader();
-						reader.onloadend = ( e ) => {
-							this.bookContent = e.target.result;
-							this.updateLength();
-							this.nowIndex[0] = this.domProp.record;
-							this.setNowPage();
-							this.getCatalog();
-						};
-						reader.readAsText( file, 'gb2312' );
-					}, ( fail ) => {
-						console.log("Request file system failed: " + fail.message);
-					});
-				}, ( fail ) => {
-					console.log( "Request file system failed: " + fail.message );
-				});
-			},
-			//获取内容 正式用
 			// getContent () {
-			// 	const contentBox = document.getElementById('contentBox');
-			// 	let ReadTxt = plus.android.importClass('com.itstudy.io.GetText');
-			// 	let readTxt = new ReadTxt();
-			// 	this.bookContent = readTxt.getTextFromText(plus.io.convertLocalFileSystemURL(this.domProp.path));
-			// 	this.$nextTick(() => {
-			// 		this.updateLength();
-			// 		this.nowIndex[0] = this.domProp.record;
-			// 		this.setNowPage();
-			// 		this.getCatalog();
-			// 	})
+			// 	plus.io.resolveLocalFileSystemURL('file://' + this.domProp.path, ( entry ) => {
+			// 		entry.file( ( file ) => {
+			// 			let reader = new plus.io.FileReader();
+			// 			reader.onloadend = ( e ) => {
+			// 				this.bookContent = e.target.result;
+			// 				this.updateLength();
+			// 				this.nowIndex[0] = this.domProp.record;
+			// 				this.setNowPage();
+			// 				this.getCatalog();
+			// 			};
+			// 			reader.readAsText( file, 'gb2312' );
+			// 		}, ( fail ) => {
+			// 			console.log("Request file system failed: " + fail.message);
+			// 		});
+			// 	}, ( fail ) => {
+			// 		console.log( "Request file system failed: " + fail.message );
+			// 	});
 			// },
+			//获取内容 正式用
+			getContent () {
+				const contentBox = document.getElementById('contentBox');
+				let ReadTxt = plus.android.importClass('com.itstudy.io.GetText');
+				let readTxt = new ReadTxt();
+				this.bookContent = readTxt.getTextFromText(plus.io.convertLocalFileSystemURL(this.domProp.path));
+				this.$nextTick(() => {
+					this.updateLength();
+					this.nowIndex[0] = this.domProp.record;
+					this.setNowPage();
+					this.getCatalog();
+				})
+			},
 			//获取章节目录
 			getCatalog () {
 				const reg = new RegExp(/(第?[一二两三四五六七八九十○零百千万亿0-9１２３４５６７８９０]{1,6}[章回卷节折篇幕集部]?[.\s][^\n]*)[_,-]?/g);
@@ -278,19 +272,16 @@
 					args: {'catalog': catalog}
 				})
 			},
-			//设置当前页内容
+			//设置当前页/下页内容
 			setNowPage () {
 				this.updateReadStatus(false);
 				//截取内容
 				let text = this.bookContent.substr(this.nowIndex[0], 1500);
-				let result = text.split('');
-				
 				//创建新的文本容器，插入节点中
 				const box = this.createContent();
 				const contentBox = document.getElementById('contentBox');
 				contentBox.appendChild(box);
 				const contents = document.getElementsByClassName('content');
-				
 				//如果为翻页模式移除原本的内容
 				if ( this.domProp.scrollMode == 'paging' && contents.length > 1 ) {
 					contentBox.removeChild(contents[0])
@@ -298,38 +289,36 @@
 				
 				//获取新插入的文本容器
 				const content = contents[contents.length - 1];
-				//遍历文本一个字符一个字符的插入
-				// for ( let i in result ) {
-				// 	content.textContent += result[i];
-				// 	if ( ( parseInt(i) + 1) % 10 == 0 ) {
-				// 		if ( content.offsetHeight > this.viewHeight ) {
-				// 			for ( let j = content.textContent.length - 1; j >= 0; j-- ) {
-				// 				content.textContent = content.textContent.substr(0, j);
-				// 				if ( content.offsetHeight <= this.viewHeight ) {
-				// 					//当前页内容最后的位置
-				// 					this.nowIndex[1] = this.nowIndex[0] + content.textContent.length;
-				// 					break;
-				// 				}
-				// 			}
-				// 		}
-				// 	}
-				// }
-				let contentSync = null;
-				for ( let i in result ) {
-					content.textContent = contentSync ? contentSync + result[i] : result[i];
+				let len = text.length % 20 > 0 ? parseInt(text.length / 20) + 1 : parseInt(text.length / 20);
+				//打断循环
+				let isBreak = false;
+				//每次添加20个字符
+				for ( let i = 0; i < len; i++ ) {
+					content.textContent += text.substring(i * 20, (i + 1) * 20);
+					//文本高度超过规定高度
 					if ( content.offsetHeight > this.viewHeight ) {
-						content.textContent = contentSync;
-						//当前页内容最后的位置
-						this.nowIndex[1] = parseInt(i) + this.nowIndex[0];
-						break;
+						len = content.textContent.length;
+						//文本每次减去最后一个字符
+						for ( let j = 0; j < len; j++ ) {
+							content.textContent = content.textContent.substr(0, content.textContent.length-1);
+							//文本高度等于规定高度，结束循环
+							if ( content.offsetHeight == this.viewHeight ) {
+								//当前页内容最后的位置
+								this.nowIndex[1] = this.nowIndex[0] + content.textContent.length;
+								//通知外层循环中断
+								isBreak = true;
+								break;
+							}
+						}
 					} else {
 						//如果文本遍历完了，但文本高度没有超过容器高度则表示这是最后一页
-						if ( i == result.length - 1 ) {
-							//当前页内容最后的位置
-							this.nowIndex[1] = parseInt(i) + 1 + this.nowIndex[0];
+						if ( i == len - 1 ) {
+							this.nowIndex[1] = this.nowIndex[0] + text.length;
 							this.updateReadStatus(true);
 						}
-						contentSync = content.textContent;
+					}
+					if ( isBreak ) {
+						break;
 					}
 				}
 				this.setMarkTitle();
@@ -344,7 +333,6 @@
 				//截取结束位置前1500个字，如果没有1500个字，则截取到首位
 				let index = this.nowIndex[1] - 1500 > 0 ? this.nowIndex[1] - 1500 : 0;
 				let text = this.bookContent.substring(index, this.nowIndex[1]);
-				let result = text.split('');
 				
 				//创建新的文本容器
 				const box = this.createContent();
@@ -360,33 +348,34 @@
 				}
 				
 				//遍历截取的文本内容，从文本的末尾开始循环放入新建的文本容器
-				let contentSync = null;
-				for ( let i = result.length - 1; i >= 0; i--) {
-					content.textContent = contentSync ? result[i] + contentSync : result[i];
+				let len = text.length % 20 > 0 ? parseInt(text.length / 20) + 1 : parseInt(text.length / 20);
+				//打断循环
+				let isBreak = false;
+				for ( let i = 0; i < len; i++) {
+					//每次从最后面添加20个字符
+					content.textContent = text.substr(-(i + 1) * 20, 20) + content.textContent;
 					if ( content.offsetHeight > this.viewHeight ) {
-						content.textContent = contentSync;
-						this.nowIndex[0] = this.nowIndex[1] - ( result.length - 1 - parseInt(i) );
-						break;
-					} else {
-						contentSync = content.textContent;
-					}
-					//如果文本遍历完后，文本高度还是小于等于规定的高度,则请求新的文本补全整个页面
-					if ( i == 0 && content.offsetHeight <= this.viewHeight ) {
-						this.nowIndex[0] = 0;
-						text = this.bookContent.substr(this.nowIndex[1], 1500);
-						let ment = text.split('');
-						contentSync = content.textContent;
-						content.textContent = '';
-						for ( let j in ment ) {
-							content.textContent = contentSync ? contentSync + ment[j] : ment[j];
-							if ( content.offsetHeight > this.viewHeight ) {
-								content.textContent = contentSync;
-								this.nowIndex[1] = this.nowIndex[1] + parseInt(j);
+						len = content.textContent.length;
+						//文本每次减去最前面的一个字符
+						for ( let j = 0; j < len; j++ ) {
+							content.textContent = content.textContent.substr(1);
+							//文本高度等于规定高度，结束循环
+							if ( content.offsetHeight == this.viewHeight ) {
+								//更新当前页内容的初始位置
+								this.nowIndex[0] = this.nowIndex[1] - content.textContent.length > 0 ? this.nowIndex[1] - content.textContent.length : 0;
+								//通知外层循环中断
+								isBreak = true;
 								break;
-							} else {
-								contentSync = content.textContent;
 							}
 						}
+					} else {
+						//如果文本遍历完后文本高度还是小于等于规定的高度, 这是第一页, 则请求新的文本补全整个页面
+						if ( i == len - 1 ) {
+							this.nowIndex[0] = 0;
+						}
+					}
+					if ( isBreak ) {
+						break;
 					}
 				}
 				this.updateRecord(this.nowIndex[0]);
@@ -407,6 +396,7 @@
 					this.recordChange(newVal.record, oldVal.record)
 				}
 			},
+			//字体改变
 			fontChange (newVal, oldVal) {
 				const content = document.getElementsByClassName('content')[0];
 				this.initLine();
@@ -414,8 +404,13 @@
 				this.timer = setTimeout(() => {
 					//字体变大
 					if ( oldVal < newVal ) {
-						for ( let j = content.textContent.length - 1; j >= 0; j-- ) {
-							content.textContent = content.textContent.substr(0, j);
+						//如果文本高度没有超过规定高度则不操作
+						if ( content.offsetHeight <= this.viewHeight ) {
+							return;
+						}
+						let len = content.textContent.length;
+						for ( let i = 0; i < len; i++ ) {
+							content.textContent = content.textContent.substr(0, content.textContent.length - 1);
 							if ( content.offsetHeight <= this.viewHeight ) {
 								this.nowIndex[1] = this.nowIndex[0] + content.textContent.length;
 								break;
@@ -423,42 +418,43 @@
 						}
 					} else {
 						//字体变小
+						//如果已经是最后面了则不操作
+						if ( this.nowIndex[1] >= this.bookContent.length ) {
+							return;
+						}
 						let text = this.bookContent.substr(this.nowIndex[1], 400);
-						let result = text.split('');
-						let contentSync = content.textContent;
-						for ( let j in result ) {
-							content.textContent = contentSync ? contentSync + result[j] : result[j];
+						let isBreak = false;
+						//遍历截取的文本内容，从文本的末尾开始循环放入新建的文本容器
+						let len = text.length % 20 > 0 ? parseInt(text.length / 20) + 1 : parseInt(text.length / 20);
+						for ( let i = 0; i < len; i++ ) {
+							content.textContent += text.substring(i * 20, (i + 1) * 20);
+							//文本高度超过规定高度
 							if ( content.offsetHeight > this.viewHeight ) {
-								content.textContent = contentSync;
-								this.nowIndex[1] = this.nowIndex[1] + parseInt(j);
-								break;
-							} else {
-								if ( j >= result.length - 1 ) {
-									this.nowIndex[1] = result.length - 1;
-								} else {
-									contentSync = content.textContent;
+								len = content.textContent.length;
+								//文本每次减去最后一个字符
+								for ( let j = 0; j < len; j++ ) {
+									content.textContent = content.textContent.substr(0, content.textContent.length-1);
+									//文本高度等于规定高度，结束循环
+									if ( content.offsetHeight == this.viewHeight ) {
+										//当前页内容最后的位置
+										this.nowIndex[1] = this.nowIndex[0] + content.textContent.length;
+										//通知外层循环中断
+										isBreak = true;
+										break;
+									}
 								}
+							}
+							if ( isBreak ) {
+								break;
 							}
 						}
 					}
 				}, 50)
 			},
+			//翻页模式改变
 			scrollModeChange (newVal, oldVal) {
-				// const content = document.getElementsByClassName('content');
-				// if ( newVal == 'upDown' ) {
-				// 	for ( let i in content ) {
-				// 		content[i].style.position = 'relative';
-				// 		content[i].style.left = 0;
-				// 		content[i].style.top = 0;
-				// 	}
-				// }
-				// if ( newVal == 'leftRight' ) {
-				// 	const top = document.getElementById('readTop');
-				// 	content[i].style.position = 'absolute';
-				// 	content[i].style.left = 0;
-				// 	content[i].style.top = top.offsetHeight + 'px';
-				// }
 			},
+			//阅读记录改变
 			recordChange (newVal, oldVal) {
 				this.nowIndex[0] = newVal;
 				this.setNowPage();

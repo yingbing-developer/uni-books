@@ -65,6 +65,9 @@
 				<view @tap="deleteFiles" v-if="checkes.length > 0">
 					<bubble-item title="删除文件"></bubble-item>
 				</view>
+				<view @tap="backRoot">
+					<bubble-item title="根目录"></bubble-item>
+				</view>
 		  </bubble>
 	</view>
 </template>
@@ -79,9 +82,6 @@
 	import { dateFormat, suffix, indexOf } from '@/common/js/util.js'
 	import { mapGetters, mapMutations } from 'vuex'
 	const environment = plus.android.importClass("android.os.Environment");
-	const File = plus.android.importClass("java.io.File");
-	const FileFilter = plus.android.importClass("java.io.FileFilter");
-	const FileInputStream = plus.android.importClass("java.io.FileInputStream");
 	export default {
 		mixins: [skinMixin],
 		data () {
@@ -294,10 +294,15 @@
 					}
 				}
 			},
+			//返回根目录
+			backRoot () {
+				this.getFileSystem();
+				this.$refs.bubble.hide();
+			},
 			//返回上级目录
 			backParent () {
-				let fd = new File(this.pathHistory);
-				if ( fd != null && fd.exists() ) {
+				let fd = plus.android.newObject("java.io.File", this.pathHistory);
+				if ( fd != null && plus.android.invoke(fd, 'exists') ) {
 					let parent = plus.android.invoke(fd, 'getParent');
 					if ( parent ) {
 						this.getFileSystem(parent);
@@ -322,69 +327,61 @@
 			},
 			//根据path路径获取文件系统对象,type为1表示访问为-1表示后退为0表示不记录
 			getFileSystem (path) {
-				let fd = path ? new File(path) : environment.getExternalStorageDirectory();
-				let entry = fd != null && fd.exists() ? fd : environment.getExternalStorageDirectory();
-				if ( path ) {
+				let fd = path ? plus.android.newObject("java.io.File", path) : environment.getExternalStorageDirectory();
+				let entry = fd != null && plus.android.invoke(fd, 'exists') ? fd : environment.getExternalStorageDirectory();
+				if ( fd != null && plus.android.invoke(fd, 'exists') && path ) {
 					this.updatePath(path);
 				}
-				let list = plus.android.invoke(entry, "listFiles");
-				let len = list.length;
-				let file = [];
-				let folder = [];
-				let fileLength = 0;
-				for(let i=0; i<len; i++){
-				    // 过滤隐藏文件  
-				    if ( !plus.android.invoke(list[i],"isHidden") ){
-						let name = plus.android.invoke(list[i], 'getName');
-						if ( plus.android.invoke(list[i],"isDirectory") ){
-							folder.push({
-								name: name,
-								type: 'folder',
-								size: '0B',
-								time: dateFormat(plus.android.invoke(list[i],"lastModified")),
-								creatime: plus.android.invoke(list[i],"lastModified"),
-								path: plus.android.invoke(list[i],"getPath")
-							})
-						    // 文件夹
-						} else{
-							//是否是txt文件
-						    if ( this.types.indexOf(suffix(name)) > -1 ) {
-						    	file.push({
-									name: name,
-									type: suffix(name),
-									size: this.readFileSize(list[i]),
-									time: dateFormat(plus.android.invoke(list[i],"lastModified")),
-									creatime: plus.android.invoke(list[i],"lastModified"),
-									path: plus.android.invoke(list[i],"getPath")
-								})
-						    	//计算当前路径文件的数量
-						    	fileLength += 1;
-						    }
-						}  
-				    }
-				}
-				file.sort((a, b) => {
-					return b.creatime - a.creatime;
-				})
-				this.list = folder.concat(file);
+				let GetFileList = plus.android.importClass('com.itstudy.io.GetFileList');
+				let getFile = new GetFileList();
+				this.list = getFile.getFile(entry);
+				// let list = plus.android.invoke(entry, "listFiles");
+				// let len = list.length;
+				// let file = [];
+				// let folder = [];
+				// let fileLength = 0;
+				// for(let i=0; i<len; i++){
+				//     // 过滤隐藏文件  
+				//     if ( !plus.android.invoke(list[i],"isHidden") ){
+				// 		let name = plus.android.invoke(list[i], 'getName');
+				// 		if ( plus.android.invoke(list[i],"isDirectory") ){
+				// 			folder.push({
+				// 				name: name,
+				// 				type: 'folder',
+				// 				size: '0B',
+				// 				time: dateFormat(plus.android.invoke(list[i],"lastModified")),
+				// 				creatime: plus.android.invoke(list[i],"lastModified"),
+				// 				path: plus.android.invoke(list[i],"getPath")
+				// 			})
+				// 		    // 文件夹
+				// 		} else{
+				// 			//是否是txt文件
+				// 		    if ( plus.android.invoke(name, "endsWith", '.txt') ) {
+				// 		    	file.push({
+				// 					name: name,
+				// 					type: suffix(name),
+				// 					size: this.readFileSize(list[i]),
+				// 					time: dateFormat(plus.android.invoke(list[i],"lastModified")),
+				// 					creatime: plus.android.invoke(list[i],"lastModified"),
+				// 					path: plus.android.invoke(list[i],"getPath")
+				// 				})
+				// 		    	//计算当前路径文件的数量
+				// 		    	fileLength += 1;
+				// 		    }
+				// 		}  
+				//     }
+				// }
+				// file.sort((a, b) => {
+				// 	return b.creatime - a.creatime;
+				// })
+				// this.list = folder.concat(file);
 				this.fileLength = fileLength;
-				let ff = new FileFilter((item) => {
-					if ( plus.android.invoke(item,"isDirectory") ){
-						return {
-							name: plus.android.invoke(item, 'getName'),
-							type: 'folder',
-							size: '0B',
-							time: dateFormat(plus.android.invoke(item,"lastModified")),
-							creatime: plus.android.invoke(item,"lastModified"),
-							path: plus.android.invoke(item,"getPath")
-						}
-					}
-				})
-				console.log(plus.android.invoke(list, "ff"));
+				this.checkes = [];
 			},
 			readFileSize (file) {
-			    let fileSize = new FileInputStream(file);
-				let size = fileSize.available() != 'null' ? fileSize.available() : 0;
+			    let fileSize = plus.android.newObject("java.io.FileInputStream", file);
+				let available = plus.android.invoke(fileSize, 'available');
+				let size = available != 'null' ? available : 0;
 				let fileSizeString;
 				if(size == 0){
 					fileSizeString = "0B";
