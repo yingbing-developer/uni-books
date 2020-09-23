@@ -21,7 +21,7 @@
 						<c-icon name="folder" size="75" color="#FFCA28"></c-icon>
 					</view>
 					<view class="list-right-back">
-						<text class="list-title" :style="{'color': skinColor.titleColor}">..</text>
+						<text class="list-title" :style="{'color': skinColor.titleColor}">{{test}}</text>
 					</view>
 				</view>
 			</cell>
@@ -86,6 +86,7 @@
 		mixins: [skinMixin],
 		data () {
 			return {
+				test: '',
 				list: [],
 				checkes: [],
 				fileLength: 0,
@@ -108,7 +109,7 @@
 					icon: 'none'
 				})
 			} else {
-				this.getFileSystem(this.pathHistory);
+				this.getFileSystem(plus.android.newObject("java.io.File", this.pathHistory));
 			}
 		},
 		methods: {
@@ -173,7 +174,7 @@
 				let err = 0;
 				for ( let i in this.checkes ) {
 					//根据文件路径判断文件有没有被导入过
-					let index = indexOf(this.list, this.checkes[i], 'name');
+					let index = indexOf(this.list, this.checkes[i], 'path');
 					if ( this.isLead(this.list[index].path) == -1 ) {
 						books.push(this.list[index]);
 					} else {
@@ -187,7 +188,7 @@
 					})
 				} else {
 					uni.showToast({
-						title: '有' + err + '个文件添加失败',
+						title: '成功导入' + (this.checkes.length - err) + '个文件，' + '有' + err + '个文件导入失败',
 						icon: 'none'
 					})
 				}
@@ -274,7 +275,7 @@
 				// 如果是已经导入的文件，删除导入记录
 				let fd = new File(path);
 				if (fd != null && fd.exists()){
-					fd.delete();
+					plus.android.invoke(fd, 'delete');
 					uni.showToast({
 						title: '删除成功'
 					});
@@ -305,7 +306,7 @@
 				if ( fd != null && plus.android.invoke(fd, 'exists') ) {
 					let parent = plus.android.invoke(fd, 'getParent');
 					if ( parent ) {
-						this.getFileSystem(parent);
+						this.getFileSystem(plus.android.newObject("java.io.File", parent));
 					} else {
 						uni.showToast({
 							icon: 'none',
@@ -323,19 +324,20 @@
 				if ( this.list[index].type != 'folder' ) {
 					return;
 				}
-				this.getFileSystem(path);
+				this.getFileSystem(plus.android.newObject("java.io.File", path));
 			},
-			//根据path路径获取文件系统对象,type为1表示访问为-1表示后退为0表示不记录
-			getFileSystem (path) {
-				let fd = path ? plus.android.newObject("java.io.File", path) : environment.getExternalStorageDirectory();
-				let entry = fd != null && plus.android.invoke(fd, 'exists') ? fd : environment.getExternalStorageDirectory();
-				if ( fd != null && plus.android.invoke(fd, 'exists') && path ) {
-					this.updatePath(path);
-				}
+			//根据文件对象获取文件列表,type为1表示访问为-1表示后退为0表示不记录
+			getFileSystem (ff) {
+				let fd = ff && ff != null && plus.android.invoke(ff, 'exists') ? ff : environment.getExternalStorageDirectory();
+				this.test += plus.android.invoke(fd, 'getPath');
+				this.updatePath(plus.android.invoke(fd, 'getPath'));
 				let GetFileList = plus.android.importClass('com.itstudy.io.GetFileList');
 				let getFile = new GetFileList();
-				this.list = getFile.getFile(entry);
-				// let list = plus.android.invoke(entry, "listFiles");
+				let list = getFile.getFiles(fd);
+				this.test += JSON.stringify(list);
+				this.list = list;
+				this.test += '渲染列表';
+				// let list = plus.android.invoke(fd, "listFiles");
 				// let len = list.length;
 				// let file = [];
 				// let folder = [];
@@ -375,7 +377,7 @@
 				// 	return b.creatime - a.creatime;
 				// })
 				// this.list = folder.concat(file);
-				this.fileLength = fileLength;
+				// this.fileLength = fileLength;
 				this.checkes = [];
 			},
 			readFileSize (file) {
@@ -466,8 +468,8 @@
 	}
 	.list-title {
 		font-size: 30rpx;
-		lines: 1;
-		text-overflow: ellipsis;
+		/* lines: 1;
+		text-overflow: ellipsis; */
 	}
 	.lr-bottom {
 		flex-direction: row;
