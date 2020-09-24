@@ -21,7 +21,7 @@
 						<c-icon name="folder" size="75" color="#FFCA28"></c-icon>
 					</view>
 					<view class="list-right-back">
-						<text class="list-title" :style="{'color': skinColor.titleColor}">{{test}}</text>
+						<text class="list-title" :style="{'color': skinColor.titleColor}">..</text>
 					</view>
 				</view>
 			</cell>
@@ -86,7 +86,6 @@
 		mixins: [skinMixin],
 		data () {
 			return {
-				test: '',
 				list: [],
 				checkes: [],
 				fileLength: 0,
@@ -329,19 +328,26 @@
 			//根据文件对象获取文件列表,type为1表示访问为-1表示后退为0表示不记录
 			getFileSystem (ff) {
 				let fd = ff && ff != null && plus.android.invoke(ff, 'exists') ? ff : environment.getExternalStorageDirectory();
-				this.test += plus.android.invoke(fd, 'getPath');
 				this.updatePath(plus.android.invoke(fd, 'getPath'));
+				
+				//获取文件列表 正式用
 				let GetFileList = plus.android.importClass('com.itstudy.io.GetFileList');
 				let getFile = new GetFileList();
-				let list = getFile.getFiles(fd);
-				this.test += JSON.stringify(list);
-				this.list = list;
-				this.test += '渲染列表';
+				let str = getFile.getFiles(plus.android.invoke(fd, 'getPath'));
+				let list = str.split('::');
+				let folder = JSON.parse(JSON.parse(JSON.stringify(list[0])));
+				let file = JSON.parse(JSON.parse(JSON.stringify(list[1])));
+				file.sort((a, b) => {
+					return b.createTime - a.createTime;
+				})
+				this.fileLength = file.length;
+				this.list = folder.concat(file);
+				
+				//获取文件列表 调试用
 				// let list = plus.android.invoke(fd, "listFiles");
 				// let len = list.length;
 				// let file = [];
 				// let folder = [];
-				// let fileLength = 0;
 				// for(let i=0; i<len; i++){
 				//     // 过滤隐藏文件  
 				//     if ( !plus.android.invoke(list[i],"isHidden") ){
@@ -367,8 +373,6 @@
 				// 					creatime: plus.android.invoke(list[i],"lastModified"),
 				// 					path: plus.android.invoke(list[i],"getPath")
 				// 				})
-				// 		    	//计算当前路径文件的数量
-				// 		    	fileLength += 1;
 				// 		    }
 				// 		}  
 				//     }
@@ -377,7 +381,7 @@
 				// 	return b.creatime - a.creatime;
 				// })
 				// this.list = folder.concat(file);
-				// this.fileLength = fileLength;
+				// this.fileLength = file.length;
 				this.checkes = [];
 			},
 			readFileSize (file) {
@@ -468,8 +472,8 @@
 	}
 	.list-title {
 		font-size: 30rpx;
-		/* lines: 1;
-		text-overflow: ellipsis; */
+		lines: 1;
+		text-overflow: ellipsis;
 	}
 	.lr-bottom {
 		flex-direction: row;

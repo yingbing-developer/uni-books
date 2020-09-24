@@ -1,7 +1,9 @@
 package com.itstudy.io;
 
-import android.os.Build;
-import android.support.annotation.RequiresApi;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.*;
 import java.text.DecimalFormat;
@@ -20,26 +22,37 @@ import java.util.List;
 public class GetFileList {
 
 
-    @RequiresApi(api = Build.VERSION_CODES.N)
-    public List<List<FileList>> getFiles(File file) throws IOException {
+    public String getFiles(String path) throws IOException, JSONException {
+        File file = new File(path);
         File[] files = file.listFiles();
-        List<FileList> folder = new ArrayList<>();
-        List<FileList> fileList = new ArrayList<>();
+        JSONArray folderJsonArray = new JSONArray();
+        JSONArray fileListJsonArray = new JSONArray();
         for (File value : files) {
-            if (value.isDirectory()) {
-                folder.add(new FileList(value.getName(), value.getPath(), "folder", this.getFileTime(value), value.lastModified()));
-            }
-            if (value.isFile()) {
-                if ("txt".equals(this.getFileType(value))) {
-                    fileList.add(new FileList(value.getName(), value.getPath(), this.getFileType(value), this.getFileSize(value), this.getFileTime(value), value.lastModified()));
+            if ( !value.isHidden() ) {
+                JSONObject jsonObject = new JSONObject();
+                if (value.isDirectory()) {
+                    jsonObject.put("name", value.getName());
+                    jsonObject.put("path", value.getPath());
+                    jsonObject.put("type", "folder");
+                    jsonObject.put("size", "0B");
+                    jsonObject.put("time", this.getFileTime(value));
+                    jsonObject.put("createTime",value.lastModified());
+                    folderJsonArray.put(jsonObject);
+                }
+                if (value.isFile()) {
+                    if ("txt".equals(this.getFileType(value))) {
+                        jsonObject.put("name", value.getName());
+                        jsonObject.put("path", value.getPath());
+                        jsonObject.put("type", this.getFileType(value));
+                        jsonObject.put("size", this.getFileSize(value));
+                        jsonObject.put("time", this.getFileTime(value));
+                        jsonObject.put("createTime",value.lastModified());
+                        fileListJsonArray.put(jsonObject);
+                    }
                 }
             }
         }
-        List<List<FileList>> list = new ArrayList<>();
-        list.add(folder);
-        Collections.sort(fileList);
-        list.add(fileList);
-        return list;
+        return folderJsonArray.toString() + "::" + fileListJsonArray.toString();
     }
 
     private String getFileType(File file) {
@@ -72,98 +85,5 @@ public class GetFileList {
     private String getFileTime(File file) {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         return formatter.format(file.lastModified());
-    }
-}
-
-class FileList implements Comparable<FileList> {
-    private String name;
-    private String path;
-    private String type;
-    private String time;
-    private String size;
-    private Long createTime;
-
-    FileList(String name, String path, String type, String time, Long createTime) {
-        this.name = name;
-        this.path = path;
-        this.type = type;
-        this.size = "0B";
-        this.time = time;
-        this.createTime = createTime;
-    }
-
-    FileList(String name, String path, String type, String size, String time, Long createTime) {
-        this.name = name;
-        this.path = path;
-        this.type = type;
-        this.size = size;
-        this.time = time;
-        this.createTime = createTime;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getPath() {
-        return path;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getTime() {
-        return time;
-    }
-
-    public void setTime(String time) {
-        this.time = time;
-    }
-
-    public String getSize() {
-        return size;
-    }
-
-    public void setSize(String size) {
-        this.size = size;
-    }
-
-    public Long getCreateTime() {
-        return createTime;
-    }
-
-    public void setCreateTime(Long createTime) {
-        this.createTime = createTime;
-    }
-
-    @Override
-    public String toString() {
-        return "FileList{" +
-                "name='" + name + '\'' +
-                ", path='" + path + '\'' +
-                ", type='" + type + '\'' +
-                ", time='" + time + '\'' +
-                ", size='" + size + '\'' +
-                ", createTime=" + createTime +
-                '}';
-    }
-
-
-    @Override
-    public int compareTo(FileList o) {
-        return o.getCreateTime().intValue() - this.createTime.intValue();
     }
 }
