@@ -20,7 +20,7 @@
 			</view>
 		</nav-bar>
 		<c-search v-if="showFilter" @confirm="setNameFilter"></c-search>
-		<waterfall :scrollable="scrollable" @scroll="scroll" column-count="<integer>" :column-width="listwidth" column-gap="10" left-gap="10" right-gap="10">
+		<waterfall :scrollable="scrollable" @scroll="scroll" column-count="<integer>" :column-width="listwidth" :column-gap="gapWidth" :left-gap="gapWidth" :right-gap="gapWidth">
 		    <cell v-for="(item, index) in books" :key="item.id">
 				<view class="book" ref="list" @tap="routePush('/pages/read/index?path=' + item.path)" @longpress="showAction(index)">
 					<image class="book-img" :src="item.image" mode="aspectFill"></image>
@@ -129,6 +129,9 @@
 			},
 			listwidth () {
 				return uni.upx2px(180);
+			},
+			gapWidth () {
+				return uni.upx2px(15);
 			}
 		},
 		created () {
@@ -240,7 +243,7 @@
 		top: 0;
 		left: 0;
 		bottom: 0;
-		width: 35rpx;
+		width: 15rpx;
 	}
 	.book {
 		margin-top: 15rpx;

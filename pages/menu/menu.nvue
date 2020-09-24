@@ -1,8 +1,15 @@
 <template>
-	<view class="menu" v-if="isShow" @touchstart="touchstart" @touchmove="touchmove" @touchend="touchend" @touchmove.stop.prevent="">
+	<view class="menu"
+	v-if="isShow"
+	@touchstart="touchstart"
+	@touchmove="touchmove"
+	@touchend="touchend">
 		<!-- 遮罩层 -->
-		<view class="mask" ref="mask" :style="{'opacity': maskOpacity}" @tap="maskHide"></view>
-		<view class="popup" ref="popup" :style="{'background-color': skinColor.menuBgColor, 'transform': 'translateX(' + popuplate + 'rpx)'}" @tap="moveEnable">
+		<view class="mask" ref="mask" :style="{'opacity': maskOpacity}" @tap.stop="maskHide"></view>
+		<view class="popup"
+		ref="popup"
+		:style="{'background-color': skinColor.menuBgColor, 'transform': 'translateX(' + popuplate + 'rpx)'}"
+		@touchmove.stop.prevent="">
 			<view class="top-img">
 				<image class="bg" src="@/static/menuBack.png" mode="aspectFill"></image>
 				<view class="top-mask" :style="{opacity: skinColor.imgMask}"></view>
@@ -118,6 +125,9 @@
 				if ( !this.isShow ) {
 					return;
 				} else {
+					if ( this.touchTime > 0 ) {
+						return;
+					}
 					this.hide();
 				}
 			},
@@ -180,9 +190,6 @@
 				})
 			},
 			touchstart (e) {
-				if ( e.touches.length > 1 ) {
-					return;
-				}
 				const touch = e.touches[0];
 				this.pointX = touch.pageX;
 				this.timer = setInterval(() => {
@@ -190,9 +197,6 @@
 				}, 100)
 			},
 			touchmove (e) {
-				if ( e.touches.length > 1 ) {
-					return;
-				}
 				const touch = e.touches[0];
 				this.popuplate = 0 - this.mulriple * (this.pointX - touch.pageX);
 				if ( this.popuplate <= -540 ) {
@@ -218,8 +222,10 @@
 				} else {
 					this.show();
 				}
-				this.touchTime = 0;
-				this.pointX = 0;
+				setTimeout(() => {
+					this.touchTime = 0;
+					this.pointX = 0;
+				}, 100)
 			}
 		},
 		watch: {

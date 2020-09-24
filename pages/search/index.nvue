@@ -108,7 +108,9 @@
 					icon: 'none'
 				})
 			} else {
-				this.getFileSystem(plus.android.newObject("java.io.File", this.pathHistory));
+				setTimeout(() => {
+					this.getFileSystem(plus.android.newObject("java.io.File", this.pathHistory));
+				}, 300)
 			}
 		},
 		methods: {
@@ -330,58 +332,58 @@
 				let fd = ff && ff != null && plus.android.invoke(ff, 'exists') ? ff : environment.getExternalStorageDirectory();
 				this.updatePath(plus.android.invoke(fd, 'getPath'));
 				
-				//获取文件列表 正式用
-				let GetFileList = plus.android.importClass('com.itstudy.io.GetFileList');
-				let getFile = new GetFileList();
-				let str = getFile.getFiles(plus.android.invoke(fd, 'getPath'));
-				let list = str.split('::');
-				let folder = JSON.parse(JSON.parse(JSON.stringify(list[0])));
-				let file = JSON.parse(JSON.parse(JSON.stringify(list[1])));
-				file.sort((a, b) => {
-					return b.createTime - a.createTime;
-				})
-				this.fileLength = file.length;
-				this.list = folder.concat(file);
+				// //获取文件列表 正式用
+				// let GetFileList = plus.android.importClass('com.itstudy.io.GetFileList');
+				// let getFile = new GetFileList();
+				// let str = getFile.getFiles(plus.android.invoke(fd, 'getPath'));
+				// let list = str.split('::');
+				// let folder = JSON.parse(JSON.parse(JSON.stringify(list[0])));
+				// let file = JSON.parse(JSON.parse(JSON.stringify(list[1])));
+				// file.sort((a, b) => {
+				// 	return b.createTime - a.createTime;
+				// })
+				// this.fileLength = file.length;
+				// this.list = folder.concat(file);
 				
 				//获取文件列表 调试用
-				// let list = plus.android.invoke(fd, "listFiles");
-				// let len = list.length;
-				// let file = [];
-				// let folder = [];
-				// for(let i=0; i<len; i++){
-				//     // 过滤隐藏文件  
-				//     if ( !plus.android.invoke(list[i],"isHidden") ){
-				// 		let name = plus.android.invoke(list[i], 'getName');
-				// 		if ( plus.android.invoke(list[i],"isDirectory") ){
-				// 			folder.push({
-				// 				name: name,
-				// 				type: 'folder',
-				// 				size: '0B',
-				// 				time: dateFormat(plus.android.invoke(list[i],"lastModified")),
-				// 				creatime: plus.android.invoke(list[i],"lastModified"),
-				// 				path: plus.android.invoke(list[i],"getPath")
-				// 			})
-				// 		    // 文件夹
-				// 		} else{
-				// 			//是否是txt文件
-				// 		    if ( plus.android.invoke(name, "endsWith", '.txt') ) {
-				// 		    	file.push({
-				// 					name: name,
-				// 					type: suffix(name),
-				// 					size: this.readFileSize(list[i]),
-				// 					time: dateFormat(plus.android.invoke(list[i],"lastModified")),
-				// 					creatime: plus.android.invoke(list[i],"lastModified"),
-				// 					path: plus.android.invoke(list[i],"getPath")
-				// 				})
-				// 		    }
-				// 		}  
-				//     }
-				// }
-				// file.sort((a, b) => {
-				// 	return b.creatime - a.creatime;
-				// })
-				// this.list = folder.concat(file);
-				// this.fileLength = file.length;
+				let list = plus.android.invoke(fd, "listFiles");
+				let len = list ? list.length : 0;
+				let file = [];
+				let folder = [];
+				for(let i=0; i<len; i++){
+				    // 过滤隐藏文件  
+				    if ( !plus.android.invoke(list[i],"isHidden") ){
+						let name = plus.android.invoke(list[i], 'getName');
+						if ( plus.android.invoke(list[i],"isDirectory") ){
+							folder.push({
+								name: name,
+								type: 'folder',
+								size: '0B',
+								time: dateFormat(plus.android.invoke(list[i],"lastModified")),
+								creatime: plus.android.invoke(list[i],"lastModified"),
+								path: plus.android.invoke(list[i],"getPath")
+							})
+						    // 文件夹
+						} else{
+							//是否是txt文件
+						    if ( plus.android.invoke(name, "endsWith", '.txt') ) {
+						    	file.push({
+									name: name,
+									type: suffix(name),
+									size: this.readFileSize(list[i]),
+									time: dateFormat(plus.android.invoke(list[i],"lastModified")),
+									creatime: plus.android.invoke(list[i],"lastModified"),
+									path: plus.android.invoke(list[i],"getPath")
+								})
+						    }
+						}  
+				    }
+				}
+				file.sort((a, b) => {
+					return b.creatime - a.creatime;
+				})
+				this.list = folder.concat(file);
+				this.fileLength = file.length;
 				this.checkes = [];
 			},
 			readFileSize (file) {

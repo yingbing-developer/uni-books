@@ -130,13 +130,6 @@
 			//设置书签的前50个字
 			setMarkTitle (e) {
 				this.markTitle = e.title;
-			},
-			//弹窗
-			toast (e) {
-				uni.showToast({
-					title: e.title,
-					icon: 'none'
-				})
 			}
 		},
 		onBackPress (event) {
@@ -172,9 +165,12 @@
 			this.initDom.bind(this);
 			this.initMonitor();
 			this.initView();
-			this.getContent();
+			plus.nativeUI.showWaiting("读取文本中..")
+			setTimeout(() => {
+				this.getContent();
+			}, 400)
 			window.οnresize= () => {  
-				this.initLine();
+				this.initView();
 				this.setNowPage();
 			} 
 			// window.onscroll = () => {
@@ -204,7 +200,7 @@
 					if ( this.nowIndex[0] > 0 ) {
 						this.setPrevPage();
 					} else {
-						this.toast('已经是最前面了');
+						plus.nativeUI.toast("已经是最前面了", {verticalAlign: 'center'});
 					}
 				})
 				//下一页
@@ -212,7 +208,7 @@
 					if ( this.nowIndex[1] < this.bookContent.length ) {
 						this.updateRecord(this.nowIndex[1]);
 					} else {
-						this.toast('已经是最后面了');
+						plus.nativeUI.toast("已经是最后面了", {verticalAlign: 'center'});
 					}
 				})
 			},
@@ -223,38 +219,38 @@
 				myDom.setOption(this.domProp);
 			},
 			//获取内容 调试用
-			// getContent () {
-			// 	plus.io.resolveLocalFileSystemURL('file://' + this.domProp.path, ( entry ) => {
-			// 		entry.file( ( file ) => {
-			// 			let reader = new plus.io.FileReader();
-			// 			reader.onloadend = ( e ) => {
-			// 				this.bookContent = e.target.result;
-			// 				this.updateLength();
-			// 				this.nowIndex[0] = this.domProp.record;
-			// 				this.setNowPage();
-			// 				this.getCatalog();
-			// 			};
-			// 			reader.readAsText( file, 'gb2312' );
-			// 		}, ( fail ) => {
-			// 			console.log("Request file system failed: " + fail.message);
-			// 		});
-			// 	}, ( fail ) => {
-			// 		console.log( "Request file system failed: " + fail.message );
-			// 	});
-			// },
-			//获取内容 正式用
 			getContent () {
-				const contentBox = document.getElementById('contentBox');
-				let ReadTxt = plus.android.importClass('com.itstudy.io.GetText');
-				let readTxt = new ReadTxt();
-				this.bookContent = readTxt.getTextFromText(plus.io.convertLocalFileSystemURL(this.domProp.path));
-				this.$nextTick(() => {
-					this.updateLength();
-					this.nowIndex[0] = this.domProp.record;
-					this.setNowPage();
-					this.getCatalog();
-				})
+				plus.io.resolveLocalFileSystemURL('file://' + this.domProp.path, ( entry ) => {
+					entry.file( ( file ) => {
+						let reader = new plus.io.FileReader();
+						reader.onloadend = ( e ) => {
+							plus.nativeUI.closeWaiting();
+							this.bookContent = e.target.result;
+							this.updateLength();
+							this.nowIndex[0] = this.domProp.record;
+							this.setNowPage();
+							this.getCatalog();
+						};
+						reader.readAsText( file, 'gb2312' );
+					}, ( fail ) => {
+						console.log("Request file system failed: " + fail.message);
+					});
+				}, ( fail ) => {
+					console.log( "Request file system failed: " + fail.message );
+				});
 			},
+			//获取内容 正式用
+			// getContent () {
+			// 	const contentBox = document.getElementById('contentBox');
+			// 	let ReadTxt = plus.android.importClass('com.itstudy.io.GetText');
+			// 	let readTxt = new ReadTxt();
+			// 	this.bookContent = readTxt.getTextFromText(plus.io.convertLocalFileSystemURL(this.domProp.path));
+			// 	plus.nativeUI.closeWaiting();
+			// 	this.updateLength();
+			// 	this.nowIndex[0] = this.domProp.record;
+			// 	this.setNowPage();
+			// 	this.getCatalog();
+			// },
 			//获取章节目录
 			getCatalog () {
 				const reg = new RegExp(/(第?[一二两三四五六七八九十○零百千万亿0-9１２３４５６７８９０]{1,6}[章回卷节折篇幕集部]?[.\s][^\n]*)[_,-]?/g);
@@ -484,13 +480,6 @@
 				dom.style.display = 'inline-block';
 				dom.setAttribute('class', 'content');
 				return dom;
-			},
-			toast (title) {
-				UniViewJSBridge.publishHandler('onWxsInvokeCallMethod', {
-					cid: this._$id,
-					method: 'toast',
-					args: {'title': title}
-				})
 			},
 			//更新阅读记录
 			updateRecord (record) {
