@@ -1,13 +1,61 @@
 <template>
 	<view class="list-scroll">
-		<slot :data="listSync"></slot>
+		
+		<!-- 瀑布流 -->
+		<waterfall v-if="type == 'waterfall'" :loadmoreoffset="loadmoreoffset" :scrollable="scrollable" @scroll="scroll" @loadmore="loadmore" column-count="<integer>" :column-width="listwidth" :column-gap="gapWidth" :left-gap="gapWidth" :right-gap="gapWidth">
+			<slot :scopeData="listSync"></slot>
+		</waterfall>
+		
+		<!-- list列表 -->
+		<list v-if="type == 'list'" @scroll="scroll" :loadmoreoffset="loadmoreoffset" @loadmore="loadmore">
+			<slot :scopeData="listSync"></slot>
+		</list>
 	</view>
 </template>
 
 <script>
 	export default {
+		props: {
+			type: {
+				type: String,
+				default: 'list'
+			},
+			//瀑布流类型时生效
+			listwidth: {
+				type: Number,
+				default: 0
+			},
+			gapWidth: {
+				type: Number,
+				default: 0
+			},
+			scrollable: {
+				type: Boolean,
+				default: true
+			},
+			list: {
+				type: Array,
+				default () {
+					return new Array();
+				}
+			},
+			loadmoreoffset: {
+				type: Number,
+				default: 30
+			}
+		}
 		data () {
-			listSync: []
+			return {
+				listSync: []
+			}
+		},
+		methods: {
+			scroll (e) {
+				this.$emit('scroll', e)
+			},
+			loadmore (e) {
+				console.log(e);
+			}
 		}
 	}
 </script>
