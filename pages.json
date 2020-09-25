@@ -28,27 +28,34 @@
 			"path": "pages/read/index",
 			"style": {
 				"navigationStyle": "custom",
+				"navigationBarTextStyle": "black",
 				"app-plus": {
 				    "subNVues":[{
 				        "id": "catalog", // 唯一标识
-				        "path": "pages/read/catalog.nvue", // 页面路径
+				        "path": "pages/read/subNVue/catalog", // 页面路径
 				        "type": "popup",  //这里不需要
 				        "style": {
-							"position": "absolute",
-				            "right": "0",
-							"top": "0",
 							"mask": "rgba(0,0,0,0.3)",
-				            "width": "500upx",
+				            "width": "750upx",
 				            "height": "100%",
 							"background": "transparent"
 				        }
 				    }]
 				}
 			}
+		},
+		//关于软件
+		{
+			"path": "pages/about/index",
+			"style": {
+				"navigationStyle": "custom",
+				"disableScroll": true // 不嵌套 scroller
+			}
 		}
 	],
 	"globalStyle": {
 		"navigationBarTextStyle": "white",
+		"navigationBarBackgroundColor": "rgba(0,0,0,0)",
 		"navigationBarTitleText": "uni-app",
 		"backgroundColor": "#F8F8F8"
 	}

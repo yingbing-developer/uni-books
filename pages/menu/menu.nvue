@@ -2,7 +2,7 @@
 	<view class="menu"
 	v-if="isShow"
 	@touchstart="touchstart"
-	@touchmove="touchmove"
+	@touchmove.stop.prevent="touchmove"
 	@touchend="touchend">
 		<!-- 遮罩层 -->
 		<view class="mask" ref="mask" :style="{'opacity': maskOpacity}" @tap.stop="maskHide"></view>
@@ -30,7 +30,7 @@
 				<text class="title" :style="{color: skinColor.menuTitleColor}">{{modeName}}</text>
 			</view>
 			<!-- 功能页面 -->
-			<view class="list actived" v-for="(item, index) in options" :key="index">
+			<view class="list actived" v-for="(item, index) in options" :key="index" @tap="clickOptions(item)">
 				<view class="icon">
 					<c-icon :name="item.icon" :size="item.size" :color="skinColor.menuIconColor"></c-icon>
 				</view>
@@ -69,6 +69,7 @@
 				},
 				isShow: false,
 				maskOpacity: 0,
+				routeDisabled: false,
 				popuplate: -540,
 				pointX: 0,
 				touchTime: 0,
@@ -110,9 +111,6 @@
 			}
 		},
 		methods: {
-			moveEnable () {
-				return true;
-			},
 			changeCurrent (val) {
 				this.current = val;
 				this.hide();
@@ -190,6 +188,8 @@
 				})
 			},
 			touchstart (e) {
+				this.touchTime = 0;
+				this.pointX = 0;
 				const touch = e.touches[0];
 				this.pointX = touch.pageX;
 				this.timer = setInterval(() => {
@@ -225,7 +225,31 @@
 				setTimeout(() => {
 					this.touchTime = 0;
 					this.pointX = 0;
-				}, 100)
+				}, 20)
+			},
+			clickOptions (item) {
+				if ( item.title == '关于' ) {
+					this.routePush('/pages/about/index');
+				}
+				if ( item.title == '设置' ) {
+					plus.nativeUI.toast("敬请期待", {verticalAlign: 'bottom'});
+				}
+			},
+			routePush (url) {
+				//路由防抖
+				if ( this.routeDisabled ) {
+					return;
+				}
+				this.routeDisabled = true;
+				uni.navigateTo({
+					url: url,
+					success: (res) => {
+						this.routeDisabled = false;
+					},
+					fail: (err) => {
+						this.routeDisabled = false;
+					}
+				})
 			}
 		},
 		watch: {

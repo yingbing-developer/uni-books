@@ -22,7 +22,7 @@
 		<c-search v-if="showFilter" @confirm="setNameFilter"></c-search>
 		<waterfall :scrollable="scrollable" @scroll="scroll" column-count="<integer>" :column-width="listwidth" :column-gap="gapWidth" :left-gap="gapWidth" :right-gap="gapWidth">
 		    <cell v-for="(item, index) in books" :key="item.id">
-				<view class="book" ref="list" @tap="routePush('/pages/read/index?path=' + item.path)" @longpress="showAction(index)">
+				<view class="book" ref="list" @tap="routePush('/pages/read/index?path=' + item.path)" @longpress="showAction(item.path)">
 					<image class="book-img" :src="item.image" mode="aspectFill"></image>
 					<view class="book-mask" :style="{opacity: skinColor.imgMask}"></view>
 					<view class="book-bottom">
@@ -84,8 +84,8 @@
 				routeDisabled: false,
 				//操作列表
 				actions: [],
-				//触发操作列表的下标
-				actionIndex: '',
+				//触发操作列表的图书路径
+				actionPath: '',
 				//名称过滤
 				nameFilter: '',
 				//是否显示过滤器
@@ -167,8 +167,8 @@
 					}
 				})
 			},
-			showAction (index) {
-				this.actionIndex = index;
+			showAction (path) {
+				this.actionPath = path;
 				this.$refs.action.show();
 			},
 			selectAction (e) {
@@ -178,7 +178,8 @@
 						content: '是否删除选中书籍？',
 						success: (res) => {
 							if ( res.confirm ) {
-								this.deleteBook(this.bookList[this.actionIndex].path);
+								this.deleteBook(this.actionPath);
+								this.actionPath = '';
 							}
 						}
 					})
@@ -211,6 +212,9 @@
 				uni.navigateTo({
 					url: url,
 					success: (res) => {
+						this.routeDisabled = false;
+					},
+					fail: (err) => {
 						this.routeDisabled = false;
 					}
 				})

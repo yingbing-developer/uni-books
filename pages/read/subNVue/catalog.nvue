@@ -13,7 +13,7 @@
 					<text
 					class="list_text"
 					:style="{color: scrollTo == index ? '#DD524D' : skinColor.menuTitleColor}"
-					>{{item.title | removeBlank}}</text>
+					>{{item.title}}</text>
 				</view>
 			</cell>
 		</list>
@@ -36,11 +36,6 @@
 				title: '',
 				path: '',
 				showClear: false
-			}
-		},
-		filters: {
-			removeBlank (value) {
-				return value.replace(' ', '');
 			}
 		},
 		computed: {
@@ -68,9 +63,11 @@
 				this.title = data.title;
 				this.path = data.path;
 				this.showClear = data.showClear || false
-				setTimeout(() => {
-					dom.scrollToElement(this.$refs['list'][this.scrollTo], {animated: false});
-				}, 50);
+				if ( this.list.length > 0 ) {
+					setTimeout(() => {
+						dom.scrollToElement(this.$refs['list'][this.scrollTo], {animated: false});
+					}, 50);
+				}
 			})  
 		},
 		beforeDestroy () {
@@ -96,6 +93,10 @@
 
 <style scoped>
 	.catalog {
+		width: 500rpx;
+		position: fixed;
+		right: 0;
+		top: 0;
 		flex: 1;
 	}
 	.title {

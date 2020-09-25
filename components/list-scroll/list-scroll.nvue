@@ -1,0 +1,17 @@
+<template>
+	<view class="list-scroll">
+		<slot :data="listSync"></slot>
+	</view>
+</template>
+
+<script>
+	export default {
+		data () {
+			listSync: []
+		}
+	}
+</script>
+
+<style>
+
+</style>

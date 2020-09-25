@@ -9,7 +9,7 @@
 				<slot name="left">
 				</slot>
 			</view>
-			<view class="center">
+			<view class="center" :style="centerStyle">
 				<text class="title" :style="{'color': titleColor}">{{title}}</text>
 				<slot name="center"></slot>
 			</view>
@@ -44,6 +44,10 @@
 			titleColor: {
 				type: String,
 				default: '#FFFFFF'
+			},
+			cWidth: {
+				type: Number,
+				default: 0
 			}
 		},
 		data () {
@@ -51,6 +55,11 @@
 				barHeight: '',
 				//返回键防抖
 				backDisabled: false
+			}
+		},
+		computed: {
+			centerStyle () {
+				return this.cWidth > 0 ? { width: this.cWidth + 'rpx' } : {}
 			}
 		},
 		created () {
@@ -73,9 +82,6 @@
 				uni.navigateBack({
 					delta: 1
 				})
-			},
-			test () {
-				console.log('test');
 			}
 		},
 		components: {
@@ -116,8 +122,15 @@
 	}
 	.title {
 		font-size: 35rpx;
+		/* #ifdef APP-NVUE */
 		text-overflow: ellipsis;
 		lines: 1;
+		/* #endif */
+		/* #ifndef APP-NVUE */
+		white-space:nowrap;/* 规定文本是否折行 */
+		overflow: hidden;/* 规定超出内容宽度的元素隐藏 */
+		text-overflow: ellipsis;
+		/* #endif */
 	}
 	.left, .center, .right {
 		/* #ifndef APP-NVUE */

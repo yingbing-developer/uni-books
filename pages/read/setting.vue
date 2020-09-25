@@ -224,7 +224,7 @@
 				setTimeout(() => {
 					this.topLateY = 0;
 					this.bottomLateY = 0;
-				}, 100)
+				}, 150)
 			},
 			hide () {
 				this.topLateY = '-100%';
@@ -352,6 +352,9 @@
 				// 打开 nvue 子窗体 
 				subNvue.show('slide-in-right', 400);
 			}
+		},
+		beforeDestroy () {
+			uni.$off('setting');
 		},
 		watch: {
 			light (val) {

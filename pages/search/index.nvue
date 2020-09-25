@@ -1,6 +1,6 @@
 <template>
 	<view class="search" :style="{'background-color': skinColor.bgColor}">
-		<nav-bar title="添加书籍" :bgColor="skinColor.navColor" :titleColor="skinColor.iconColor">
+		<nav-bar title="添加书籍" :bgColor="skinColor.navColor" :titleColor="skinColor.iconColor" :cWidth="200">
 			<!-- <view slot="right" @tap="showFilterBox">
 				<c-icon name="filter" size="37.5" :color="skinColor.iconColor"></c-icon>
 			</view> -->
@@ -35,7 +35,7 @@
 					<view class="list-right">
 						<view class="lr-top">
 							<text class="list-title" :style="{'color': skinColor.titleColor}">{{item.name}}</text>
-							<text v-if="isLead(item.path) > -1" class="list-text" :style="{'color': skinColor.textColor}">已导入</text>
+							<text v-if="isLead(item.path) > -1" class="lt-right list-text" :style="{'color': skinColor.textColor}">已导入</text>
 						</view>
 						<view class="lr-bottom">
 							<text class="list-text" :style="{'color': skinColor.textColor}">{{item.time}}</text>
@@ -332,18 +332,14 @@
 				let fd = ff && ff != null && plus.android.invoke(ff, 'exists') ? ff : environment.getExternalStorageDirectory();
 				this.updatePath(plus.android.invoke(fd, 'getPath'));
 				
-				// //获取文件列表 正式用
+				//获取文件列表 正式用
 				// let GetFileList = plus.android.importClass('com.itstudy.io.GetFileList');
 				// let getFile = new GetFileList();
 				// let str = getFile.getFiles(plus.android.invoke(fd, 'getPath'));
 				// let list = str.split('::');
 				// let folder = JSON.parse(JSON.parse(JSON.stringify(list[0])));
 				// let file = JSON.parse(JSON.parse(JSON.stringify(list[1])));
-				// file.sort((a, b) => {
-				// 	return b.createTime - a.createTime;
-				// })
-				// this.fileLength = file.length;
-				// this.list = folder.concat(file);
+				
 				
 				//获取文件列表 调试用
 				let list = plus.android.invoke(fd, "listFiles");
@@ -360,7 +356,7 @@
 								type: 'folder',
 								size: '0B',
 								time: dateFormat(plus.android.invoke(list[i],"lastModified")),
-								creatime: plus.android.invoke(list[i],"lastModified"),
+								createTime: plus.android.invoke(list[i],"lastModified"),
 								path: plus.android.invoke(list[i],"getPath")
 							})
 						    // 文件夹
@@ -372,7 +368,7 @@
 									type: suffix(name),
 									size: this.readFileSize(list[i]),
 									time: dateFormat(plus.android.invoke(list[i],"lastModified")),
-									creatime: plus.android.invoke(list[i],"lastModified"),
+									createTime: plus.android.invoke(list[i],"lastModified"),
 									path: plus.android.invoke(list[i],"getPath")
 								})
 						    }
@@ -380,10 +376,10 @@
 				    }
 				}
 				file.sort((a, b) => {
-					return b.creatime - a.creatime;
+					return b.createTime - a.createTime;
 				})
-				this.list = folder.concat(file);
 				this.fileLength = file.length;
+				this.list = folder.concat(file);
 				this.checkes = [];
 			},
 			readFileSize (file) {
@@ -473,9 +469,13 @@
 		align-items: center;
 	}
 	.list-title {
+		flex: 1;
 		font-size: 30rpx;
 		lines: 1;
 		text-overflow: ellipsis;
+	}
+	.lt-right {
+		width: 70rpx;
 	}
 	.lr-bottom {
 		flex-direction: row;
