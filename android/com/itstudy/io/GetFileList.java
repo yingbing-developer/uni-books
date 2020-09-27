@@ -73,11 +73,11 @@ public class GetFileList {
         } else if (size < 1024) {
             fileSizeString = size + "B";
         } else if (size < 1048576) {
-            fileSizeString = df.format(size / 1024) + "KB";
+            fileSizeString = (double)(Math.round(size / 1024)/100.0) + "KB";
         } else if (size < 1073741824) {
-            fileSizeString = df.format(size / 1048576) + "MB";
+            fileSizeString = (double)(Math.round(size / 1048576)/100.0) + "MB";
         } else {
-            fileSizeString = df.format(size / 1073741824) + "GB";
+            fileSizeString = (double)(Math.round(size / 1073741824)/100.0) + "GB";
         }
         return fileSizeString;
     }

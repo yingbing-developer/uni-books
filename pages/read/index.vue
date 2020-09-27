@@ -219,38 +219,38 @@
 				myDom.setOption(this.domProp);
 			},
 			//获取内容 调试用
-			getContent () {
-				plus.io.resolveLocalFileSystemURL('file://' + this.domProp.path, ( entry ) => {
-					entry.file( ( file ) => {
-						let reader = new plus.io.FileReader();
-						reader.onloadend = ( e ) => {
-							plus.nativeUI.closeWaiting();
-							this.bookContent = e.target.result;
-							this.updateLength();
-							this.nowIndex[0] = this.domProp.record;
-							this.setNowPage();
-							this.getCatalog();
-						};
-						reader.readAsText( file, 'gb2312' );
-					}, ( fail ) => {
-						console.log("Request file system failed: " + fail.message);
-					});
-				}, ( fail ) => {
-					console.log( "Request file system failed: " + fail.message );
-				});
-			},
-			//获取内容 正式用
 			// getContent () {
-			// 	const contentBox = document.getElementById('contentBox');
-			// 	let ReadTxt = plus.android.importClass('com.itstudy.io.GetText');
-			// 	let readTxt = new ReadTxt();
-			// 	this.bookContent = readTxt.getTextFromText(plus.io.convertLocalFileSystemURL(this.domProp.path));
-			// 	plus.nativeUI.closeWaiting();
-			// 	this.updateLength();
-			// 	this.nowIndex[0] = this.domProp.record;
-			// 	this.setNowPage();
-			// 	this.getCatalog();
+			// 	plus.io.resolveLocalFileSystemURL('file://' + this.domProp.path, ( entry ) => {
+			// 		entry.file( ( file ) => {
+			// 			let reader = new plus.io.FileReader();
+			// 			reader.onloadend = ( e ) => {
+			// 				plus.nativeUI.closeWaiting();
+			// 				this.bookContent = e.target.result;
+			// 				this.updateLength();
+			// 				this.nowIndex[0] = this.domProp.record;
+			// 				this.setNowPage();
+			// 				this.getCatalog();
+			// 			};
+			// 			reader.readAsText( file, 'gb2312' );
+			// 		}, ( fail ) => {
+			// 			console.log("Request file system failed: " + fail.message);
+			// 		});
+			// 	}, ( fail ) => {
+			// 		console.log( "Request file system failed: " + fail.message );
+			// 	});
 			// },
+			//获取内容 正式用
+			getContent () {
+				const contentBox = document.getElementById('contentBox');
+				let ReadTxt = plus.android.importClass('com.itstudy.io.GetText');
+				let readTxt = new ReadTxt();
+				this.bookContent = readTxt.getTextFromText(plus.io.convertLocalFileSystemURL(this.domProp.path));
+				plus.nativeUI.closeWaiting();
+				this.updateLength();
+				this.nowIndex[0] = this.domProp.record;
+				this.setNowPage();
+				this.getCatalog();
+			},
 			//获取章节目录
 			getCatalog () {
 				const reg = new RegExp(/(第?[一二两三四五六七八九十○零百千万亿0-9１２３４５６７８９０]{1,6}[章回卷节折篇幕集部]?[.\s][^\n]*)[_,-]?/g);

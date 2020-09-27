@@ -20,9 +20,10 @@
 			</view>
 		</nav-bar>
 		<c-search v-if="showFilter" @confirm="setNameFilter"></c-search>
-		<waterfall :scrollable="scrollable" @scroll="scroll" column-count="<integer>" :column-width="listwidth" :column-gap="gapWidth" :left-gap="gapWidth" :right-gap="gapWidth">
-		    <cell v-for="(item, index) in books" :key="item.id">
-				<view class="book" ref="list" @tap="routePush('/pages/read/index?path=' + item.path)" @longpress="showAction(item.path)">
+		<list-scroll @scroll="scroll" type="list-column" :list="books" :gapWidth="20" :listHeight="285" :scrollable="scrollable">
+			<view slot="listTop" ref="listTop"></view>
+			<template v-slot="{item}">
+				<view class="book" @tap="routePush('/pages/read/index?path=' + item.path)" @longpress="showAction(item.path)">
 					<image class="book-img" :src="item.image" mode="aspectFill"></image>
 					<view class="book-mask" :style="{opacity: skinColor.imgMask}"></view>
 					<view class="book-bottom">
@@ -33,29 +34,29 @@
 						</view>
 					</view>
 				</view>
-				<view v-if="index == bookList.length - 1" style="height: 10px;"></view>
-		    </cell>
-			<view class="fixed">
-				<view @tap="changeCurrent">
-					<fixed-button :show="btnShow">
-						<c-icon name="history" size="40" :color="skinColor.iconColor" v-if="current == 0"></c-icon>
-						<c-icon name="read" size="47.5" :color="skinColor.iconColor" v-if="current == 1"></c-icon>
-					</fixed-button>
-				</view>
-				<view @tap="clear" v-if="books.length > 0">
-					<fixed-button :show="btnShow">
-						<c-icon name="waste-fill" size="40" :color="skinColor.iconColor"></c-icon>
-					</fixed-button>
-				</view>
-				<view @tap="scrollTop">
-					<fixed-button :show="Math.abs(oldOffsetY) > 300">
-						<c-icon name="top" size="40" :color="skinColor.iconColor"></c-icon>
-					</fixed-button>
-				</view>
+			</template>
+		</list-scroll>
+		<view class="fixed">
+			<view @tap="changeCurrent">
+				<fixed-button :show="btnShow">
+					<c-icon name="history" size="40" :color="skinColor.iconColor" v-if="current == 0"></c-icon>
+					<c-icon name="read" size="47.5" :color="skinColor.iconColor" v-if="current == 1"></c-icon>
+				</fixed-button>
 			</view>
-			<no-data v-if="books.length <= 0" :title="noDataTitle"></no-data>
-			<view class="touch" @touchstart="touchstart" @touchmove="touchmove" @touchend="touchend"></view>
-		</waterfall>
+			<view @tap="clear" v-if="books.length > 0">
+				<fixed-button :show="btnShow">
+					<c-icon name="waste-fill" size="40" :color="skinColor.iconColor"></c-icon>
+				</fixed-button>
+			</view>
+			<view @tap="scrollTop">
+				<fixed-button :show="Math.abs(oldOffsetY) > 300">
+					<c-icon name="top" size="40" :color="skinColor.iconColor"></c-icon>
+				</fixed-button>
+			</view>
+		</view>
+		<no-data v-if="books.length <= 0" :title="noDataTitle"></no-data>
+		<view class="touch" @touchstart="touchstart" @touchmove="touchmove" @touchend="touchend"></view>
+		
 		<!-- 抽屉菜单 -->
 		<c-menu v-model="current" :translate="menuLate" :opacity="menuOpac" ref="leftMenu"></c-menu>
 		<!-- 操作列表 -->
@@ -67,6 +68,7 @@
 	import CIcon from '@/components/c-icon/c-icon.nvue'
 	import CMenu from '@/pages/menu/menu.nvue'
 	import CSearch from '@/components/search/search.nvue'
+	import ListScroll from '@/components/list-scroll/list-scroll.nvue'
 	import NoData from '@/components/no-data/no-data.nvue'
 	import ActionSheet from '@/components/action-sheet/action-sheet.nvue'
 	import { skinMixin, menuTouchMixin } from '@/common/mixin/index.js'
@@ -127,11 +129,12 @@
 			noDataTitle () {
 				return this.current == 0 ? '没有正在阅读的书籍哦！' : '没有读完的书籍哦！';
 			},
-			listwidth () {
-				return uni.upx2px(180);
-			},
-			gapWidth () {
-				return uni.upx2px(15);
+			test () {
+				return [{
+					type: 1,
+					imgMask: this.skinColor.imgMask,
+					lists: this.books
+				}]
 			}
 		},
 		created () {
@@ -150,7 +153,7 @@
 					this.btnShow = true;
 				}
 				//如果列表y轴偏移为0，则显示浮动按钮
-				if ( e.contentOffset.y <= 0 ) {
+				if ( e.contentOffset.y == 0 ) {
 					this.btnShow = true;
 				}
 				this.oldOffsetY = e.contentOffset.y;
@@ -201,7 +204,10 @@
 				this.nameFilter = e;
 			},
 			scrollTop () {
-				dom.scrollToElement(this.$refs['list'][0]);
+				dom.scrollToElement(this.$refs.listTop, {animated: false});
+			},
+			listClick (index) {
+				this.routePush('/pages/read/index?path=' + this.books[index].path)
 			},
 			routePush (url) {
 				//路由防抖
@@ -237,6 +243,7 @@
 			NoData,
 			ActionSheet,
 			CSearch,
+			ListScroll
 		}
 	}
 </script>
@@ -250,7 +257,8 @@
 		width: 15rpx;
 	}
 	.book {
-		margin-top: 15rpx;
+		width: 230rpx;
+		margin-top: 20rpx;
 		position: relative;
 		height: 285rpx;
 	}

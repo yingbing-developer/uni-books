@@ -1,15 +1,48 @@
 <template>
 	<view class="list-scroll">
 		
-		<!-- 瀑布流 -->
-		<waterfall v-if="type == 'waterfall'" :loadmoreoffset="loadmoreoffset" :scrollable="scrollable" @scroll="scroll" @loadmore="loadmore" column-count="<integer>" :column-width="listwidth" :column-gap="gapWidth" :left-gap="gapWidth" :right-gap="gapWidth">
-			<slot :scopeData="listSync"></slot>
-		</waterfall>
-		
-		<!-- list列表 -->
-		<list v-if="type == 'list'" @scroll="scroll" :loadmoreoffset="loadmoreoffset" @loadmore="loadmore">
-			<slot :scopeData="listSync"></slot>
+		<!-- 单列列表 -->
+		<list ref="list"
+		v-if="type == 'list'"
+		:scrollable="scrollable"
+		@scroll="scroll"
+		:loadmoreoffset="loadmoreoffset"
+		@loadmore="loadmore">
+			<cell>
+				<slot name="listTop"></slot>
+			</cell>
+			<cell v-for="(lists, i) in listColumn" :key="i" @appear="appear(i)" @disappear="disappear(i)">
+				<view :style="{height: listHeight + 'rpx'}" v-for="(child, index) in lists" :key="index">
+					<block v-if="isShows.indexOf(i) > -1">
+						<slot :item="child"></slot>
+					</block>
+					<view class="itemHide" :style="{height: listHeight + 'rpx'}" v-else></view>
+				</view>
+			</cell>
 		</list>
+		
+		<!-- 多列列表 -->
+		<list ref="list"
+		v-if="type == 'list-column'"
+		:scrollable="scrollable"
+		@scroll="scroll"
+		:loadmoreoffset="loadmoreoffset"
+		@loadmore="loadmore">
+			<cell>
+				<slot name="listTop"></slot>
+			</cell>
+			<cell v-for="(lists, i) in listColumn" :key="i" @appear="appear(i)" @disappear="disappear(i)">
+				<view class="list">
+					<view class="item-box" :style="{width: itemWidth + 'rpx', height: (listHeight + gapWidth) + 'rpx'}" v-for="(child, index) in lists" :key="index">
+						<block v-if="isShows.indexOf(i) > -1">
+							<slot :item="child"></slot>
+						</block>
+						<view class="itemHide" :style="{width: itemWidth + 'rpx'}" v-else></view>
+					</view>
+				</view>
+			</cell>
+		</list>
+		
 	</view>
 </template>
 
@@ -20,11 +53,12 @@
 				type: String,
 				default: 'list'
 			},
-			//瀑布流类型时生效
-			listwidth: {
+			//列数
+			columnCount: {
 				type: Number,
-				default: 0
+				default: 3
 			},
+			//间隔
 			gapWidth: {
 				type: Number,
 				default: 0
@@ -41,12 +75,45 @@
 			},
 			loadmoreoffset: {
 				type: Number,
-				default: 30
+				default: 50
+			},
+			offsetAccuracy: {
+				type: Number,
+				default: 5
+			},
+			listHeight: {
+				type: Number,
+				default: 0
+			},
+			maxRow: {
+				type: Number,
+				default: 3
 			}
-		}
+		},
+		computed: {
+			//多列列表数据
+			listColumn () {
+				let arr = [];
+				let j = -1;
+				for ( let i in this.list ) {
+					if ( i % this.maxCount == 0) {
+						j++;
+						this.$set(arr, j , []);
+					}
+					arr[j].push(this.list[i]);
+				}
+				return arr;
+			},
+			maxCount () {
+				return parseInt(this.columnCount * this.maxRow);
+			},
+			itemWidth () {
+				return parseInt(750 / this.columnCount);
+			}
+		},
 		data () {
 			return {
-				listSync: []
+				isShows: []
 			}
 		},
 		methods: {
@@ -54,12 +121,38 @@
 				this.$emit('scroll', e)
 			},
 			loadmore (e) {
-				console.log(e);
+				this.$emit('loadmore', e);
+			},
+			appear (index) {
+				let flag = this.isShows.indexOf(index);
+				if ( flag == -1 ) {
+					this.isShows.push(index);
+				}
+			},
+			disappear (index) {
+				let flag = this.isShows.indexOf(index);
+				if ( flag > -1 ) {
+					this.isShows.splice(flag, 1);
+				}
 			}
 		}
 	}
 </script>
 
-<style>
-
+<style scoped>
+	.list-scroll {
+		flex: 1;
+		width: 750rpx;
+	}
+	.list {
+		flex-direction: row;
+		flex-wrap: wrap;
+	}
+	.item-box {
+		align-items: center;
+	}
+	.itemHide {
+		background-color: #FFFFFF;
+		flex: 1;
+	}
 </style>
