@@ -60,7 +60,7 @@
 						<bubble-item title="取消全选"></bubble-item>
 					</view>
 				</block>
-				<view @tap="deleteFiles" v-if="checkes.length > 0">
+				<view @tap="deleteAction" v-if="checkes.length > 0">
 					<bubble-item title="删除文件"></bubble-item>
 				</view>
 				<view @tap="backRoot">
@@ -129,8 +129,8 @@
 				this.checkes = [];
 				this.$refs.bubble.hide();
 			},
-			//删除选择的文件
-			deleteFiles () {
+			//删除操作
+			deleteAction () {
 				if ( this.checkes.length <= 0 ) {
 					return;
 				}
@@ -139,8 +139,10 @@
 					content: '确认删除选择的文件?',
 					success: (res) => {
 						if ( res.confirm ) {
-							for ( let i = 0; i < this.checkes.length; i++) {
-								this.deleteFile(this.checkes[i]);
+							if ( this.checkes.length > 1 ) {
+								this.deleteFiles();
+							} else {
+								this.deleteFile(this.checkes[0]);
 							}
 						}
 					}
@@ -272,11 +274,11 @@
 					})
 				}
 			},
-			//删除文件
+			//删除单个文件
 			deleteFile (path) {
 				// 如果是已经导入的文件，删除导入记录
 				let fd = plus.android.newObject("java.io.File", path);
-				if (fd != null && plus.android.invoke(fd, 'exists')){
+				if (fd != null && plus.android.invoke(fd, 'exists')) {
 					let isDeleted = plus.android.invoke(fd, 'delete');
 					if ( isDeleted ) {
 						uni.showToast({
@@ -295,6 +297,7 @@
 						title: '文件不存在'
 					});
 				}
+				//如果被删除的文件已经被导入
 				let flag = this.isLead(path);
 				if ( flag > -1 ) {
 					this.deleteBook(path);
@@ -309,6 +312,49 @@
 				if ( i > -1 ) {
 					this.checkes.splice(i, 1);
 				}
+			},
+			//删除多个文件
+			deleteFiles () {
+				plus.nativeUI.showWaiting("删除中..")
+				let suc = 0;
+				let err = 0;
+				let clearList = (path) => {
+					//如果被删除的文件已经被导入
+					let flag = this.isLead(path);
+					if ( flag > -1 ) {
+						this.deleteBook(path);
+					}
+					//删除当前页面显示的数据
+					let index = indexOf(this.list, path, 'path');
+					this.list.splice(index, 1);
+					//文件数量减1
+					this.fileLength--;
+				}
+				for ( let i in this.checkes ) {
+					let fd = plus.android.newObject("java.io.File", this.checkes[i]);
+					if (fd != null && plus.android.invoke(fd, 'exists')){
+						let isDeleted = plus.android.invoke(fd, 'delete');
+						//删除成功
+						if ( isDeleted ) {
+							suc++
+							clearList(this.checkes[i]);
+						} else {
+							//删除失败
+							err++
+						}
+						
+					} else {
+						//文件不存在
+						err++
+						clearList(this.checkes[i]);
+					}
+				}
+				this.checkes = [];
+				plus.nativeUI.closeWaiting();
+				uni.showToast({
+					icon: 'none',
+					title: '成功删除' + suc + '个文件, 删除失败' + err + '个文件'
+				})
 			},
 			//返回根目录
 			backRoot () {

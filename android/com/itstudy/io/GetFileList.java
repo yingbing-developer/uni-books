@@ -8,9 +8,6 @@ import org.json.JSONObject;
 import java.io.*;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @Title: FileList
@@ -66,18 +63,18 @@ public class GetFileList {
     private String getFileSize(File file) throws IOException {
         FileInputStream fs = new FileInputStream(file);
         DecimalFormat df = new DecimalFormat("#.00");
-        int size = fs.available();
+        double size = fs.available();
         String fileSizeString;
         if (size == 0) {
             fileSizeString = "0B";
         } else if (size < 1024) {
             fileSizeString = size + "B";
         } else if (size < 1048576) {
-            fileSizeString = (double)(Math.round(size / 1024)/100.0) + "KB";
+            fileSizeString = df.format(size / 1024) + "KB";
         } else if (size < 1073741824) {
-            fileSizeString = (double)(Math.round(size / 1048576)/100.0) + "MB";
+            fileSizeString = df.format(size / 1048576) + "MB";
         } else {
-            fileSizeString = (double)(Math.round(size / 1073741824)/100.0) + "GB";
+            fileSizeString = df.format(size / 1073741824) + "GB";
         }
         return fileSizeString;
     }
