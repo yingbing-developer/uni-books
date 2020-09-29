@@ -22,6 +22,9 @@ export const menuTouchMixin = {
 	},
 	methods: {
 		touchstart (e) {
+			if ( e.touches.length > 1 ) {
+				return;
+			}
 			const touch = e.touches[0];
 			this.pointX = touch.pageX;
 			this.scrollable = false;

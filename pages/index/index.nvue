@@ -23,7 +23,7 @@
 		<list-scroll @scroll="scroll" type="list-column" :list="books" :gapWidth="20" :listHeight="285" :scrollable="scrollable">
 			<view slot="listTop" ref="listTop"></view>
 			<template v-slot="{item}">
-				<view class="book" @tap="routePush('/pages/read/index?path=' + item.path)" @longpress="showAction(item.path)">
+				<view class="book" @tap="readBook(item.path)" @longpress="showAction(item.path)">
 					<image class="book-img" :src="item.image" mode="aspectFill"></image>
 					<view class="book-mask" :style="{opacity: skinColor.imgMask}"></view>
 					<view class="book-bottom">
@@ -208,6 +208,16 @@
 			},
 			listClick (index) {
 				this.routePush('/pages/read/index?path=' + this.books[index].path)
+			},
+			//读取书籍
+			readBook (path) {
+				let fd = plus.android.newObject("java.io.File", path);
+				if ( fd == null || !plus.android.invoke(fd, 'exists') ) {
+					plus.nativeUI.toast("文件路径不存在！", {verticalAlign: 'center'});
+					this.deleteBook(path);
+					return;
+				}
+				this.routePush('/pages/read/index?path=' + path);
 			},
 			routePush (url) {
 				//路由防抖

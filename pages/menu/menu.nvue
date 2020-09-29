@@ -188,6 +188,9 @@
 				})
 			},
 			touchstart (e) {
+				if ( e.touches.length > 1 ) {
+					return;
+				}
 				this.touchTime = 0;
 				this.pointX = 0;
 				const touch = e.touches[0];

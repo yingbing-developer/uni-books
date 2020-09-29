@@ -92,6 +92,9 @@
 		methods: {
 			//圆点触摸开始
 			touchstart (e) {
+				if ( e.touches.length > 1 ) {
+					return;
+				}
 				let touch = e.touches[0];
 				this.pointX = touch.pageX;
 			},
@@ -109,6 +112,9 @@
 			},
 			//点击进度条本身触发
 			lineTouchstart (e) {
+				if ( e.touches.length > 1 ) {
+					return;
+				}
 				let touch = e.touches[0];
 				this.percent = parseFloat(((touch.pageX - this.start) / this.width * 100).toFixed(2));
 				this.oldPercent = this.percent;

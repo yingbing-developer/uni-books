@@ -101,7 +101,7 @@
 			this.updateBookReadTime(this.path);
 		},
 		methods: {
-			...mapMutations(['deleteBook', 'updateBookReadStatus', 'updateBookLength', 'updateBookReadTime', 'updateBookRecord']),
+			...mapMutations(['updateBookReadStatus', 'updateBookLength', 'updateBookReadTime', 'updateBookRecord']),
 			//更新阅读记录
 			updateRecord (e) {
 				this.updateBookRecord({
@@ -130,10 +130,6 @@
 			//设置书签的前50个字
 			setMarkTitle (e) {
 				this.markTitle = e.title;
-			},
-			//删除当前书籍
-			deleteNowBook (e) {
-				this.deleteBook(e.path);
 			}
 		},
 		onBackPress (event) {
@@ -167,15 +163,6 @@
 		},
 		mounted () {
 			this.initDom.bind(this);
-			let fd = plus.android.newObject("java.io.File", this.domProp.path);
-			if ( fd == null || !plus.android.invoke(fd, 'exists') ) {
-				plus.nativeUI.toast("文件路径不存在！", {verticalAlign: 'center'});
-				this.deleteNowBook(this.domProp.path);
-				uni.navigateBack({
-					delta: 1
-				})
-				return;
-			}
 			this.initMonitor();
 			this.initView();
 			plus.nativeUI.showWaiting("读取文本中..")
@@ -525,14 +512,6 @@
 					cid: this._$id,
 					method: 'setMarkTitle',
 					args: {'title': title.substr(0, 50)}
-				})
-			},
-			//删除书籍
-			deleteNowBook (path) {
-				UniViewJSBridge.publishHandler('onWxsInvokeCallMethod', {
-					cid: this._$id,
-					method: 'deleteNowBook',
-					args: {'path': path}
 				})
 			}
 		}

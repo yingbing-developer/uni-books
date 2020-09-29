@@ -152,7 +152,6 @@
 		align-items: center;
 	}
 	.itemHide {
-		background-color: #FFFFFF;
 		flex: 1;
 	}
 </style>

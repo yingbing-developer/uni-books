@@ -28,7 +28,6 @@
 			"path": "pages/read/index",
 			"style": {
 				"navigationStyle": "custom",
-				"navigationBarTextStyle": "black",
 				"app-plus": {
 				    "subNVues":[{
 				        "id": "catalog", // 唯一标识
@@ -55,7 +54,6 @@
 	],
 	"globalStyle": {
 		"navigationBarTextStyle": "white",
-		"navigationBarBackgroundColor": "rgba(0,0,0,0)",
 		"navigationBarTitleText": "uni-app",
 		"backgroundColor": "#F8F8F8"
 	}
