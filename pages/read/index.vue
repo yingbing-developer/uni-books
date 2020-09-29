@@ -62,14 +62,16 @@
 		},
 		computed: {
 			...mapGetters(['readMode', 'bookList']),
-			path () {
-				const pages = getCurrentPages();
-				const page = pages[pages.length - 1];
-				return page.options.path;
-			},
 			//书籍信息
 			bookInfo () {
-				return this.bookList[indexOf(this.bookList, this.path, 'path')];
+				const pages = getCurrentPages();
+				const page = pages[pages.length - 1];
+				let index =  page.options.index;
+				return this.bookList[index];
+			},
+			//文件路径
+			path () {
+				return this.bookInfo.path;
 			},
 			//滚动方式
 			scrollMode () {

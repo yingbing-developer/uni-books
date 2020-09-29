@@ -72,6 +72,7 @@
 	import NoData from '@/components/no-data/no-data.nvue'
 	import ActionSheet from '@/components/action-sheet/action-sheet.nvue'
 	import { skinMixin, menuTouchMixin } from '@/common/mixin/index.js'
+	import { indexOf } from '@/common/js/util.js'
 	import { mapGetters, mapMutations } from 'vuex'
 	const dom = weex.requireModule('dom') || {};
 	export default {
@@ -217,7 +218,8 @@
 					this.deleteBook(path);
 					return;
 				}
-				this.routePush('/pages/read/index?path=' + path);
+				let index = indexOf(this.bookList, path, 'path');
+				this.routePush('/pages/read/index?index=' + index);
 			},
 			routePush (url) {
 				//路由防抖
