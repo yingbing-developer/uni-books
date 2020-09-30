@@ -387,7 +387,7 @@
 				}
 				this.getFileSystem(plus.android.newObject("java.io.File", path));
 			},
-			//根据文件对象获取文件列表,type为1表示访问为-1表示后退为0表示不记录
+			//根据文件对象获取文件列表
 			getFileSystem (ff) {
 				let fd = ff && ff != null && plus.android.invoke(ff, 'exists') ? ff : environment.getExternalStorageDirectory();
 				this.updatePath(plus.android.invoke(fd, 'getPath'));
