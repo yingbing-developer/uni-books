@@ -16,7 +16,6 @@
 					<block v-if="isShows.indexOf(i) > -1">
 						<slot :item="child"></slot>
 					</block>
-					<view class="itemHide" :style="{height: listHeight + 'rpx'}" v-else></view>
 				</view>
 			</cell>
 		</list>
@@ -37,7 +36,6 @@
 						<block v-if="isShows.indexOf(i) > -1">
 							<slot :item="child"></slot>
 						</block>
-						<view class="itemHide" :style="{width: itemWidth + 'rpx'}" v-else></view>
 					</view>
 				</view>
 			</cell>
@@ -150,8 +148,5 @@
 	}
 	.item-box {
 		align-items: center;
-	}
-	.itemHide {
-		flex: 1;
 	}
 </style>
