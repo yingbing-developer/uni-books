@@ -2,7 +2,7 @@
 	<view class="bubble" v-if="isShow">
 		<view class="mask" ref="mask" @tap="hide"></view>
 		<view class="container" :style="{'top': barTop}">
-			<view class="popup" ref="popup">
+			<view class="popup" ref="popup" :style="{'background-color': skinColor.menuBgColor}">
 				<slot></slot>
 			</view>
 		</view>
@@ -11,7 +11,9 @@
 
 <script>
 	const animation = weex.requireModule('animation');
+	import { skinMixin } from '@/common/mixin/index.js'
 	export default {
+		mixins: [skinMixin],
 		data () {
 			return {
 				barTop: '',
@@ -114,7 +116,6 @@
 		right: 15rpx;
 		width: 300rpx;
 		transform: scale(0);
-		background-color: #FAFAFA;
 		border-radius: 4.5rpx;
 	}
 </style>

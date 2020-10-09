@@ -20,7 +20,7 @@
 			</view>
 		</nav-bar>
 		<c-search v-if="showFilter" @confirm="setNameFilter"></c-search>
-		<list-scroll @scroll="scroll" type="list-column" :list="books" :gapWidth="20" :listHeight="285" :scrollable="scrollable">
+		<list-scroll :column-count="3" @scroll="scroll" :list="books" :gapWidth="20" :listHeight="285" :scrollable="scrollable">
 			<view slot="listTop" ref="listTop"></view>
 			<template v-slot="{item}">
 				<view class="book" @tap="readBook(item.path)" @longpress="showAction(item.path)">
@@ -106,36 +106,25 @@
 		},
 		computed: {
 			...mapGetters(['bookList']),
-			books () {
-				let books = [];
-				if ( this.current == 0 ) {
-					this.bookList.forEach((item) => {
-						if ( !item.isReaded && item.name.indexOf(this.nameFilter) > -1 ) {
-							books.push(item)
-						}
-					})
-				}
-				if ( this.current == 1 ) {
-					this.bookList.forEach((item) => {
-						if ( item.isReaded && item.name.indexOf(this.nameFilter) > -1  ) {
-							books.push(item)
-						}
-					})
-				}
-				//根据最后阅读的时间进行先后排序
-				return books.sort((a, b) => {
-					return b.lastReadTime - a.lastReadTime;
-				});
-			},
 			noDataTitle () {
 				return this.current == 0 ? '没有正在阅读的书籍哦！' : '没有读完的书籍哦！';
 			},
-			test () {
-				return [{
-					type: 1,
-					imgMask: this.skinColor.imgMask,
-					lists: this.books
-				}]
+			books () {
+				let arr = this.bookList.filter((item) => {
+					if ( this.current == 0 ) {
+						if ( item.name.indexOf(this.nameFilter) > -1 && !item.isReaded ) {
+							return item;
+						}
+					}
+					if ( this.current == 1 ) {
+						if ( item.name.indexOf(this.nameFilter) > -1 && item.isReaded ) {
+							return item;
+						}
+					}
+				})
+				return arr.sort((a, b) => {
+					return b.lastReadTime - a.lastReadTime;
+				});
 			}
 		},
 		created () {
@@ -177,9 +166,10 @@
 			},
 			selectAction (e) {
 				if ( e == 'delete' ) {
+					let name = this.bookList[indexOf(this.bookList, this.actionPath, 'path')].name;
 					uni.showModal({
 						title: '操作提示',
-						content: '是否删除选中书籍？',
+						content: '是否删除  ' + name + '  ？',
 						success: (res) => {
 							if ( res.confirm ) {
 								this.deleteBook(this.actionPath);
@@ -206,9 +196,6 @@
 			},
 			scrollTop () {
 				dom.scrollToElement(this.$refs.listTop, {animated: false});
-			},
-			listClick (index) {
-				this.routePush('/pages/read/index?path=' + this.books[index].path)
 			},
 			//读取书籍
 			readBook (path) {
@@ -269,7 +256,7 @@
 		width: 15rpx;
 	}
 	.book {
-		width: 230rpx;
+		width: 250rpx;
 		margin-top: 20rpx;
 		position: relative;
 		height: 285rpx;
@@ -277,23 +264,23 @@
 	.book-img {
 		position: absolute;
 		top: 0;
-		left: 0;
-		right: 0;
+		left: 10rpx;
+		right: 10rpx;
 		bottom: 0;
 	}
 	.book-mask {
 		position: absolute;
 		top: 0;
-		left: 0;
-		right: 0;
+		left: 10rpx;
+		right: 10rpx;
 		bottom: 0;
 		background-color: #000000;
 	}
 	.book-bottom {
 		position: absolute;
 		bottom: 0;
-		left: 0;
-		right: 0;
+		left: 10rpx;
+		right: 10rpx;
 		height: 80rpx;
 		background-color: rgba(0,0,0,0.5);
 		justify-content: center;

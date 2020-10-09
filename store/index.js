@@ -35,7 +35,7 @@ const store = new Vuex.Store({
 					menuIconColor: '#737373',
 					menuTitleColor: '#727272',
 					menuActiveColor: '#2397EE',
-					menuActiveBgColor: '#DDDDDD',
+					menuActiveBgColor: '#EEEEEE',
 					imgMask: 0,
 					readBackColor: '#BFAD8A',
 					readTextColor: '#2E2B23'
@@ -91,7 +91,7 @@ const store = new Vuex.Store({
 					creatime: time,
 					time: dateFormat(time).split(' ')[0],
 					path: books[i].path,
-					size: books[i].realSize,
+					size: books[i].size,
 					length: 0,
 					record: 0,
 					lastReadTime: time,

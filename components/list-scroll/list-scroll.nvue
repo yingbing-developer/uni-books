@@ -1,9 +1,6 @@
 <template>
 	<view class="list-scroll">
-		
-		<!-- 单列列表 -->
 		<list ref="list"
-		v-if="type == 'list'"
 		:scrollable="scrollable"
 		@scroll="scroll"
 		:loadmoreoffset="loadmoreoffset"
@@ -11,86 +8,71 @@
 			<cell>
 				<slot name="listTop"></slot>
 			</cell>
-			<cell v-for="(lists, i) in listColumn" :key="i" @appear="appear(i)" @disappear="disappear(i)">
-				<view :style="{height: listHeight + 'rpx'}" v-for="(child, index) in lists" :key="index">
-					<block v-if="isShows.indexOf(i) > -1">
+			<cell
+			v-for="(lists, i) in listSync"
+			:key="i"
+			@appear="appear(i)"
+			@disappear="disappear(i)"
+			:style="{height: i == listSync.length - 1 ? lastItemHeight : itemHeight}">
+				<view class="list" v-if="isShows.indexOf(i) > -1">
+					<view :style="{width: itemWidth + 'rpx'}" v-for="(child, index) in lists" :key="index">
 						<slot :item="child"></slot>
-					</block>
-				</view>
-			</cell>
-		</list>
-		
-		<!-- 多列列表 -->
-		<list ref="list"
-		v-if="type == 'list-column'"
-		:scrollable="scrollable"
-		@scroll="scroll"
-		:loadmoreoffset="loadmoreoffset"
-		@loadmore="loadmore">
-			<cell>
-				<slot name="listTop"></slot>
-			</cell>
-			<cell v-for="(lists, i) in listColumn" :key="i" @appear="appear(i)" @disappear="disappear(i)">
-				<view class="list">
-					<view class="item-box" :style="{width: itemWidth + 'rpx', height: (listHeight + gapWidth) + 'rpx'}" v-for="(child, index) in lists" :key="index">
-						<block v-if="isShows.indexOf(i) > -1">
-							<slot :item="child"></slot>
-						</block>
 					</view>
 				</view>
 			</cell>
 		</list>
-		
 	</view>
 </template>
 
 <script>
 	export default {
 		props: {
-			type: {
-				type: String,
-				default: 'list'
-			},
 			//列数
 			columnCount: {
 				type: Number,
-				default: 3
+				default: 1
 			},
-			//间隔
-			gapWidth: {
-				type: Number,
-				default: 0
-			},
+			//是否禁用滚动
 			scrollable: {
 				type: Boolean,
 				default: true
 			},
+			//列表数据
 			list: {
 				type: Array,
 				default () {
 					return new Array();
 				}
 			},
+			//离底部多少像素时触发加载更多事件
 			loadmoreoffset: {
 				type: Number,
 				default: 50
 			},
+			//触发滚动事件的频率，没多少像素触发一次
 			offsetAccuracy: {
 				type: Number,
 				default: 5
 			},
+			//外部设置一行的高度
 			listHeight: {
 				type: Number,
 				default: 0
 			},
-			maxRow: {
+			//外部设置的上下间隔
+			gapWidth: {
 				type: Number,
-				default: 3
+				default: 0
+			},
+			//一次最多渲染多少列
+			rowCount: {
+				type: Number,
+				default: 4
 			}
 		},
 		computed: {
 			//多列列表数据
-			listColumn () {
+			listSync () {
 				let arr = [];
 				let j = -1;
 				for ( let i in this.list ) {
@@ -103,10 +85,18 @@
 				return arr;
 			},
 			maxCount () {
-				return parseInt(this.columnCount * this.maxRow);
+				return parseInt(this.columnCount * this.rowCount);
 			},
 			itemWidth () {
-				return parseInt(750 / this.columnCount);
+				return 750 / this.columnCount;
+			},
+			itemHeight () {
+				return (this.rowCount * (this.listHeight + this.gapWidth)) + 'rpx';
+			},
+			lastItemHeight () {
+				let i = this.listSync.length - 1;
+				let row = this.listSync[i].length % this.columnCount > 0 ? parseInt(this.listSync[i].length / this.columnCount) + 1 : parseInt(this.listSync[i].length / this.columnCount);
+				return (row * (this.listHeight + this.gapWidth)) + 'rpx';
 			}
 		},
 		data () {
@@ -145,8 +135,5 @@
 	.list {
 		flex-direction: row;
 		flex-wrap: wrap;
-	}
-	.item-box {
-		align-items: center;
 	}
 </style>

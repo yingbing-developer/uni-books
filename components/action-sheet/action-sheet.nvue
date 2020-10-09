@@ -1,16 +1,16 @@
 <template>
 	<view class="action" @touchmove="moveEnable" v-if="isShow">
 		<view class="mask" ref="mask" @tap="hide"></view>
-		<view class="popup" ref="popup" :style="{transform: 'translateY(' + Math.abs(lateY) + 'px)'}">
+		<view class="popup" ref="popup" :style="{transform: 'translateY(' + Math.abs(lateY) + 'px)', 'background-color': skinColor.menuBgColor}">
 			<view v-for="(item, index) in list" :key="index" @tap="clickItem(item.value)">
 				<view class="list">
-					<text class="list-text">{{item.title}}</text>
+					<text class="list-text" :style="{'color': skinColor.menuTitleColor}">{{item.title}}</text>
 				</view>
-				<view style="height: 1px;background-color: #EEEEEE;" v-if="index != list.length - 1"></view>
+				<view :style="{height: '1.5rpx', 'background-color': skinColor.menuActiveBgColor}" v-if="index < list.length - 1"></view>
 			</view>
-			<view style="height: 4px;background-color: #EEEEEE;"></view>
-			<view class="list" style="height: 55px;" @tap="hide">
-				<text class="list-text">取消</text>
+			<view :style="{height: '6rpx', 'background-color': skinColor.menuActiveBgColor}"></view>
+			<view class="list" style="height: 95rpx;" @tap="hide">
+				<text class="list-text" :style="{'color': skinColor.menuTitleColor}">取消</text>
 			</view>
 		</view>
 	</view>
@@ -18,7 +18,9 @@
 
 <script>
 	const animation = weex.requireModule('animation');
+	import { skinMixin } from '@/common/mixin/index.js'
 	export default {
+		mixins: [skinMixin],
 		props: {
 			list: {
 				type: Array,
@@ -124,7 +126,6 @@
 		left: 0;
 		right: 0;
 		bottom: 0;
-		background-color: #FAFAFA;
 	}
 	.list {
 		height: 90rpx;
@@ -133,6 +134,5 @@
 	}
 	.list-text {
 		font-size: 27rpx;
-		color: #333333;
 	}
 </style>

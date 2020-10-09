@@ -12,7 +12,7 @@
 			</view>
 		</nav-bar>
 		<c-search @confirm="setNameFilter"></c-search>
-		<list-scroll type="list" :list="list" :listHeight="108">
+		<list-scroll :row-count="20" :list="listSync" :listHeight="108">
 			 <!-- 注意事项: 不能使用 index 作为 key 的唯一标识 -->
 			<!-- 返回项 -->
 			<view slot="listTop" @tap="backParent()" class="list" :style="{'border-bottom-color': skinColor.gapColor}">
@@ -25,7 +25,7 @@
 			</view>
 			<!-- 文件列表 -->
 			<template v-slot="{item}">
-				<view v-if="item.name.indexOf(nameFilter) > -1" @tap="clickFolder(item.path)" @longpress="showAction(item.path)" class="list" :style="{'border-bottom-color': skinColor.gapColor, 'background-color': checkes.indexOf(item.path) > -1 ? skinColor.menuActiveBgColor : ''}">
+				<view @tap="clickFolder(item.path)" @longpress="showAction(item.path)" class="list" :style="{'border-bottom-color': skinColor.gapColor, 'background-color': checkes.indexOf(item.path) > -1 ? skinColor.menuActiveBgColor : ''}">
 					<view class="list-icon" @tap.stop="check(item.path)">
 						<c-icon name="folder" size="75" color="#FFCA28" v-if="item.type == 'folder'"></c-icon>
 						<c-icon name="txt" size="60" color="#FFCA28" v-else></c-icon>
@@ -94,11 +94,21 @@
 				//操作列表
 				actions: [],
 				//触发操作列表的路径
-				actionPath: ''
+				actionPath: '',
+				//路由防抖
+				routeDisabled: false
 			}
 		},
 		computed: {
-			...mapGetters(['bookList', 'pathHistory'])
+			...mapGetters(['bookList', 'pathHistory']),
+			listSync () {
+				let arr = this.list.filter((item) => {
+					if ( item.name.indexOf(this.nameFilter) > -1 ) {
+						return item;
+					}
+				})
+				return arr;
+			}
 		},
 		created () {
 			if( environment.getExternalStorageState() !== environment.MEDIA_MOUNTED ) {
@@ -251,9 +261,10 @@
 				}
 				//选择取消导入
 				if ( val == 'pop' ) {
+					let name = this.list[indexOf(this.list, this.actionPath, 'path')].name;
 					uni.showModal({
 						title: '操作提示',
-						content: '是否将选中书籍从导入列表删除？',
+						content: '确认将  ' + name +'  从导入列表删除吗？',
 						success: (res) => {
 							if ( res.confirm ) {
 								this.deleteBook(this.actionPath);
@@ -263,9 +274,10 @@
 				}
 				//用户选择删除操作
 				if ( val == 'delete' ) {
+					let name = this.list[indexOf(this.list, this.actionPath, 'path')].name;
 					uni.showModal({
 						title: '操作提示',
-						content: '确认删除文件吗?',
+						content: '确认要删除  ' + name + '  吗？',
 						success: (res) => {
 							if ( res.confirm ) {
 								this.deleteFile(this.actionPath);
@@ -380,12 +392,54 @@
 			},
 			//点击文件夹访问
 			clickFolder (path) {
-				//如果为文件不能访问
 				let index = indexOf(this.list, path, 'path');
-				if ( this.list[index].type != 'folder' ) {
+				//如果是文件夹则访问文件列表
+				if ( this.list[index].type == 'folder' ) {
+					this.getFileSystem(plus.android.newObject("java.io.File", path));
+					//如果是txt文件则进行阅读
+				} else if ( this.list[index].type == 'txt' ) {
+					let fd = plus.android.newObject("java.io.File", path);
+					if ( fd == null || !plus.android.invoke(fd, 'exists') ) {
+						plus.nativeUI.toast("文件路径不存在！", {verticalAlign: 'bottom'});
+						this.list.splice(index, 1);
+						return;
+					}
+					//查询有没有导入过该txt文件
+					let bookIndex = indexOf(this.bookList, path, 'path');
+					//导入过直接阅读
+					if ( bookIndex > -1 ) {
+						this.routePush('/pages/read/index?index=' + bookIndex);
+					} else {
+						//未导入，则先导入再进行阅读
+						let books = [];
+						books.push(this.list[index]);
+						this.addBooks(books);
+						this.$nextTick(() => {
+							bookIndex = indexOf(this.bookList, path, 'path');
+							if ( bookIndex > -1 ) {
+								this.routePush('/pages/read/index?index=' + bookIndex);
+							} else {
+								plus.nativeUI.toast("文件导入失败！", {verticalAlign: 'bottom'});
+							}
+						})
+					}
+				}
+			},
+			routePush (url) {
+				//路由防抖
+				if ( this.routeDisabled ) {
 					return;
 				}
-				this.getFileSystem(plus.android.newObject("java.io.File", path));
+				this.routeDisabled = true;
+				uni.navigateTo({
+					url: url,
+					success: (res) => {
+						this.routeDisabled = false;
+					},
+					fail: (err) => {
+						this.routeDisabled = false;
+					}
+				})
 			},
 			//根据文件对象获取文件列表
 			getFileSystem (ff) {

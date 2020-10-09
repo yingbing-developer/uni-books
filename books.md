@@ -74,8 +74,21 @@ getFileSystem (ff) {
 
 ```javascript
 
-//获取内容 调试用
 // getContent () {
+	
+//获取内容 正式用
+	const contentBox = document.getElementById('contentBox');
+	let ReadTxt = plus.android.importClass('com.itstudy.io.GetText');
+	let readTxt = new ReadTxt();
+	this.bookContent = readTxt.getTextFromText(plus.io.convertLocalFileSystemURL(this.domProp.path));
+	plus.nativeUI.closeWaiting();
+	this.updateLength();
+	this.nowIndex[0] = this.domProp.record;
+	this.setNowPage();
+	this.getCatalog();
+	
+	
+//获取内容 调试用
 // 	plus.io.resolveLocalFileSystemURL('file://' + this.domProp.path, ( entry ) => {
 // 		entry.file( ( file ) => {
 // 			let reader = new plus.io.FileReader();
@@ -95,20 +108,6 @@ getFileSystem (ff) {
 // 		console.log( "Request file system failed: " + fail.message );
 // 	});
 // }
-
-//获取内容 正式用
-getContent () {
-	const contentBox = document.getElementById('contentBox');
-	let ReadTxt = plus.android.importClass('com.itstudy.io.GetText');
-	let readTxt = new ReadTxt();
-	this.bookContent = readTxt.getTextFromText(plus.io.convertLocalFileSystemURL(this.domProp.path));
-	plus.nativeUI.closeWaiting();
-	this.updateLength();
-	this.nowIndex[0] = this.domProp.record;
-	this.setNowPage();
-	this.getCatalog();
-}
-
 ```
 
 #开发不易,麻烦各位帅哥、美女行行好给个好评吧!!!
