@@ -1,16 +1,24 @@
 <template>
-	<view class="progress-box" :style="{height: itemSize + 'rpx'}">
-		<view class="gap" :style="{'width': (itemSize/2) + 'rpx'}"></view>
-		<!-- 进度条 -->
-		<view id="progress" class="progress" :style="{'background-color': color}" ref="progress" @touchstart="lineTouchstart">
-			<view class="active" :style="{'background-color': activeColor, width: activeWidth + 'px'}"></view>
-		</view>
-		<view class="gap" :style="{'width': (itemSize/2) + 'rpx'}"></view>
-		<!-- 圆点 -->
-		<view class="item"
+	<view class="progress-box" :style="{height: itemSize + 'rpx'}"
 		@touchstart="touchstart"
 		@touchmove="touchmove"
-		@touchend="touchend"
+		@touchend="touchend">
+		
+		<!-- nvue中overflow只有hidden属性，所以超出部分会隐藏，为了显示完成的滑块，在进度条2边加上间隔，宽度为滑块宽度的一半 -->
+		<view :style="{'width': (itemSize / 2) + 'rpx'}"></view>
+		
+		<!-- 进度条 -->
+		<view id="progress" class="progress" :style="{'background-color': color}" ref="progress" @touchstart.stop="lineTouchstart">
+			<view class="active" :style="{'background-color': activeColor, width: activeWidth + 'px'}"></view>
+		</view>
+		
+		<!-- nvue中overflow只有hidden属性，所以超出部分会隐藏，为了显示完成的滑块，在进度条2边加上间隔，宽度为滑块宽度的一半 -->
+		<view :style="{'width': (itemSize / 1.5) + 'rpx'}"></view>
+		
+		<!-- 滑块 -->
+		<view class="item"
+		@touchstart="itemTouchstart"
+		ref="item"
 		:style="{
 			'background-color': activeColor,
 			'transform': 'translateX(' + activeWidth + 'px)',
@@ -34,7 +42,6 @@
 			itemSize: {
 				type: Number,
 				default: 40
-				
 			},
 			color: {
 				type: String,
@@ -51,6 +58,8 @@
 		},
 		data () {
 			return {
+				//确认手指是否触摸到滑块
+				startTouch: false,
 				//进度条总宽度
 				width: 0,
 				//进度条起始位置
@@ -90,25 +99,48 @@
 			}, 30)
 		},
 		methods: {
-			//圆点触摸开始
+			//手指触摸到滑块
+			itemTouchstart (e) {
+				if ( e.touches.length > 1 ) {
+					return;
+				}
+				this.startTouch = true;
+			},
+			//滑块触摸开始
 			touchstart (e) {
+				//手指是否触摸到滑块
+				if ( !this.startTouch ) {
+					return;
+				}
 				if ( e.touches.length > 1 ) {
 					return;
 				}
 				let touch = e.touches[0];
 				this.pointX = touch.pageX;
 			},
-			//圆点触摸移动
+			//滑块触摸移动
 			touchmove (e) {
+				//手指是否触摸到滑块
+				if ( !this.startTouch ) {
+					return;
+				}
 				let touch = e.touches[0];
+				
 				//触摸移动的距离加上进度条本身进度为当前进度
 				this.percent = parseFloat(((touch.pageX - this.pointX) / this.width * 100).toFixed(2)) + this.oldPercent;
 				this.setPercent();
 			},
-			//圆点触摸结束
+			//滑块触摸结束
 			touchend (e) {
+				//手指是否触摸到滑块
+				if ( !this.startTouch ) {
+					return;
+				}
+				
 				//记录下这次进度
 				this.oldPercent = this.percent;
+				
+				this.startTouch = false;
 			},
 			//点击进度条本身触发
 			lineTouchstart (e) {

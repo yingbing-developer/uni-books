@@ -220,7 +220,7 @@
 				if ( this.timer ) {
 					clearInterval(this.timer);
 				}
-				if ( this.popuplate <= -300 || (this.touchTime <= 0.3 && this.popuplate < 0) ) {
+				if ( this.popuplate <= -300 || (this.touchTime <= 0.3 && this.popuplate < -100) ) {
 					this.hide();
 				} else {
 					this.show();

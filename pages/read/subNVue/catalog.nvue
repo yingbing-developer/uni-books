@@ -1,5 +1,5 @@
 <template>
-    <div class="catalog" :style="{'background-color': skinColor.menuBgColor}">
+    <div class="catalog" :style="{'background-color': skinColor.menuBgColor}" @touchmove.stop.prevent="">
 		<view class="title">
 			<text class="title-text">{{title}}目录</text>
 		</view>

@@ -6,9 +6,9 @@
 				<view class="list">
 					<text class="list-text" :style="{'color': skinColor.menuTitleColor}">{{item.title}}</text>
 				</view>
-				<view :style="{height: '1.5rpx', 'background-color': skinColor.menuActiveBgColor}" v-if="index < list.length - 1"></view>
+				<view :style="{height: '1.5rpx', 'background-color': skinColor.gapColor}" v-if="index < list.length - 1"></view>
 			</view>
-			<view :style="{height: '6rpx', 'background-color': skinColor.menuActiveBgColor}"></view>
+			<view :style="{height: '6rpx', 'background-color': skinColor.gapColor}"></view>
 			<view class="list" style="height: 95rpx;" @tap="hide">
 				<text class="list-text" :style="{'color': skinColor.menuTitleColor}">取消</text>
 			</view>

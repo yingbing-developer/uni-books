@@ -31,6 +31,15 @@
 				            "height": "100%",
 							"background": "transparent"
 				        }
+				    },{
+				        "id": "setting", // 唯一标识
+				        "path": "pages/read/subNVue/setting", // 页面路径
+				        "style": {
+							"mask": "rgba(0,0,0,0)",
+				            "width": "750upx",
+				            "height": "100%",
+							"background": "transparent"
+				        }
 				    }]
 				}
 			}

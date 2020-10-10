@@ -402,6 +402,7 @@
 					if ( fd == null || !plus.android.invoke(fd, 'exists') ) {
 						plus.nativeUI.toast("文件路径不存在！", {verticalAlign: 'bottom'});
 						this.list.splice(index, 1);
+						this.fileLength--;
 						return;
 					}
 					//查询有没有导入过该txt文件

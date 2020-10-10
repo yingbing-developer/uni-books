@@ -33,7 +33,7 @@
 				<view class="touch-item touch-prev"></view>
 			</view>
 			<view class="touch-box touch-center">
-				<view class="touch-item" @tap="$refs.readSetting.show()"></view>
+				<view class="touch-item" @tap="openSettingNvue"></view>
 			</view>
 			<view class="touch-box touch-right" v-if="scrollMode == 'paging'">
 				<view class="touch-item touch-next"></view>
@@ -41,7 +41,7 @@
 		</view>
 		
 		<!-- 阅读设置 -->
-		<read-setting :markTitle="markTitle" :catalog="catalog" :path="path" ref="readSetting"></read-setting>
+		<!-- <read-setting :markTitle="markTitle" :catalog="catalog" :path="path" ref="readSetting"></read-setting> -->
 	</view>
 </template>
 
@@ -56,6 +56,8 @@
 		mixins: [skinMixin],
 		data () {
 			return {
+				//设置窗口是否打开
+				settingShow: false,
 				catalog: [],
 				markTitle: ''
 			}
@@ -101,6 +103,11 @@
 		},
 		created () {
 			this.updateBookReadTime(this.path);
+			
+			//监听设置窗口显示
+			uni.$on('setting-isShow', (data) => {
+				this.settingShow = data.show;
+			})
 		},
 		methods: {
 			...mapMutations(['updateBookReadStatus', 'updateBookLength', 'updateBookReadTime', 'updateBookRecord']),
@@ -132,12 +139,32 @@
 			//设置书签的前50个字
 			setMarkTitle (e) {
 				this.markTitle = e.title;
+				uni.$emit('setting-mark', {
+					markTitle: this.markTitle
+				})
+			},
+			//打开设置子窗体
+			openSettingNvue () {
+				const subNvue = uni.getSubNVueById('setting');
+				
+				//向子窗体传值
+				uni.$emit('setting-popup', {  
+					path: this.path,
+				    markTitle: this.markTitle,
+				    catalog: this.catalog
+				});
+				
+				// 打开 nvue 子窗体 
+				subNvue.show();
 			}
+		},
+		beforeDestroy () {
+			uni.$off('setting-isShow');
 		},
 		onBackPress (event) {
 			if ( event.from == 'backbutton' ) {
-				if ( this.$refs.readSetting.isShow ) {
-					this.$refs.readSetting.hide();
+				if ( this.settingShow ) {
+					uni.$emit('setting-hide');
 					return true;
 				}
 			}

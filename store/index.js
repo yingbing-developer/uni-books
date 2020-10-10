@@ -35,7 +35,7 @@ const store = new Vuex.Store({
 					menuIconColor: '#737373',
 					menuTitleColor: '#727272',
 					menuActiveColor: '#2397EE',
-					menuActiveBgColor: '#EEEEEE',
+					menuActiveBgColor: '#DDDDDD',
 					imgMask: 0,
 					readBackColor: '#BFAD8A',
 					readTextColor: '#2E2B23'
