@@ -39,9 +39,6 @@
 				<view class="touch-item touch-next"></view>
 			</view>
 		</view>
-		
-		<!-- 阅读设置 -->
-		<!-- <read-setting :markTitle="markTitle" :catalog="catalog" :path="path" ref="readSetting"></read-setting> -->
 	</view>
 </template>
 
@@ -49,7 +46,6 @@
 	import { mapGetters, mapMutations } from 'vuex'
 	import { skinMixin } from '@/common/mixin/index.js'
 	import { indexOf } from '@/common/js/util.js'
-	import ReadSetting from './setting.vue'
 	import NavBar from '@/components/nav-bar/nav-bar.nvue'
 	import GapBar from '@/components/nav-bar/nav-bar.nvue'
 	export default {
@@ -172,8 +168,7 @@
 		},
 		components: {
 			GapBar,
-			NavBar,
-			ReadSetting
+			NavBar
 		}
 	}
 </script>
