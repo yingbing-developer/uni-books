@@ -20,7 +20,9 @@
 				<view class="percent-box">
 					<text class="percent-text">{{progress}}%</text>
 				</view>
-				<view class="percentAfter"></view>
+				<view class="percentAfter">
+					<view class="percent-arrow"></view>
+				</view>
 			</view>
 			
 			<view class="readBoardContent">
@@ -465,15 +467,19 @@
 		font-size: 25rpx;
 	}
 	.percentAfter {
-		width: 0;
-		height: 0;
-		border-style: solid;
-		border-left-width: 20rpx;
-		border-left-color: transparent;
-		border-right-width: 20rpx;
-		border-right-color: transparent;
-		border-top-width: 10rpx;
-		border-top-color: #333333;
+		width: 25rpx;
+		height: 15rpx;
+		position: relative;
+	}
+	.percent-arrow {
+		position: absolute;
+		top: -10rpx;
+		left: 5rpx;
+		width: 20rpx;
+		height: 20rpx;
+		transform-origin: center center;
+		transform: rotateZ(45deg);
+		background-color: #333333;
 	}
 	.read-board-line {
 		flex-direction: row;

@@ -12,10 +12,10 @@
 			</view>
 		</nav-bar>
 		<c-search @confirm="setNameFilter"></c-search>
-		<list-scroll :row-count="20" :list="listSync" :listHeight="108">
+		<list-scroll @scroll="scroll" :row-count="20" :list="listSync" :listHeight="108">
 			 <!-- 注意事项: 不能使用 index 作为 key 的唯一标识 -->
 			<!-- 返回项 -->
-			<view slot="listTop" @tap="backParent()" class="list" :style="{'border-bottom-color': skinColor.gapColor}">
+			<view slot="listTop" ref="listTop" @tap="backParent()" class="list" :style="{'border-bottom-color': skinColor.gapColor}">
 				<view class="list-icon">
 					<c-icon name="folder" size="75" color="#FFCA28"></c-icon>
 				</view>
@@ -67,6 +67,14 @@
 					<bubble-item title="根目录"></bubble-item>
 				</view>
 		  </bubble>
+		  
+		<view class="fixed">
+			<view @tap="scrollTop">
+				<fixed-button :show="Math.abs(oldOffsetY) > 300">
+					<c-icon name="top" size="40" :color="skinColor.iconColor"></c-icon>
+				</fixed-button>
+			</view>
+		</view>
 	</view>
 </template>
 
@@ -81,6 +89,7 @@
 	import { dateFormat, suffix, indexOf } from '@/common/js/util.js'
 	import { mapGetters, mapMutations } from 'vuex'
 	const environment = plus.android.importClass("android.os.Environment");
+	const dom = weex.requireModule('dom');
 	export default {
 		mixins: [skinMixin],
 		data () {
@@ -96,7 +105,9 @@
 				//触发操作列表的路径
 				actionPath: '',
 				//路由防抖
-				routeDisabled: false
+				routeDisabled: false,
+				//滚动距离
+				oldOffsetY: 0
 			}
 		},
 		computed: {
@@ -124,6 +135,9 @@
 		},
 		methods: {
 			...mapMutations(['addBooks', 'deleteBook', 'updatePath']),
+			scroll (e) {
+				this.oldOffsetY = e.contentOffset.y;
+			},
 			//全选文件
 			selectAll () {
 				this.checkes = [];
@@ -497,7 +511,12 @@
 				})
 				this.fileLength = file.length;
 				this.list = folder.concat(file);
+				this.scrollTop();
 				this.checkes = [];
+			},
+			//返回顶部
+			scrollTop () {
+				dom.scrollToElement(this.$refs.listTop, {animated: false});
 			},
 			readFileSize (file) {
 			    let fileSize = plus.android.newObject("java.io.FileInputStream", file);
@@ -616,5 +635,13 @@
 	.btn-text {
 		font-size: 27rpx;
 		color: #F1F1F1;
+	}
+	.fixed {
+		position: fixed;
+		bottom: 20px;
+		right: 20px;
+		width: 90rpx;
+		align-items: center;
+		justify-content: flex-end;
 	}
 </style>

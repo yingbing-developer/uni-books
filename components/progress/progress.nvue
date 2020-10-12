@@ -115,6 +115,10 @@
 				if ( e.touches.length > 1 ) {
 					return;
 				}
+				
+				// 记录原本的进度
+				this.oldPercent = this.percent;
+				
 				let touch = e.touches[0];
 				this.pointX = touch.pageX;
 			},
@@ -136,9 +140,6 @@
 				if ( !this.startTouch ) {
 					return;
 				}
-				
-				//记录下这次进度
-				this.oldPercent = this.percent;
 				
 				this.startTouch = false;
 			},

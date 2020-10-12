@@ -80,6 +80,7 @@
 		data () {
 			return {
 				current: 0,
+				//滚动距离
 				oldOffsetY: 0,
 				//是否显示浮动按钮
 				btnShow: true,

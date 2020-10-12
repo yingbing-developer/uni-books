@@ -100,7 +100,7 @@
 		created () {
 			this.updateBookReadTime(this.path);
 			
-			//监听设置窗口显示
+			//监听原生子窗体显示
 			uni.$on('setting-isShow', (data) => {
 				this.settingShow = data.show;
 			})
@@ -155,6 +155,7 @@
 			}
 		},
 		beforeDestroy () {
+			//注销监听原生子窗体是否显示
 			uni.$off('setting-isShow');
 		},
 		onBackPress (event) {
