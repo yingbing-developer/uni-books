@@ -10,20 +10,10 @@
 		</view>
 		
 		<!-- 文本内容区域 -->
-		<read class="readBox" :fontSize="fontSize" :color="skinColor.readTextColor" :bgColor="skinColor.readBackColor"></read>
-		
-		<!-- 触摸区域 -->
-		<view class="touchBoard">
-			<view class="touch-box touch-left" v-if="scrollMode == 'paging'">
-				<view class="touch-item touch-prev"></view>
-			</view>
-			<view class="touch-box touch-center">
-				<view class="touch-item" @tap="openSettingNvue"></view>
-			</view>
-			<view class="touch-box touch-right" v-if="scrollMode == 'paging'">
-				<view class="touch-item touch-next"></view>
-			</view>
-		</view>
+		<read :book-content="bookContent" :start="bookInfo.record" class="readBox" :fontSize="fontSize" :color="skinColor.readTextColor" :bgColor="skinColor.readBackColor">
+			<!-- 点击此处显示菜单 -->
+			<view class="touch-menu" @tap="openSettingNvue">菜单</view>
+		</read>
 	</view>
 </template>
 
@@ -87,6 +77,8 @@
 			uni.$on('setting-isShow', (data) => {
 				this.settingShow = data.show;
 			})
+			
+			this.getContent();
 		},
 		mounted () {
 			
@@ -100,20 +92,16 @@
 				// this.bookContent = readTxt.getTextFromText(plus.io.convertLocalFileSystemURL(this.domProp.path));
 				// plus.nativeUI.closeWaiting();
 				// this.updateLength();
-				// this.nowIndex[0] = this.domProp.record;
-				// this.setNowPage();
 				// this.getCatalog();
 				
 				//获取内容 调试用
-				plus.io.resolveLocalFileSystemURL('file://' + this.domProp.path, ( entry ) => {
+				plus.io.resolveLocalFileSystemURL('file://' + this.path, ( entry ) => {
 					entry.file( ( file ) => {
 						let reader = new plus.io.FileReader();
 						reader.onloadend = ( e ) => {
 							plus.nativeUI.closeWaiting();
 							this.bookContent = e.target.result;
 							this.updateLength();
-							this.nowIndex[0] = this.domProp.record;
-							this.setNowPage();
 							this.getCatalog();
 						};
 						reader.readAsText( file, 'gb2312' );
@@ -135,11 +123,7 @@
 						index: match.index
 					})
 				}
-				UniViewJSBridge.publishHandler('onWxsInvokeCallMethod', {
-					cid: this._$id,
-					method: 'setCatalog',
-					args: {'catalog': catalog}
-				})
+				this.catalog = catalog;
 			},
 			//更新阅读记录
 			updateRecord (e) {
@@ -155,15 +139,11 @@
 					isReaded: e.status
 				});
 			},
-			//填充章节目录
-			setCatalog (e) {
-				this.catalog = e.catalog;
-			},
 			//设置文本总长度
 			updatetLength (e) {
 				this.updateBookLength({
 					path: this.path,
-					length: e.length
+					length: this.bookContent.length
 				})
 			},
 			//设置书签的前50个字
@@ -232,38 +212,28 @@
 		text-overflow: ellipsis;
 	}
 	.readBox {
-		overflow: hidden;
 		position: relative;
 		flex: 1;
+		overflow: unset;
 	}
 	.noWrap {
 		white-space: nowrap;
 	}
-	.touchBoard {
-		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
+	.touch-menu {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		width: 200rpx;
+		height: 400rpx;
+		border: 5rpx dashed #FFFFFF;
+		box-sizing: border-box;
+		color: #FFFFFF;
+		font-size: 20rpx;
+		z-index: 100;
 		display: flex;
 		justify-content: center;
-	}
-	.touch-box  {
-		display: flex;
 		align-items: center;
-		height: 100%;
-	}
-	.touch-left, .touch-right {
-		flex: 1;
-	}
-	.touch-center {
-		width: 30%;
-	}
-	.touch-item {
-		width: 100%;
-		height: 200rpx;
-	}
-	.touch-prev, .touch-next {
-		height: 70%;
+		border-radius: 20rpx;
 	}
 </style>

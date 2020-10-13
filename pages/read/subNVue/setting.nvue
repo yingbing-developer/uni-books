@@ -473,7 +473,7 @@
 	}
 	.percent-arrow {
 		position: absolute;
-		top: -10rpx;
+		top: -13rpx;
 		left: 5rpx;
 		width: 20rpx;
 		height: 20rpx;

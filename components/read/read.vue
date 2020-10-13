@@ -5,13 +5,13 @@
 		<view :prop="domProp" :change:prop="dom.readChange" id="dom"></view>
 		
 		<!-- 文本内容区域 -->
-		<view id="flipbook" class="flipbook" :style="{'font-size': fontSize + 'px'}">
-		  <view style="background-color: #BFAD8A;"> Page 1 </view>
-		  <view style="background-color: #BFAD8A;"> Page 2 </view>
-		  <view style="background-color: #BFAD8A;"> Page 3 </view>
-		  <view style="background-color: #BFAD8A;"> Page 4 </view>
+		<view id="flipbook" :style="{'font-size': fontSize + 'px', 'line-height': (fontSize + 10) + 'px'}">
+			<view class="content" :style="{'background-color': bgColor}"></view>
 		</view>
 		
+		<view class="touchBtn touchLeft">上一页</view>
+		<slot></slot>
+		<view class="touchBtn touchRight">下一页</view>
 	</view>
 </template>
 
@@ -47,23 +47,15 @@
 				default: '#BFAD8A'
 			}
 		},
-		data () {
-			return {
-				//设置窗口是否打开
-				settingShow: false,
-				catalog: [],
-				markTitle: ''
-			}
-		},
 		computed: {
 			domProp () {
 				return {
 					fontSize: this.fontSize,
-					record: this.start
+					record: this.start,
+					bookContent: this.bookContent,
+					bgColor: this.bgColor
 				};
 			}
-		},
-		created () {
 		},
 		methods: {
 			//当阅读位置改变时触发（必须是子组件自身的事件触发的改变才能触发，因为子组件外造成的改变不会触发）
@@ -72,12 +64,8 @@
 			},
 			//更新阅读状态
 			updateReadStatus (e) {
-				
+				this.$emit('readStatus', e.status);
 			}
-		},
-		beforeDestroy () {
-			//注销监听原生子窗体是否显示
-			uni.$off('setting-isShow');
 		}
 	}
 </script>
@@ -88,21 +76,29 @@
 			return {
 				//当前页文字的开始和结束位置
 				nowIndex: [0,0],
+				nextIndex: [0,0],
+				prevIndex: [0,0],
 				maxHeight: 0
 			}
 		},
 		mounted () {
-			this.initProp.bind(this);
-			const jquery =  document.createElement('script');
-			jquery.src = 'static/js/jquery-1.7.1.min.js';
-			jquery.onload = this.initJquery.bind(this);
-			document.head.appendChild(jquery);
 			setTimeout(() => {
-				const turn = document.createElement('script');
-				turn.src = 'static/js/turn.js';
-				turn.onload = this.initTurn.bind(this);
-				document.head.appendChild(turn);
-			}, 30)
+				this.initProp.bind(this);
+				const jquery =  document.createElement('script');
+				jquery.src = 'static/js/jquery-1.7.1.min.js';
+				jquery.onload = this.initJquery.bind(this);
+				document.head.appendChild(jquery);
+				setTimeout(() => {
+					const turn = document.createElement('script');
+					turn.src = 'static/js/turn.min.js';
+					turn.onload = this.initTurn.bind(this);
+					document.head.appendChild(turn);
+					setTimeout(() => {
+						this.nowIndex[0] = this.domProp.record;
+						this.setNowPage();
+					}, 100)
+				}, 30)
+			}, 500)
 		},
 		methods: {
 			//初始化jquery
@@ -116,8 +112,10 @@
 				  width: readBox.offsetWidth,
 				  height: this.maxHeight,
 				  autoCenter: true,
-				  display: 'single'
+				  display: 'single',
+				  acceleration: true
 				});
+				$('#flipbook').css('overflow', 'unset');
 			},
 			//初始化数据
 			initProp () {
@@ -129,18 +127,12 @@
 			setNowPage () {
 				this.updateReadStatus(false);
 				//截取内容
-				let text = this.bookContent.substr(this.nowIndex[0], 1500);
+				let text = this.domProp.bookContent.substr(this.nowIndex[0], 1500);
 				//创建新的文本容器，插入节点中
 				const box = this.createContent();
-				const contentBox = document.getElementById('contentBox');
-				contentBox.appendChild(box);
+				$("#flipbook").turn("addPage", box, 2);
 				const contents = document.getElementsByClassName('content');
-				//如果为翻页模式移除原本的内容
-				if ( this.domProp.scrollMode == 'paging' && contents.length > 1 ) {
-					contentBox.removeChild(contents[0])
-				}
-				
-				//获取新插入的文本容器
+				console.log(contents.length);
 				const content = contents[contents.length - 1];
 				let len = text.length % 20 > 0 ? parseInt(text.length / 20) + 1 : parseInt(text.length / 20);
 				//打断循环
@@ -174,7 +166,6 @@
 						break;
 					}
 				}
-				this.setMarkTitle();
 			},
 			//设置上一页内容
 			setPrevPage () {
@@ -232,7 +223,6 @@
 					}
 				}
 				this.updateRecord(this.nowIndex[0]);
-				this.setMarkTitle();
 			},
 			//阅读设置改变
 			readChange (newVal, oldVal) {
@@ -312,14 +302,22 @@
 				this.setNowPage();
 			},
 			createContent() {
-				const dom = document.createElement('text');
-				dom.style.whiteSpace = 'pre-wrap';
-				dom.style.wordBreak = 'break-all';
-				dom.style.wordWrap = 'break-word';
-				dom.style.width = '100%';
-				dom.style.display = 'inline-block';
-				dom.setAttribute('class', 'content');
-				return dom;
+				const div = $('<view class="content" />');
+				div.css('background-color', this.domProp.bgColor);
+				div.css('whiteSpace', 'pre-wrap');
+				div.css('wordWrap', 'break-word');
+				div.css('padding', '0, 20rpx');
+				div.css('box-sizing', 'border-box');
+				div.css('display', 'inline-block');
+				return div;
+				// const div = document.createElement('div');
+				// div.style.whiteSpace = 'pre-wrap';
+				// div.style.wordBreak = 'break-all';
+				// div.style.wordWrap = 'break-word';
+				// div.style.padding = '0, 20rpx';
+				// div.style.display = 'inline-block';
+				// div.setAttribute('class', 'content')
+				// return div;
 			},
 			//更新阅读记录
 			updateRecord (record) {
@@ -344,12 +342,31 @@
 <style scoped>
 	.read-box {
 		font-family: '微软雅黑';
+		position: relative;
 	}
-	.box-view {
-		overflow-x: hidden;
+	.touchBtn {
+		font-size: 20rpx;
+		z-index: 10;
+		width: 200rpx;
+		height: 400rpx;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		position: absolute;
+		top: 50%;
+		transform: translateY(-50%);
+		border: 5rpx dashed #FFFFFF;
+		box-sizing: border-box;
+		color: #FFFFFF;
 	}
-	.flipbook {
-		width: 100%;
-		height: 100%;
+	.touchLeft {
+		left: 0;
+		border-top-right-radius: 20rpx;
+		border-bottom-right-radius: 20rpx;
+	}
+	.touchRight {
+		right: 0;
+		border-top-left-radius: 20rpx;
+		border-bottom-left-radius: 20rpx;
 	}
 </style>

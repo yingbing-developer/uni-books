@@ -126,6 +126,9 @@
 					if ( this.touchTime > 0 ) {
 						return;
 					}
+					if ( this.popuplate < -50 ) {
+						return;
+					}
 					this.hide();
 				}
 			},

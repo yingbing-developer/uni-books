@@ -448,10 +448,7 @@
 				this.routeDisabled = true;
 				uni.navigateTo({
 					url: url,
-					success: (res) => {
-						this.routeDisabled = false;
-					},
-					fail: (err) => {
+					complete: (res) => {
 						this.routeDisabled = false;
 					}
 				})
