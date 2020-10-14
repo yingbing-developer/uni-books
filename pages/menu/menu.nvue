@@ -5,7 +5,7 @@
 	@touchmove.stop.prevent="touchmove"
 	@touchend="touchend">
 		<!-- 遮罩层 -->
-		<view class="mask" ref="mask" :style="{'opacity': maskOpacity}" @tap.stop="maskHide"></view>
+		<view class="mask" ref="mask" :style="{'opacity': maskOpacity}" @touchstart="maskHide"></view>
 		<view class="popup"
 		ref="popup"
 		:style="{'background-color': skinColor.menuBgColor, 'transform': 'translateX(' + popuplate + 'rpx)'}"
@@ -69,6 +69,7 @@
 				},
 				isShow: false,
 				maskOpacity: 0,
+				isMaskHide: false,
 				routeDisabled: false,
 				popuplate: -540,
 				pointX: 0,
@@ -120,17 +121,7 @@
 				this.changeSkin(skin);
 			},
 			maskHide () {
-				if ( !this.isShow ) {
-					return;
-				} else {
-					if ( this.touchTime > 0 ) {
-						return;
-					}
-					if ( this.popuplate < -50 ) {
-						return;
-					}
-					this.hide();
-				}
+				this.isMaskHide = true;
 			},
 			//仅仅显示组件，并不显示菜单和遮罩层
 			open () {
@@ -223,7 +214,7 @@
 				if ( this.timer ) {
 					clearInterval(this.timer);
 				}
-				if ( this.popuplate <= -300 || (this.touchTime <= 0.3 && this.popuplate < -100) ) {
+				if ( this.popuplate <= -300 || (this.touchTime <= 0.3 && this.popuplate < -100) || (this.isMaskHide && this.popuplate > -10) ) {
 					this.hide();
 				} else {
 					this.show();
@@ -231,6 +222,7 @@
 				setTimeout(() => {
 					this.touchTime = 0;
 					this.pointX = 0;
+					this.isMaskHide = false;
 				}, 20)
 			},
 			clickOptions (item) {
