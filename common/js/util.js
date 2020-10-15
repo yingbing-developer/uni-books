@@ -48,7 +48,7 @@ export function removeSuffix (name) {
 export const indexOf = function (arr, value, query) {
 	for ( let i in arr ) {
 		if ( arr[i][query] == value ) {
-			return i;
+			return parseInt(i);
 		}
 	}
 	return -1;

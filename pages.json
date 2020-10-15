@@ -20,6 +20,7 @@
 			"path": "pages/read/index",
 			"style": {
 				"navigationStyle": "custom",
+				"disableScroll": "true",
 				"app-plus": {
 				    "subNVues":[{
 				        "id": "catalog", // 唯一标识
