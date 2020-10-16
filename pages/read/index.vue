@@ -11,16 +11,22 @@
 		
 		<!-- 文本内容区域 -->
 		<view class="pageBox">
-			<swiper :style="{'height': swiperHeight + 'px'}" :current="page" :duration="100" @change="changePage">
+			<swiper indicator-dots :style="{'height': swiperHeight + 'px'}" :current="page" :duration="duration" @change="changePage">
 				<swiper-item class="pageItem" v-for="(item, index) in pages" :key="index">
 					<page
+					ref="page"
 					class="pageContent"
+					:dataId="index"
 					:color="skinColor.readTextColor"
 					:content="item.content"
+					:supContent="item.supContent"
 					:fontSize="fontSize"
 					:type="item.type"
 					:page-type="item.pageType"
 					:record="item.record"
+					:isPageNow="page == index"
+					@setNext="setNext"
+					@setPrev="setPrev"
 					@ready="ready"></page>
 				</swiper-item>
 			</swiper>
@@ -46,6 +52,8 @@
 	import NavBar from '@/components/nav-bar/nav-bar.nvue'
 	import GapBar from '@/components/nav-bar/nav-bar.nvue'
 	import Page from '@/components/page/page.vue'
+	//文本截取长度
+	const sliceLen = 1500;
 	export default {
 		mixins: [skinMixin],
 		data () {
@@ -54,11 +62,7 @@
 				bookContent: '',
 				pages: [],
 				page: 0,
-				area: {
-					prev: [0,0],
-					now: [0,0],
-					next: [0,0]
-				},
+				duration: 100,
 				swiperHeight: 0,
 				//设置窗口是否打开
 				settingShow: false,
@@ -98,41 +102,48 @@
 			}
 		},
 		created () {
-			this.updateBookReadTime(this.path);
-			
 			//监听原生子窗体显示
 			uni.$on('setting-isShow', (data) => {
 				this.settingShow = data.show;
 			})
 		},
 		onReady () {
+			//更新阅读时间
+			this.updateBookReadTime(this.path);
+			
+			//初始化页面
 			if ( this.bookInfo.record == 0 ) {
 				this.pages = [{
 					content: '',
+					supContent: '',
 					record: 0,
-					pageType: 'now',
+					pageType: 'init',
 					type: 'next'
 				},{
 					content: '',
+					supContent: '',
 					record: 0,
-					pageType: 'next',
+					pageType: 'uninit',
 					type: 'next'
 				}]
 			} else {
 				this.pages = [{
 					content: '',
+					supContent: '',
 					record: 0,
-					pageType: 'prev',
+					pageType: 'uninit',
 					type: 'prev'
 				},{
 					content: '',
+					supContent: '',
 					record: 0,
-					pageType: 'now',
+					pageType: 'init',
 					type: 'next'
 				},{
 					content: '',
+					supContent: '',
 					record: 0,
-					pageType: 'next',
+					pageType: 'uninit',
 					type: 'next'
 				}]
 				this.page = 1;
@@ -160,10 +171,18 @@
 						reader.onloadend = ( e ) => {
 							plus.nativeUI.closeWaiting();
 							this.bookContent = e.target.result;
-							
+							//更新文本总长度
+							this.updateBookLength({
+								path: this.path,
+								length: this.bookContent.length
+							})
+							//获取章节目录
+							this.getCatalog();
 							// 初始化当前页内容
-							let index = indexOf(this.pages, 'now', 'pageType');
-							this.pages[index].content = this.bookContent.substr(this.bookInfo.record, 1500);
+							let index = indexOf(this.pages, 'init', 'pageType');
+							this.pages[index].record = this.bookInfo.record;
+							this.pages[index].content = this.bookContent.substr(this.bookInfo.record, sliceLen);
+							this.pages[index].supContent = this.bookContent.substr(this.bookInfo.record + sliceLen, 500);
 						};
 						reader.readAsText( file, 'gb2312' );
 					}, ( fail ) => {
@@ -173,69 +192,145 @@
 					console.log( "Request file system failed: " + fail.message );
 				});
 			},
+			//获取章节目录
+			getCatalog () {
+				const reg = new RegExp(/(第?[一二两三四五六七八九十○零百千万亿0-9１２３４５６７８９０]{1,6}[章回卷节折篇幕集部]?[.\s][^\n]*)[_,-]?/g);
+				let match = '';
+				let catalog = [];
+				while ((match = reg.exec(this.bookContent)) != null) {
+					catalog.push({
+						title: match[0],
+						index: match.index
+					})
+				}
+				this.catalog = catalog;
+			},
 			ready (e) {
-				this.area[e.pageType] = [e.start, e.end];
-				if ( e.pageType == 'now' ) {
+				//判断是否是首屏加载的页面
+				if ( e.pageType == 'init' ) {
 					//获取当前页的下标
-					let index = indexOf(this.pages, 'now', 'pageType');
-					
+					let index = indexOf(this.pages, 'init', 'pageType');
 					// 初始化下一页内容 如果后面还有内容的话
 					if ( e.end < this.bookContent.length ) {
 						this.pages[index + 1].record = e.end;
-						this.pages[index + 1].content = this.bookContent.substr(e.end, 1500);
+						this.pages[index + 1].content = this.bookContent.substr(e.end, sliceLen);
+						this.pages[index + 1].supContent = this.bookContent.substr(e.end + sliceLen, 500);
 					} else {
 						// 后面没有内容则删掉下一页的页面
 						this.pages.splice(2, 1);
 					}
-					
 					// 初始化上一页内容 如果前面还有内容的话
 					if ( e.start > 0 ) {
 						let start = e.start - 1500 > 0 ? e.start - 1500 : 0;
-						this.pages[index - 1].record = start;
-						this.pages[index - 1].content = this.bookContent.substr(start, e.start);
+						this.pages[index - 1].record = e.start;
+						this.pages[index - 1].content = this.bookContent.substring(start, e.start);
+						this.pages[index - 1].supContent = this.bookContent.substr(e.start, 500);
 					}
-					
+					this.$set(this.pages[index], 'pageType', 'uninit');
 				}
 			},
-			changePage (e) {
-				
-				let prevIndex = indexOf(this.pages, 'prev', 'pageType');
-				let nowIndex = indexOf(this.pages, 'now', 'pageType');
-				let nextIndex = indexOf(this.pages, 'next', 'pageType');
-				//向后面翻页时
-				if ( this.page - e.target.current < 0 ) {
-					this.area['prev'] = this.area['now'];
-					this.area['now'] = this.area['next'];
-					//将原本当前页变为上一页
-					this.pages[nowIndex].pageType = 'prev';
-					this.pages[nextIndex].pageType = 'now';
-					
-					//如果后面还有内容 新增下一页页面
-					if ( this.area['now'][1] < this.bookContent.length ) {
+			setPrev (e) {
+				// 初始化上一页内容 如果前面还有内容的话
+				if ( e.type == 'create' ) {
+					if ( e.start > 0 ) {
+						let start = e.start - sliceLen > 0 ? e.start - sliceLen : 0;
+						this.pages.unshift({
+							content: this.bookContent.substring(start, e.start),
+							supContent: this.bookContent.substr(e.start, 500),
+							record: e.start,
+							pageType: 'uninit',
+							type: 'prev'
+						})
+						//删除原本的下一页的页面  如果有的话
+						if ( this.pages.length > 3 ) {
+							this.pages.pop();
+						}
+						this.duration = 0;
+						this.page = 1;
+						setTimeout(() => {
+							this.duration = 100;
+						}, 20)
+					} else {
+						this.pages.pop();
+						this.duration = 0;
+						this.page = 0;
+						setTimeout(() => {
+							this.duration = 100;
+						}, 20)
+					}
+				}
+				//更新上一页内容
+				if ( e.type == 'update' ) {
+					let start = e.start - 1500 > 0 ? e.start - 1500 : 0;
+					this.pages[0].record = e.start;
+					this.pages[0].content = this.bookContent.substring(start, e.start);
+					this.pages[0].supContent = this.bookContent.substr(e.start, 500);
+				}
+			},
+			setNext (e) {
+				// 初始化下一页内容 如果后面还有内容的话
+				if ( e.type == 'create' ) {
+					if ( e.end < this.bookContent.length ) {
+						//新增下一页内容
 						this.pages.push({
-							content: this.bookContent.substr(this.area['now'][1], 1500),
-							record: this.area['now'][1],
-							pageType: 'next',
+							content: this.bookContent.substr(e.end, 1500),
+							supContent: this.bookContent.substr(e.end + sliceLen, 500),
+							record: e.end,
+							pageType: 'uninit',
 							type: 'next'
 						})
-					}
-					setTimeout(() => {
 						//删除原本的上一页的页面  如果有的话
-						if ( prevIndex > -1 ) {
-							this.pages.splice(prevIndex, 1);
-							// this.pages = this.pages.shift();
+						if ( this.pages.length > 3 ) {
+							this.pages.splice(0, 1);
 						}
+						this.duration = 0;
 						this.page = 1;
-					}, 100)
+						setTimeout(() => {
+							this.duration = 100;
+						}, 20)
+					} else {
+						this.pages.splice(0, 1);
+						this.duration = 0;
+						this.page = 1;
+						setTimeout(() => {
+							this.duration = 100;
+						}, 20)
+					}
+				}
+				//更新下一页内容
+				if ( e.type == 'update' ) {
+					this.pages[this.pages.length - 1].record = e.end;
+					this.pages[this.pages.length - 1].content = this.bookContent.substr(e.end, sliceLen);
+					this.pages[this.pages.length - 1].supContent = this.bookContent.substr(e.end + sliceLen, 500);
 				}
 				
 			},
-			//更新阅读记录
-			updateRecord (e) {
-				this.updateBookRecord({
-					path: this.path,
-					record: e.record
-				});
+			changePage (e) {
+				//向后面翻页时
+				if ( this.page - e.target.current < 0 ) {
+					this.page = e.target.current;
+					setTimeout(() => {
+						//更新阅读记录
+						this.updateBookRecord({
+							path: this.path,
+							record: this.$refs.page[this.pages.length - 1].start
+						});
+						this.$refs.page[this.pages.length - 1].setNext();
+					}, this.duration)
+				}
+				//向前面翻页时
+				if ( this.page - e.target.current > 0 ) {
+					this.page = e.target.current;
+					setTimeout(() => {
+						//更新阅读记录
+						this.updateBookRecord({
+							path: this.path,
+							record: this.$refs.page[0].start
+						});
+						this.$refs.page[0].setPrev()
+					}, this.duration)
+				}
+				
 			},
 			//更新阅读状态
 			updateReadStatus (e) {
@@ -243,17 +338,6 @@
 					path: this.path,
 					isReaded: e.status
 				});
-			},
-			//填充章节目录
-			setCatalog (e) {
-				this.catalog = e.catalog;
-			},
-			//设置文本总长度
-			updatetLength (e) {
-				this.updateBookLength({
-					path: this.path,
-					length: e.length
-				})
 			},
 			//设置书签的前50个字
 			setMarkTitle (e) {
@@ -322,6 +406,7 @@
 	}
 	.pageBox {
 		flex: 1;
+		padding: 0 20rpx;
 	}
 	.pageItem {
 		height: 100%;
