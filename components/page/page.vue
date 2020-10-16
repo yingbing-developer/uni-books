@@ -89,10 +89,6 @@
 				}
 				this.$emit('ready', {start: this.start, end: this.end, pageType: this.pageType});
 			},
-			//通知父组件文本不够填充整个页面（在处于第一页的时候需要填满整个页面）
-			error () {
-				this.$emit('error');
-			},
 			//通知父组件设置上一页的内容
 			setPrev (type = 'create') {
 				this.$emit('setPrev', {start: this.start, end: this.end, type: type});
@@ -302,13 +298,6 @@
 					cid: this._$id,
 					method: 'finish',
 					args: {'length': length}
-				})
-			},
-			//通知父组件文本数量不够
-			error () {
-				UniViewJSBridge.publishHandler('onWxsInvokeCallMethod', {
-					cid: this._$id,
-					method: 'error'
 				})
 			},
 			//更新下一页内容
