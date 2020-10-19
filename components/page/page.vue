@@ -7,10 +7,13 @@
 <script>
 	export default {
 		props: {
-			//传入唯一标识动态命名ID获取dom对象
+			//传入唯一标识动态命名ID用于获取dom对象
 			dataId: {
-				type: Number,
-				default: 0
+				type: String,
+				default () {
+					let mydate = new Date();
+					return 'cms' + mydate.getMinutes() + mydate.getSeconds() + mydate.getMilliseconds() + Math.round(Math.random() * 10000);
+				}
 			},
 			//传入文本
 			content: {
@@ -37,16 +40,17 @@
 				type: String,
 				default: ''
 			},
-			//传入是当前页是否是首屏加载显示的页面 init / uninit
-			pageType: {
-				type: String,
-				default: ''
-			},
 			//传入阅读位置（如果type为next则是起始阅读位置, 如果type为prev则是结束阅读位置）
 			record: {
 				type: Number,
 				default: 0
 			},
+			//文本总长度
+			length: {
+				type: Number,
+				default: 0
+			},
+			//是否是当前页面
 			isPageNow: {
 				type: Boolean,
 				default: false
@@ -73,41 +77,32 @@
 					isPageNow: this.isPageNow,
 					dataId: this.dataId,
 					record: this.record,
-					type: this.type
+					type: this.type,
+					isLast: this.end >= this.length
 				};
 			}
 		},
 		methods: {
-			finish (e) {
+			ready (e) {
+				//计算开始和结束位置
+				this.countRecord(e.length);
+				//判断是否是首屏加载的初始页面
+				if ( this.isPageNow ) {
+					let isReaded = this.end >= this.length ? true : false;
+					//抛出初始页面ready事件(开始位置,结束位置,是否读完)
+					this.$emit('ready', {start: this.start, end: this.end, isReaded: isReaded});
+				}
+			},
+			//计算开始和结束位置
+			countRecord (length) {
 				if ( this.type == 'next' ) {
 					this.start = this.record;
-					this.end = this.record + e.length;
+					this.end = this.record + length;
 				}
 				if ( this.type == 'prev' ) {
-					this.start = this.record - e.length > 0 ? this.record - e.length : 0;
+					this.start = this.record - length > 0 ? this.record - length : 0;
 					this.end = this.record;
 				}
-				this.$emit('ready', {start: this.start, end: this.end, pageType: this.pageType});
-			},
-			//通知父组件设置上一页的内容
-			setPrev (type = 'create') {
-				this.$emit('setPrev', {start: this.start, end: this.end, type: type});
-			},
-			//通知父组件设置下一页的内容
-			setNext (type = 'create') {
-				this.$emit('setNext', {start: this.start, end: this.end, type: type});
-			},
-			//更新下一页内容
-			updateNext (e) {
-				if ( this.type == 'next' ) {
-					this.start = this.record;
-					this.end = this.record + e.length;
-				}
-				if ( this.type == 'prev' ) {
-					this.start = this.record - e.length > 0 ? this.record - e.length : 0;
-					this.end = this.record;
-				}
-				this.setNext('update');
 			}
 		},
 		watch: {
@@ -115,19 +110,24 @@
 				if ( this.type == 'next' ) {
 					this.start = this.record;
 				}
+			},
+			isPageNow (newVal) {
+				if ( newVal ) {
+					let isReaded = this.end >= this.length ? true : false;
+					this.$emit('ready', {start: this.start, end: this.end, isReaded: isReaded});
+				}
 			}
 		}
 	}
 </script>
 
 <script lang="renderjs" module="dom" type="module">
+	let myDom
 	export default {
 		data () {
 			return {
 				//根据容器高度，行高计算出的最大高度
-				viewHeight: 0,
-				//是否是最后一页
-				isLast: false
+				viewHeight: 0
 			}
 		},
 		mounted () {
@@ -146,7 +146,7 @@
 				const content = document.getElementById('content' + this.domProp.dataId);
 				content.textContent = '';
 				this.addText(content, text);
-				this.finish();
+				this.ready();
 			},
 			//添加文字
 			addText (content, text) {
@@ -170,11 +170,6 @@
 								break;
 							}
 						}
-					} else {
-						//如果文本遍历完了，但文本高度没有超过容器高度则表示这是最后一页
-						if ( i == len - 1 ) {
-							this.isLast = true;
-						}
 					}
 					if ( isBreak ) {
 						break;
@@ -190,9 +185,8 @@
 				//打断循环
 				let isBreak = false;
 				content.textContent = '';
-				//遍历截取的文本内容，从文本的末尾开始循环放入新建的文本容器
-				let contentSync = '';
 				let end = addNum;
+				//遍历截取的文本内容，从文本的末尾开始循环放入新建的文本容器
 				for ( let i = 0; i < len; i++) {
 					//每次从最后面添加addNum个字符
 					if ( i == len - 1 ) {
@@ -222,10 +216,10 @@
 						break;
 					}
 				}
-				this.finish();
+				this.ready();
 			},
 			initDom () {
-				let myDom = dom.init(document.getElementById('dom' + this.domProp.dataId));
+				myDom = dom.init(document.getElementById('dom' + this.domProp.dataId));
 				// 观测更新的数据在 view 层可以直接访问到
 				myDom.setOption(this.domProp);
 			},
@@ -242,22 +236,24 @@
 				}
 			},
 			domPropChange (newVal, oldVal) {
-				//当前页面 字体改变
-				if ( this.domProp.isPageNow ) {
-					if ( newVal.fontSize != oldVal.fontSize ) {
-						this.fontChange(newVal.fontSize, oldVal.fontSize);
-					}
+				//字体改变
+				if ( newVal.fontSize != oldVal.fontSize ) {
+					this.fontChange(newVal.fontSize, oldVal.fontSize);
 				}
-				//内容改掉边
+				//内容改变
 				if ( newVal.bookContent != oldVal.bookContent ) {
 					this.contentChange(newVal.bookContent, oldVal.bookContent)
 				}
 			},
 			fontChange (newVal, oldVal) {
-				clearTimeout(this.timer);
+				//不是当前页面不操作
+				if ( !this.domProp.isPageNow ) {
+					return;
+				}
 				this.initView();
+				const content = document.getElementById('content' + this.domProp.dataId);
+				clearTimeout(this.timer);
 				this.timer = setTimeout(() => {
-					const content = document.getElementById('content' + this.domProp.dataId);
 					//字体变大
 					if ( oldVal < newVal ) {
 						//如果文本高度没有超过规定高度则不操作
@@ -271,19 +267,19 @@
 								break;
 							}
 						}
-					} else {
+					} 
+					if ( oldVal > newVal ) {
 						//字体变小
 						//如果是最后一页则不操作
-						if ( this.isLast ) {
-							return;
+						if ( !this.domProp.isLast ) {
+							//从页面显示的文本后面截取全部剩余的文本，添加补充页面
+							let text = this.domProp.bookContent.substr(content.textContent.length) + this.domProp.supContent;
+							this.addText(content, text);
 						}
-						//从页面显示的文本后面截取全部剩余的文本，添减补充页面
-						let text = this.domProp.bookContent.substr(content.textContent.length) + this.domProp.supContent;
-						this.addText(content, text);
 					}
-					//更新下一页内容
-					this.updateNext();
-				}, 50)
+					//更新上下页内容
+					this.ready();
+				}, 100)
 			},
 			contentChange(newVal, oldVal) {
 				if ( newVal ) {
@@ -292,20 +288,11 @@
 				}
 			},
 			//通知父组件文本加载完成
-			finish () {
+			ready () {
 				let length = document.getElementById('content' + this.domProp.dataId).textContent.length;
 				UniViewJSBridge.publishHandler('onWxsInvokeCallMethod', {
 					cid: this._$id,
-					method: 'finish',
-					args: {'length': length}
-				})
-			},
-			//更新下一页内容
-			updateNext () {
-				let length = document.getElementById('content' + this.domProp.dataId).textContent.length;
-				UniViewJSBridge.publishHandler('onWxsInvokeCallMethod', {
-					cid: this._$id,
-					method: 'updateNext',
+					method: 'ready',
 					args: {'length': length}
 				})
 			}
@@ -316,6 +303,8 @@
 <style scoped>
 	.page {
 		height: 100%;
+		max-height: 100%;
+		overflow: hidden;
 	}
 	.content {
 		white-space: pre-wrap;

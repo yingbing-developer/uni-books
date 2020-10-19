@@ -10,23 +10,20 @@
 		</view>
 		
 		<!-- 文本内容区域 -->
-		<view class="pageBox">
+		<view class="pageBox" :style="{opacity: this.rOpacity}">
 			<swiper indicator-dots :style="{'height': swiperHeight + 'px'}" :current="page" :duration="duration" @change="changePage">
 				<swiper-item class="pageItem" v-for="(item, index) in pages" :key="index">
 					<page
 					ref="page"
 					class="pageContent"
-					:dataId="index"
 					:color="skinColor.readTextColor"
 					:content="item.content"
 					:supContent="item.supContent"
 					:fontSize="fontSize"
 					:type="item.type"
-					:page-type="item.pageType"
 					:record="item.record"
-					:isPageNow="page == index"
-					@setNext="setNext"
-					@setPrev="setPrev"
+					:length="bookContent.length"
+					:isPageNow="item.isPageNow"
 					@ready="ready"></page>
 				</swiper-item>
 			</swiper>
@@ -61,7 +58,10 @@
 				//文本内容
 				bookContent: '',
 				pages: [],
+				//当前页
 				page: 0,
+				//刚打开时，文本部分会抖动,先将文本透明化,等文本加载完毕再显示
+				rOpacity: 0,
 				duration: 100,
 				swiperHeight: 0,
 				//设置窗口是否打开
@@ -110,44 +110,6 @@
 		onReady () {
 			//更新阅读时间
 			this.updateBookReadTime(this.path);
-			
-			//初始化页面
-			if ( this.bookInfo.record == 0 ) {
-				this.pages = [{
-					content: '',
-					supContent: '',
-					record: 0,
-					pageType: 'init',
-					type: 'next'
-				},{
-					content: '',
-					supContent: '',
-					record: 0,
-					pageType: 'uninit',
-					type: 'next'
-				}]
-			} else {
-				this.pages = [{
-					content: '',
-					supContent: '',
-					record: 0,
-					pageType: 'uninit',
-					type: 'prev'
-				},{
-					content: '',
-					supContent: '',
-					record: 0,
-					pageType: 'init',
-					type: 'next'
-				},{
-					content: '',
-					supContent: '',
-					record: 0,
-					pageType: 'uninit',
-					type: 'next'
-				}]
-				this.page = 1;
-			}
 			let view = uni.createSelectorQuery().in(this).select(".pageBox");
 			view.boundingClientRect( data => {
 				this.swiperHeight = data.height;
@@ -178,11 +140,15 @@
 							})
 							//获取章节目录
 							this.getCatalog();
-							// 初始化当前页内容
-							let index = indexOf(this.pages, 'init', 'pageType');
-							this.pages[index].record = this.bookInfo.record;
-							this.pages[index].content = this.bookContent.substr(this.bookInfo.record, sliceLen);
-							this.pages[index].supContent = this.bookContent.substr(this.bookInfo.record + sliceLen, 500);
+							
+							//初始化当前页面
+							this.pages.push({
+								content: this.bookContent.substr(this.bookInfo.record, sliceLen),
+								supContent: this.bookContent.substr(this.bookInfo.record + sliceLen, 500),
+								record: this.bookInfo.record,
+								isPageNow: true,
+								type: 'next'
+							})
 						};
 						reader.readAsText( file, 'gb2312' );
 					}, ( fail ) => {
@@ -205,139 +171,115 @@
 				}
 				this.catalog = catalog;
 			},
+			//当前页准备完成
 			ready (e) {
-				//判断是否是首屏加载的页面
-				if ( e.pageType == 'init' ) {
-					//获取当前页的下标
-					let index = indexOf(this.pages, 'init', 'pageType');
-					// 初始化下一页内容 如果后面还有内容的话
-					if ( e.end < this.bookContent.length ) {
-						this.pages[index + 1].record = e.end;
-						this.pages[index + 1].content = this.bookContent.substr(e.end, sliceLen);
-						this.pages[index + 1].supContent = this.bookContent.substr(e.end + sliceLen, 500);
-					} else {
-						// 后面没有内容则删掉下一页的页面
-						this.pages.splice(2, 1);
-					}
-					// 初始化上一页内容 如果前面还有内容的话
-					if ( e.start > 0 ) {
-						let start = e.start - 1500 > 0 ? e.start - 1500 : 0;
-						this.pages[index - 1].record = e.start;
-						this.pages[index - 1].content = this.bookContent.substring(start, e.start);
-						this.pages[index - 1].supContent = this.bookContent.substr(e.start, 500);
-					}
-					this.$set(this.pages[index], 'pageType', 'uninit');
+				this.setLast(e.isReaded);
+				if ( e.start > 0 && !this.pages[this.page - 1] ) {
+					this.createPrev(e);
+				} else {
+					this.updatePrev(e);
 				}
+				
+				if ( e.end < this.bookContent.length && !this.pages[this.page + 1] ) {
+					this.createNext(e);
+				} else {
+					this.updateNext(e);
+				}
+				//显示文本
+				this.rOpacity = 1;
 			},
-			setPrev (e) {
-				// 初始化上一页内容 如果前面还有内容的话
-				if ( e.type == 'create' ) {
-					if ( e.start > 0 ) {
-						let start = e.start - sliceLen > 0 ? e.start - sliceLen : 0;
-						this.pages.unshift({
-							content: this.bookContent.substring(start, e.start),
-							supContent: this.bookContent.substr(e.start, 500),
-							record: e.start,
-							pageType: 'uninit',
-							type: 'prev'
-						})
-						//删除原本的下一页的页面  如果有的话
-						if ( this.pages.length > 3 ) {
-							this.pages.pop();
-						}
-						this.duration = 0;
-						this.page = 1;
-						setTimeout(() => {
-							this.duration = 100;
-						}, 20)
-					} else {
-						this.pages.pop();
-						this.duration = 0;
-						this.page = 0;
-						setTimeout(() => {
-							this.duration = 100;
-						}, 20)
-					}
+			createPrev (e) {
+				let start = e.start - sliceLen > 0 ? e.start - sliceLen : 0;
+				this.pages.unshift({
+					content: this.bookContent.substring(start, e.start),
+					supContent: this.bookContent.substr(e.start, 500),
+					record: e.start,
+					isPageNow: false,
+					type: 'prev'
+				})
+				if ( this.pages[this.page + 2] ) {
+					this.pages.pop();
 				}
-				//更新上一页内容
-				if ( e.type == 'update' ) {
-					let start = e.start - 1500 > 0 ? e.start - 1500 : 0;
+				this.duration = 0;
+				this.page = e.start > 0 ? 1 : 0;
+				setTimeout(() => {
+					this.duration = 100;
+				}, 10)
+			},
+			createNext (e) {
+				this.pages.push({
+					content: this.bookContent.substr(e.end, sliceLen),
+					supContent: this.bookContent.substr(e.end + sliceLen, 500),
+					record: e.end,
+					isPageNow: false,
+					type: 'next'
+				})
+				if ( this.pages[this.page - 2] ) {
+					this.pages.shift();
+				}
+				this.duration = 0;
+				this.page = e.start > 0 ? 1 : 0;
+				setTimeout(() => {
+					this.duration = 100;
+				}, 10)
+			},
+			//更新上一页内容 如果有上一页的话
+			updatePrev (e) {
+				if ( this.pages[this.page - 1] ) {
 					this.pages[0].record = e.start;
-					this.pages[0].content = this.bookContent.substring(start, e.start);
 					this.pages[0].supContent = this.bookContent.substr(e.start, 500);
+					this.pages[0].content = '';
+					this.$nextTick(() => {
+						let start = e.start - sliceLen > 0 ? e.start - sliceLen : 0;
+						this.pages[0].content = this.bookContent.substring(start, e.start);
+					})
 				}
 			},
-			setNext (e) {
-				// 初始化下一页内容 如果后面还有内容的话
-				if ( e.type == 'create' ) {
-					if ( e.end < this.bookContent.length ) {
-						//新增下一页内容
-						this.pages.push({
-							content: this.bookContent.substr(e.end, 1500),
-							supContent: this.bookContent.substr(e.end + sliceLen, 500),
-							record: e.end,
-							pageType: 'uninit',
-							type: 'next'
-						})
-						//删除原本的上一页的页面  如果有的话
-						if ( this.pages.length > 3 ) {
-							this.pages.splice(0, 1);
-						}
-						this.duration = 0;
-						this.page = 1;
-						setTimeout(() => {
-							this.duration = 100;
-						}, 20)
-					} else {
-						this.pages.splice(0, 1);
-						this.duration = 0;
-						this.page = 1;
-						setTimeout(() => {
-							this.duration = 100;
-						}, 20)
-					}
-				}
-				//更新下一页内容
-				if ( e.type == 'update' ) {
+			//更新下一页内容
+			updateNext (e) {
+				if ( this.pages[this.page + 1] ) {
 					this.pages[this.pages.length - 1].record = e.end;
-					this.pages[this.pages.length - 1].content = this.bookContent.substr(e.end, sliceLen);
 					this.pages[this.pages.length - 1].supContent = this.bookContent.substr(e.end + sliceLen, 500);
+					this.pages[this.pages.length - 1].content = '';
+					this.$nextTick(() => {
+						//如果没有下一页初始化下一页内容
+						this.pages[this.pages.length - 1].content = this.bookContent.substr(e.end, sliceLen);
+					})
 				}
-				
 			},
-			changePage (e) {
-				//向后面翻页时
-				if ( this.page - e.target.current < 0 ) {
-					this.page = e.target.current;
-					setTimeout(() => {
-						//更新阅读记录
-						this.updateBookRecord({
-							path: this.path,
-							record: this.$refs.page[this.pages.length - 1].start
-						});
-						this.$refs.page[this.pages.length - 1].setNext();
-					}, this.duration)
-				}
-				//向前面翻页时
-				if ( this.page - e.target.current > 0 ) {
-					this.page = e.target.current;
-					setTimeout(() => {
-						//更新阅读记录
-						this.updateBookRecord({
-							path: this.path,
-							record: this.$refs.page[0].start
-						});
-						this.$refs.page[0].setPrev()
-					}, this.duration)
-				}
-				
-			},
-			//更新阅读状态
-			updateReadStatus (e) {
+			//当前页是否是最后一页的执行事件
+			setLast (status) {
+				//更新阅读状态(是否读完)
 				this.updateBookReadStatus({
 					path: this.path,
-					isReaded: e.status
-				});
+					isReaded: status
+				})
+				//是最后一页
+				if ( status ) {
+					//如果还有下一页内容，删除掉
+					if ( this.pages[this.page + 1] ) {
+						this.pages.pop();
+					}
+				}
+			},
+			//滑动触发事件
+			changePage (e) {
+				if ( e.target.source == 'touch' ) {
+					let go = this.page - e.target.current;
+					this.page = e.target.current;
+					//将原本的当前页面改为非当前页面
+					let index = indexOf(this.pages, true, 'isPageNow');
+					if ( index > -1 ) {
+						this.$set(this.pages[index], 'isPageNow', false);
+					}
+					setTimeout(() => {
+						this.updateBookRecord({
+							path: this.path,
+							record: this.$refs.page[this.page].start
+						});
+						this.$set(this.pages[this.page], 'isPageNow', true);
+					}, this.duration)
+				}
 			},
 			//设置书签的前50个字
 			setMarkTitle (e) {
