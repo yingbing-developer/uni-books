@@ -30,13 +30,13 @@
 		</view>
 		
 		<!-- 触摸区域 -->
-		<view class="touch-box touch-prev" v-if="scrollMode == 'paging'">
+		<view class="touch-box touch-prev" @tap="pageClick(0)" v-if="scrollMode == 'paging'">
 			上一页
 		</view>
 		<view class="touch-box touch-menu" @tap="openSettingNvue">
 			菜单
 		</view>
-		<view class="touch-box touch-next" v-if="scrollMode == 'paging'">
+		<view class="touch-box touch-next" @tap="pageClick(pages.length - 1)" v-if="scrollMode == 'paging'">
 			下一页
 		</view>
 	</view>
@@ -60,9 +60,11 @@
 				pages: [],
 				//当前页
 				page: 0,
+				//是否是触摸翻页
+				touchChange: false,
 				//刚打开时，文本部分会抖动,先将文本透明化,等文本加载完毕再显示
 				rOpacity: 0,
-				duration: 100,
+				duration: 300,
 				swiperHeight: 0,
 				//设置窗口是否打开
 				settingShow: false,
@@ -79,6 +81,10 @@
 				let index =  page.options.index;
 				return this.bookList[index];
 			},
+			//阅读位置
+			record () {
+				return this.bookInfo.record;
+			},
 			//文件路径
 			path () {
 				return this.bookInfo.path;
@@ -94,7 +100,7 @@
 				if ( this.bookInfo.record == 0 ) {
 					return 0
 				} else {
-					return parseFloat(((this.bookInfo.record / this.bookInfo.length) * 100).toFixed(2))
+					return parseFloat(((this.record / this.bookInfo.length) * 100).toFixed(2))
 				}
 			},
 			light () {
@@ -141,14 +147,8 @@
 							//获取章节目录
 							this.getCatalog();
 							
-							//初始化当前页面
-							this.pages.push({
-								content: this.bookContent.substr(this.bookInfo.record, sliceLen),
-								supContent: this.bookContent.substr(this.bookInfo.record + sliceLen, 500),
-								record: this.bookInfo.record,
-								isPageNow: true,
-								type: 'next'
-							})
+							//初始化页面
+							this.initPage();
 						};
 						reader.readAsText( file, 'gb2312' );
 					}, ( fail ) => {
@@ -171,23 +171,53 @@
 				}
 				this.catalog = catalog;
 			},
+			//初始化页面
+			initPage () {
+				this.pages = [];
+				setTimeout(() => {
+					let len = this.record > 0 ? 3 : 2;
+					for ( let i = 0; i < len; i++ ) {
+						this.pages.push({
+							content: '',
+							supContent: '',
+							record: 0,
+							isPageNow: false,
+							type: 'next'
+						})
+					}
+					let nowIndex = this.record > 0 ? 1 : 0;
+					this.pages[0].type = this.record > 0 ? 'prev' : 'next';
+					this.pages[nowIndex].isPageNow = true;
+					this.pages[nowIndex].record = this.record;
+					this.pages[nowIndex].content = this.bookContent.substr(this.record, sliceLen);
+					this.pages[nowIndex].supContent = this.bookContent.substr(this.record + sliceLen, 500);
+					this.page = nowIndex;
+				}, 30)
+			},
 			//当前页准备完成
 			ready (e) {
-				this.setLast(e.isReaded);
-				if ( e.start > 0 && !this.pages[this.page - 1] ) {
-					this.createPrev(e);
-				} else {
-					this.updatePrev(e);
+				//设置阅读记录
+				this.setPage(e);
+				if ( this.pages[this.page - 1] ) {
+					if ( this.pages[this.page - 1].content == '') {
+						this.updatePrev(e)
+					}
+					if ( e.updatePrev ) {
+						this.pages[this.page - 1].type = 'prev';
+						this.$refs.page[this.page - 1].restart();
+					}
 				}
-				
-				if ( e.end < this.bookContent.length && !this.pages[this.page + 1] ) {
-					this.createNext(e);
-				} else {
-					this.updateNext(e);
+				if ( this.pages[this.page + 1] ) {
+					if ( this.pages[this.page + 1].content == '' || (e.end != this.$refs.page[this.page + 1].start) ) {
+						this.updateNext(e)
+					}
 				}
 				//显示文本
-				this.rOpacity = 1;
+				if ( !this.rOpacity ) {
+					this.rOpacity = 1;
+				}
 			},
+			//创建上一页内容
 			createPrev (e) {
 				let start = e.start - sliceLen > 0 ? e.start - sliceLen : 0;
 				this.pages.unshift({
@@ -197,15 +227,14 @@
 					isPageNow: false,
 					type: 'prev'
 				})
+				//有当前页的下下页内容，删除掉
 				if ( this.pages[this.page + 2] ) {
 					this.pages.pop();
 				}
-				this.duration = 0;
-				this.page = e.start > 0 ? 1 : 0;
-				setTimeout(() => {
-					this.duration = 100;
-				}, 10)
+				//将page设置为正常的值
+				this.recoverPage(e.start)
 			},
+			//创建下一页内容
 			createNext (e) {
 				this.pages.push({
 					content: this.bookContent.substr(e.end, sliceLen),
@@ -214,56 +243,64 @@
 					isPageNow: false,
 					type: 'next'
 				})
+				//有当前页的上上页内容，删除掉
 				if ( this.pages[this.page - 2] ) {
 					this.pages.shift();
 				}
-				this.duration = 0;
-				this.page = e.start > 0 ? 1 : 0;
-				setTimeout(() => {
-					this.duration = 100;
-				}, 10)
+				//将page设置为正常的值
+				this.recoverPage(e.start)
 			},
-			//更新上一页内容 如果有上一页的话
+			//更新上一页内容
 			updatePrev (e) {
-				if ( this.pages[this.page - 1] ) {
-					this.pages[0].record = e.start;
-					this.pages[0].supContent = this.bookContent.substr(e.start, 500);
-					this.pages[0].content = '';
-					this.$nextTick(() => {
-						let start = e.start - sliceLen > 0 ? e.start - sliceLen : 0;
-						this.pages[0].content = this.bookContent.substring(start, e.start);
-					})
-				}
+				let start = e.start - sliceLen > 0 ? e.start - sliceLen : 0;
+				this.pages[this.page - 1].record = e.start;
+				this.pages[this.page - 1].type = 'prev';
+				this.pages[this.page - 1].supContent = this.bookContent.substr(e.start, 500);
+				this.pages[this.page - 1].content = this.bookContent.substring(start, e.start);
 			},
 			//更新下一页内容
 			updateNext (e) {
-				if ( this.pages[this.page + 1] ) {
-					this.pages[this.pages.length - 1].record = e.end;
-					this.pages[this.pages.length - 1].supContent = this.bookContent.substr(e.end + sliceLen, 500);
-					this.pages[this.pages.length - 1].content = '';
-					this.$nextTick(() => {
-						//如果没有下一页初始化下一页内容
-						this.pages[this.pages.length - 1].content = this.bookContent.substr(e.end, sliceLen);
-					})
-				}
+				this.pages[this.page + 1].record = e.end;
+				this.pages[this.page + 1].type = 'next';
+				this.pages[this.page + 1].supContent = this.bookContent.substr(e.end + sliceLen, 500);
+				this.pages[this.page + 1].content = this.bookContent.substr(e.end, sliceLen);
 			},
-			//当前页是否是最后一页的执行事件
-			setLast (status) {
+			//更新阅读记录
+			setPage (e) {
+				if ( this.touchChange = true ) {
+					//更新阅读位置
+					this.updateBookRecord({
+						path: this.path,
+						record: e.start
+					});
+				}
 				//更新阅读状态(是否读完)
 				this.updateBookReadStatus({
 					path: this.path,
-					isReaded: status
+					isReaded: e.end >= this.bookContent.length
 				})
+				//设置当前页面的标签,用于添加标签
+				this.setMarkTitle(e.start);
 				//是最后一页
-				if ( status ) {
+				if ( e.end >= this.bookContent.length ) {
 					//如果还有下一页内容，删除掉
 					if ( this.pages[this.page + 1] ) {
 						this.pages.pop();
 					}
+				//不是最后一页
+				} else {
+					//如果没有下一页内容，新增
+					if ( !this.pages[this.page + 1] ) {
+						this.createNext(e);
+					}
 				}
+				setTimeout(() => {
+					this.touchChange = false;
+				}, 30)
 			},
 			//滑动触发事件
 			changePage (e) {
+				//判断是否是触摸触发的滑动
 				if ( e.target.source == 'touch' ) {
 					let go = this.page - e.target.current;
 					this.page = e.target.current;
@@ -272,18 +309,94 @@
 					if ( index > -1 ) {
 						this.$set(this.pages[index], 'isPageNow', false);
 					}
-					setTimeout(() => {
-						this.updateBookRecord({
-							path: this.path,
-							record: this.$refs.page[this.page].start
-						});
-						this.$set(this.pages[this.page], 'isPageNow', true);
-					}, this.duration)
+					//翻页触发事件
+					this.pageEvent(go);
 				}
 			},
-			//设置书签的前50个字
-			setMarkTitle (e) {
-				this.markTitle = e.title;
+			//点击翻页
+			pageClick (current) {
+				let go = this.page - current;
+				if ( go == 0 ) {
+					if ( this.record == 0 ) {
+						uni.showToast({
+							title: '已经是最前面了',
+							icon: 'none'
+						})
+						return;
+					}
+					if ( this.bookInfo.isReaded ) {
+						uni.showToast({
+							title: '已经是后面了',
+							icon: 'none'
+						})
+						return;
+					}
+				}
+				this.page = current;
+				//将原本的当前页面改为非当前页面
+				let index = indexOf(this.pages, true, 'isPageNow');
+				if ( index > -1 ) {
+					this.$set(this.pages[index], 'isPageNow', false);
+				}
+				//翻页触发事件
+				this.pageEvent(go);
+			},
+			//翻页事件
+			pageEvent (go) {
+				this.touchChange = true;
+				let e = {start: this.$refs.page[this.page].start, end: this.$refs.page[this.page].end };
+				setTimeout(() => {
+					//向前翻页
+					if ( go > 0 ) {
+						//不是第一页 并且没有上一页 则创建上一页
+						if ( e.start > 0 && !this.pages[this.page - 1] ) {
+							this.createPrev(e);
+						}
+						//是第一页
+						if ( e.start == 0 ) {
+							//有当前页的下下页内容，删除掉
+							if ( this.pages[this.page + 2] ) {
+								this.pages.pop();
+								this.recoverPage(e.start)
+							}
+						}
+					}
+					//向后翻页
+					if ( go < 0 ) {
+						//不是最后一页，并且没有下一页，则创建下一页
+						if ( e.end < this.bookContent.length && !this.pages[this.page + 1] ) {
+							this.createNext(e);
+						}
+						//是最后一页
+						if ( e.end >= this.bookContent.length ) {
+							//有当前页的上上页内容，删除掉
+							if ( this.pages[this.page - 2] ) {
+								this.pages.shift();
+								this.recoverPage(e.start)
+							}
+						}
+					}
+					this.$nextTick(() => {
+						this.$set(this.pages[this.page], 'isPageNow', true);
+					})
+				}, this.duration)
+			},
+			//页面数量变化后，会造成显示页异常，设置可以正常显示的page值 
+			recoverPage (start) {
+				//先将滑动动画时间设为零 避免设置page时出现动画效果
+				this.duration = 0;
+				//根绝当前页的开始位置判断是否是第一页 第一页设置为0，其余都为1
+				this.page = start > 0 ? 1 : 0;
+				
+				//如果出现滑动动画异常的情况，可能是这里出了问题，将延迟时间设长一点试试
+				setTimeout(() => {
+					//恢复滑动动画时间
+					this.duration = 300;
+				}, 30)
+			},
+			//设置当前页面书签的前50个字
+			setMarkTitle (record) {
+				this.markTitle = this.bookContent.substr(record, 50);
 				uni.$emit('setting-mark', {
 					markTitle: this.markTitle
 				})
@@ -301,6 +414,14 @@
 				
 				// 打开 nvue 子窗体 
 				subNvue.show();
+			}
+		},
+		watch: {
+			record () {
+				//判断是不是触摸翻页改变的阅读记录 如果是则不执行
+				if ( !this.touchChange ) {
+					this.initPage();
+				}
 			}
 		},
 		beforeDestroy () {

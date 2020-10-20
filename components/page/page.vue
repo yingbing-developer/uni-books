@@ -61,7 +61,9 @@
 				//保存当前页起始位置
 				start: 0,
 				//保存当前页结束位置
-				end: 0
+				end: 0,
+				//是否重置内容
+				restartValue: 0
 			}
 		},
 		computed: {
@@ -78,43 +80,46 @@
 					dataId: this.dataId,
 					record: this.record,
 					type: this.type,
-					isLast: this.end >= this.length
+					isLast: this.end >= this.length,
+					restart: this.restartValue
 				};
 			}
 		},
 		methods: {
 			ready (e) {
-				//计算开始和结束位置
-				this.countRecord(e.length);
+				if ( e.type == 'init' ) {
+					//计算开始和结束位置
+					if ( this.type == 'next' ) {
+						this.start = this.record;
+						this.end = this.record + e.length;
+					}
+					if ( this.type == 'prev' ) {
+						this.end = this.record + e.deValue;
+						this.start = this.end - e.length > 0 ? this.end - e.length : 0;
+					}
+				}
+				if ( e.type == 'update' ) {
+					//计算结束位置
+					this.end = this.start + e.length;
+				}
 				//判断是否是首屏加载的初始页面
 				if ( this.isPageNow ) {
-					let isReaded = this.end >= this.length ? true : false;
-					//抛出初始页面ready事件(开始位置,结束位置,是否读完)
-					this.$emit('ready', {start: this.start, end: this.end, isReaded: isReaded});
+					//抛出初始页面ready事件(开始位置,结束位置)
+					this.$emit('ready', {start: this.start, end: this.end, updatePrev: e.updatePrev});
+					setTimeout(() => {
+						//修改restart值，为下次重置作准备
+						this.restartValue = 0;
+					}, 100)
 				}
 			},
-			//计算开始和结束位置
-			countRecord (length) {
-				if ( this.type == 'next' ) {
-					this.start = this.record;
-					this.end = this.record + length;
-				}
-				if ( this.type == 'prev' ) {
-					this.start = this.record - length > 0 ? this.record - length : 0;
-					this.end = this.record;
-				}
+			restart () {
+				this.restartValue += 1;
 			}
 		},
 		watch: {
-			record (newVal) {
-				if ( this.type == 'next' ) {
-					this.start = this.record;
-				}
-			},
 			isPageNow (newVal) {
 				if ( newVal ) {
-					let isReaded = this.end >= this.length ? true : false;
-					this.$emit('ready', {start: this.start, end: this.end, isReaded: isReaded});
+					this.$emit('ready', {start: this.start, end: this.end, updatePrev: false});
 				}
 			}
 		}
@@ -145,46 +150,46 @@
 				let text = this.domProp.bookContent;
 				const content = document.getElementById('content' + this.domProp.dataId);
 				content.textContent = '';
-				this.addText(content, text);
-				this.ready();
+				this.addText(content, text).then((length) => {
+					this.ready('init', length);
+				});
 			},
 			//添加文字
 			addText (content, text) {
-				const addNum = 50;
-				let len = Math.ceil(text.length / addNum);
-				//打断循环
-				let isBreak = false;
-				//每次添加addNum个字符
-				for ( let i = 0; i < len; i++ ) {
-					content.textContent += text.substring(i * addNum, (i + 1) * addNum);
-					//文本高度超过规定高度
-					if ( content.offsetHeight > this.viewHeight ) {
-						len = content.textContent.length;
-						//文本每次减去最后一个字符
-						for ( let j = 0; j < len; j++ ) {
-							content.textContent = content.textContent.substr(0, content.textContent.length-1);
-							//文本高度等于规定高度，结束循环
-							if ( content.offsetHeight == this.viewHeight ) {
-								//通知外层循环中断
-								isBreak = true;
-								break;
+				return new Promise((resolve, reject) => {
+					const addNum = 50;
+					let len = Math.ceil(text.length / addNum);
+					//每次添加addNum个字符
+					for ( let i = 0; i < len; i++ ) {
+						content.textContent += text.substring(i * addNum, (i + 1) * addNum);
+						//文本高度超过规定高度
+						if ( content.offsetHeight > this.viewHeight ) {
+							len = content.textContent.length;
+							//文本每次减去最后一个字符
+							for ( let j = 0; j < len; j++ ) {
+								content.textContent = content.textContent.substr(0, content.textContent.length-1);
+								//文本高度等于规定高度，结束循环
+								if ( content.offsetHeight == this.viewHeight ) {
+									resolve(content.textContent.length);
+									return;
+								}
+							}
+						} else {
+							if ( i == len - 1 ) {
+								resolve(content.textContent.length);
+								return;
 							}
 						}
 					}
-					if ( isBreak ) {
-						break;
-					}
-				}
+				})
 			},
 			//设置上一页内容
 			setPrevPage () {
 				let text = this.domProp.bookContent;
 				const content = document.getElementById('content' + this.domProp.dataId);
+				content.textContent = '';
 				const addNum = 50;
 				let len = Math.ceil(text.length / addNum);
-				//打断循环
-				let isBreak = false;
-				content.textContent = '';
 				let end = addNum;
 				//遍历截取的文本内容，从文本的末尾开始循环放入新建的文本容器
 				for ( let i = 0; i < len; i++) {
@@ -200,23 +205,22 @@
 							content.textContent = content.textContent.substr(1);
 							//文本高度等于规定高度，结束循环
 							if ( content.offsetHeight == this.viewHeight ) {
-								//通知外层循环中断
-								isBreak = true;
-								break;
+								this.ready('init', content.textContent.length);
+								return;
 							}
 						}
 					} else {
 						//如果文本遍历完后文本高度还是小于等于规定的高度, 这是第一页, 则请求新的文本补全整个页面
 						if ( i == len - 1 ) {
 							text = this.domProp.supContent;
-							this.addText(content, text);
+							//排版上一页内容时，如果上一页是第一页的话可能会出现内容不够排满整个页面的情况，这时候需要请求后面的内容补全整个页面，先将现在已排版的内容长度记录下来，用于计算结束位置
+							let oldLength = content.textContent.length;
+							this.addText(content, text).then((length) => {
+								this.ready('init', length, length - oldLength);
+							});
 						}
 					}
-					if ( isBreak ) {
-						break;
-					}
 				}
-				this.ready();
 			},
 			initDom () {
 				myDom = dom.init(document.getElementById('dom' + this.domProp.dataId));
@@ -242,7 +246,11 @@
 				}
 				//内容改变
 				if ( newVal.bookContent != oldVal.bookContent ) {
-					this.contentChange(newVal.bookContent, oldVal.bookContent)
+					this.contentChange(newVal.bookContent)
+				}
+				//重排版
+				if ( newVal.restart != oldVal.restart ) {
+					this.restartChange(newVal.restart)
 				}
 			},
 			fontChange (newVal, oldVal) {
@@ -267,6 +275,7 @@
 								break;
 							}
 						}
+						this.ready('update', content.textContent.length, 0, true);
 					} 
 					if ( oldVal > newVal ) {
 						//字体变小
@@ -274,26 +283,34 @@
 						if ( !this.domProp.isLast ) {
 							//从页面显示的文本后面截取全部剩余的文本，添加补充页面
 							let text = this.domProp.bookContent.substr(content.textContent.length) + this.domProp.supContent;
-							this.addText(content, text);
+							this.addText(content, text).then((length) => {
+								this.ready('update', length, 0, true);
+							});
 						}
 					}
 					//更新上下页内容
-					this.ready();
-				}, 100)
+				}, 150)
 			},
-			contentChange(newVal, oldVal) {
+			//排版页面内容
+			contentChange(newVal) {
 				if ( newVal ) {
 					this.initView();
 					this.start()
 				}
 			},
+			//监听restart变化，重置页面内容
+			restartChange (newVal) {
+				if ( newVal > 0 ) {
+					this.initView();
+					this.start()
+				}
+			},
 			//通知父组件文本加载完成
-			ready () {
-				let length = document.getElementById('content' + this.domProp.dataId).textContent.length;
+			ready (type, length, deValue = 0, updatePrev = false) {
 				UniViewJSBridge.publishHandler('onWxsInvokeCallMethod', {
 					cid: this._$id,
 					method: 'ready',
-					args: {'length': length}
+					args: {'type': type, 'length': length, 'deValue': deValue, 'updatePrev': updatePrev}
 				})
 			}
 		}
