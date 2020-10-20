@@ -203,7 +203,7 @@
 						this.updatePrev(e)
 					}
 					if ( e.updatePrev ) {
-						this.pages[this.page - 1].type = 'prev';
+						this.updatePrev(e);
 						this.$refs.page[this.page - 1].restart();
 					}
 				}

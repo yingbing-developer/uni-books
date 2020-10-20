@@ -301,8 +301,11 @@
 			//监听restart变化，重置页面内容
 			restartChange (newVal) {
 				if ( newVal > 0 ) {
-					this.initView();
-					this.start()
+					clearTimeout(this.timer);
+					this.timer = setTimeout(() => {
+						this.initView();
+						this.start()
+					}, 100)
 				}
 			},
 			//通知父组件文本加载完成
