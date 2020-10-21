@@ -15,6 +15,14 @@
 				"disableScroll": true // 不嵌套 scroller
 			}
 		},
+		//设置页
+		{
+			"path": "pages/setting/index",
+			"style": {
+				"navigationStyle": "custom",
+				"disableScroll": true // 不嵌套 scroller
+			}
+		},
 		//阅读页
 		{
 			"path": "pages/read/index",

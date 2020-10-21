@@ -322,6 +322,9 @@
 
 <style scoped>
 	.page {
+		padding: 0 20rpx;
+		box-sizing: border-box;
+		width: 100%;
 		height: 100%;
 		max-height: 100%;
 		overflow: hidden;

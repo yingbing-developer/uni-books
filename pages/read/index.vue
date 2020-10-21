@@ -1,9 +1,5 @@
 <template>
-	<view class="read"
-	@touchstart="touchstart"
-	@touchmove="touchmove"
-	@touchend="touchend"
-	:style="{'background-color': skinColor.readBackColor, filter: 'brightness(' + light + '%)'}">
+	<view class="read" :style="{'background-color': skinColor.readBackColor, filter: 'brightness(' + light + '%)'}">
 		<view id="readTop" class="read-top" :style="{color: skinColor.readTextColor, 'background-color': skinColor.readBackColor}">
 			<gap-bar></gap-bar>
 			<view class="read-top-line">
@@ -14,7 +10,7 @@
 		
 		<!-- 文本内容区域 -->
 		<view class="pageBox">
-			<swiper :style="{'height': swiperHeight + 'px'}" :current="page" :duration="duration" @change="changePage">
+			<swiper :disable-touch="readMode.pageMode == 'click'" :vertical="readMode.pageMode == 'U2DTrans'" :style="{'height': swiperHeight + 'px'}" :current="page" :duration="duration" @change="changePage">
 				<swiper-item class="pageItem" v-for="(item, index) in pages" :key="index">
 					<page
 					ref="page"
@@ -33,15 +29,15 @@
 		</view>
 		
 		<!-- 触摸区域 -->
-		<!-- <view class="touch-box touch-prev" @tap="pageClick(0)" v-if="scrollMode == 'paging'">
+		<view class="touch-box touch-prev" @tap="pageClick(0)" v-if="readMode.pageMode == 'click'">
 			上一页
 		</view>
 		<view class="touch-box touch-menu" @tap="openSettingNvue">
 			菜单
 		</view>
-		<view class="touch-box touch-next" @tap="pageClick(pages.length - 1)" v-if="scrollMode == 'paging'">
+		<view class="touch-box touch-next" @tap="pageClick(pages.length - 1)" v-if="readMode.pageMode == 'click'">
 			下一页
-		</view> -->
+		</view>
 	</view>
 </template>
 
@@ -60,21 +56,22 @@
 			return {
 				//文本内容
 				bookContent: '',
+				//页面列表
 				pages: [],
 				//当前页
 				page: 0,
 				//是否是触摸翻页
 				touchChange: false,
+				//滑动动画时间
 				duration: 300,
+				//文本高度
 				swiperHeight: 0,
 				//设置窗口是否打开
 				settingShow: false,
+				//目录
 				catalog: [],
-				markTitle: '',
-				//触摸开始点X轴
-				startX: 0,
-				//触摸移动X轴上的距离
-				lateX: 0
+				//当前页书签文本
+				markTitle: ''
 			}
 		},
 		computed: {
@@ -94,12 +91,11 @@
 			path () {
 				return this.bookInfo.path;
 			},
-			//滚动方式
-			scrollMode () {
-				return this.readMode.scroll;
-			},
 			fontSize () {
 				return this.readMode.fontSize;
+			},
+			readDuration () {
+				return this.readMode.duration;
 			},
 			progress () {
 				if ( this.bookInfo.record == 0 ) {
@@ -118,6 +114,7 @@
 				this.settingShow = data.show;
 			})
 			plus.nativeUI.showWaiting("读取文本中..");
+			this.duration = this.readDuration;
 		},
 		onReady () {
 			//更新阅读时间
@@ -131,47 +128,46 @@
 		methods: {
 			...mapMutations(['updateBookReadStatus', 'updateBookLength', 'updateBookReadTime', 'updateBookRecord']),
 			getContent () {
-				
 				//获取内容 正式用
-				// let ReadTxt = plus.android.importClass('com.itstudy.io.GetText');
-				// let readTxt = new ReadTxt();
-				// this.bookContent = readTxt.getTextFromText(plus.io.convertLocalFileSystemURL(this.domProp.path));
-				// plus.nativeUI.closeWaiting();
-				// //更新文本总长度
-				// this.updateBookLength({
-				// 	path: this.path,
-				// 	length: this.bookContent.length
-				// })
-				// //获取章节目录
-				// this.getCatalog();
-				// //初始化页面
-				// this.initPage();
+				let ReadTxt = plus.android.importClass('com.itstudy.io.GetText');
+				let readTxt = new ReadTxt();
+				this.bookContent = readTxt.getTextFromText(plus.io.convertLocalFileSystemURL(this.path));
+				plus.nativeUI.closeWaiting();
+				//更新文本总长度
+				this.updateBookLength({
+					path: this.path,
+					length: this.bookContent.length
+				})
+				//获取章节目录
+				this.getCatalog();
+				//初始化页面
+				this.initPage();
 				
 				//获取内容 调试用
-				plus.io.resolveLocalFileSystemURL('file://' + this.path, ( entry ) => {
-					entry.file( ( file ) => {
-						let reader = new plus.io.FileReader();
-						reader.onloadend = ( e ) => {
-							plus.nativeUI.closeWaiting();
-							this.bookContent = e.target.result;
-							//更新文本总长度
-							this.updateBookLength({
-								path: this.path,
-								length: this.bookContent.length
-							})
-							//获取章节目录
-							this.getCatalog();
+				// plus.io.resolveLocalFileSystemURL('file://' + this.path, ( entry ) => {
+				// 	entry.file( ( file ) => {
+				// 		let reader = new plus.io.FileReader();
+				// 		reader.onloadend = ( e ) => {
+				// 			plus.nativeUI.closeWaiting();
+				// 			this.bookContent = e.target.result;
+				// 			//更新文本总长度
+				// 			this.updateBookLength({
+				// 				path: this.path,
+				// 				length: this.bookContent.length
+				// 			})
+				// 			//获取章节目录
+				// 			this.getCatalog();
 							
-							//初始化页面
-							this.initPage();
-						};
-						reader.readAsText( file, 'gb2312' );
-					}, ( fail ) => {
-						console.log("Request file system failed: " + fail.message);
-					});
-				}, ( fail ) => {
-					console.log( "Request file system failed: " + fail.message );
-				});
+				// 			//初始化页面
+				// 			this.initPage();
+				// 		};
+				// 		reader.readAsText( file, 'gb2312' );
+				// 	}, ( fail ) => {
+				// 		console.log("Request file system failed: " + fail.message);
+				// 	});
+				// }, ( fail ) => {
+				// 	console.log( "Request file system failed: " + fail.message );
+				// });
 			},
 			//获取章节目录
 			getCatalog () {
@@ -390,7 +386,7 @@
 					this.$nextTick(() => {
 						this.$set(this.pages[this.page], 'isPageNow', true);
 					})
-				}, this.duration)
+				}, this.duration + 20)
 			},
 			//页面数量变化后，会造成显示页异常，设置可以正常显示的page值 
 			recoverPage (start) {
@@ -402,22 +398,8 @@
 				//如果出现滑动动画异常的情况，可能是这里出了问题，将延迟时间设长一点试试
 				setTimeout(() => {
 					//恢复滑动动画时间
-					this.duration = 300;
-				}, 30)
-			},
-			touchstart (e) {
-				let touch = e.touches[0];
-				this.startX = touch.pageX;
-				console.log(this.startX);
-			},
-			touchmove (e) {
-				if ( e.touches.length > 1 ) {
-					return;
-				}
-				let touch = e.touches[0];
-			},
-			touchend (e) {
-				
+					this.duration = this.readDuration;
+				}, 50)
 			},
 			//设置当前页面书签的前50个字
 			setMarkTitle (record) {
@@ -447,6 +429,9 @@
 				if ( !this.touchChange ) {
 					this.initPage();
 				}
+			},
+			readDuration (newVal) {
+				this.duration = newVal;
 			}
 		},
 		beforeDestroy () {
@@ -494,12 +479,13 @@
 	}
 	.pageBox {
 		flex: 1;
-		padding: 0 20rpx;
 	}
 	.pageItem {
+		width: 100%;
 		height: 100%;
 	}
 	.pageContent {
+		width: 100%;
 		height: 100%;
 	}
 	.touch-box  {
@@ -510,7 +496,7 @@
 		top: 50%;
 		transform: translateY(-50%);
 		width: 200rpx;
-		height: 400rpx;
+		height: 200rpx;
 		border: 5rpx dashed #FFFFFF;
 		color: #333;
 		font-size: 30rpx;

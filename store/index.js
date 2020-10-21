@@ -11,7 +11,7 @@ const store = new Vuex.Store({
     state: {
 		skin: uni.getStorageSync(SKIN) || 'default', //皮肤
 		books: uni.getStorageSync(BOOKS) || [],//导入的书籍列表
-		read: uni.getStorageSync(READ) || {scroll: 'paging', fontSize: 20, light: 1},//阅读模式包含字体大小，翻页方式
+		read: uni.getStorageSync(READ) || {pageMode: 'L2RTrans', duration: 100, fontSize: 20, light: 1},//阅读模式包含字体大小，翻页方式和动画时间
 		path: uni.getStorageSync(PATH) || '',//上次访问的文件夹路径
 		bookmark: uni.getStorageSync(MARK) || []//书签
 	},
@@ -38,7 +38,9 @@ const store = new Vuex.Store({
 					menuActiveBgColor: '#DDDDDD',
 					imgMask: 0,
 					readBackColor: '#BFAD8A',
-					readTextColor: '#2E2B23'
+					readTextColor: '#2E2B23',
+					activeBgColor: '#2397EE',
+					activeColor: '#FAFAFA'
 				}
 			}
 			// 夜间模式
@@ -58,7 +60,9 @@ const store = new Vuex.Store({
 					menuActiveBgColor: '#3F3F3F',
 					imgMask: 0.45,
 					readBackColor: '#393E41',
-					readTextColor: '#95A3A6'
+					readTextColor: '#95A3A6',
+					activeBgColor: '#3F3F3F',
+					activeColor: '#777777'
 				}
 			}
 		},
@@ -152,8 +156,13 @@ const store = new Vuex.Store({
 			uni.setStorageSync(READ, state.read);
 		},
 		//改变翻页模式
-		changeScrollMode (state, scroll) {
-			state.read.scroll = scroll;
+		changePageMode (state, scroll) {
+			state.read.pageMode = scroll;
+			uni.setStorageSync(READ, state.read);
+		},
+		//改变翻页时间
+		changeReadDuration (state, duration) {
+			state.read.duration = duration;
 			uni.setStorageSync(READ, state.read);
 		},
 		//改变阅读页亮度

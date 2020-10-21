@@ -230,7 +230,7 @@
 					this.routePush('/pages/about/index');
 				}
 				if ( item.title == '设置' ) {
-					plus.nativeUI.toast("敬请期待", {verticalAlign: 'bottom'});
+					this.routePush('/pages/setting/index');
 				}
 			},
 			routePush (url) {
@@ -241,10 +241,7 @@
 				this.routeDisabled = true;
 				uni.navigateTo({
 					url: url,
-					success: (res) => {
-						this.routeDisabled = false;
-					},
-					fail: (err) => {
+					complete: (res) => {
 						this.routeDisabled = false;
 					}
 				})

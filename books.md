@@ -74,39 +74,47 @@ getFileSystem (ff) {
 
 ```javascript
 
-// getContent () {
-	
-//获取内容 正式用
-	const contentBox = document.getElementById('contentBox');
+getContent () {
+	//获取内容 正式用
 	let ReadTxt = plus.android.importClass('com.itstudy.io.GetText');
 	let readTxt = new ReadTxt();
-	this.bookContent = readTxt.getTextFromText(plus.io.convertLocalFileSystemURL(this.domProp.path));
+	this.bookContent = readTxt.getTextFromText(plus.io.convertLocalFileSystemURL(this.path));
 	plus.nativeUI.closeWaiting();
-	this.updateLength();
-	this.nowIndex[0] = this.domProp.record;
-	this.setNowPage();
+	//更新文本总长度
+	this.updateBookLength({
+		path: this.path,
+		length: this.bookContent.length
+	})
+	//获取章节目录
 	this.getCatalog();
+	//初始化页面
+	this.initPage();
 	
-	
-//获取内容 调试用
-// 	plus.io.resolveLocalFileSystemURL('file://' + this.domProp.path, ( entry ) => {
-// 		entry.file( ( file ) => {
-// 			let reader = new plus.io.FileReader();
-// 			reader.onloadend = ( e ) => {
-// 				plus.nativeUI.closeWaiting();
-// 				this.bookContent = e.target.result;
-// 				this.updateLength();
-// 				this.nowIndex[0] = this.domProp.record;
-// 				this.setNowPage();
-// 				this.getCatalog();
-// 			};
-// 			reader.readAsText( file, 'gb2312' );
-// 		}, ( fail ) => {
-// 			console.log("Request file system failed: " + fail.message);
-// 		});
-// 	}, ( fail ) => {
-// 		console.log( "Request file system failed: " + fail.message );
-// 	});
+	//获取内容 调试用
+	// plus.io.resolveLocalFileSystemURL('file://' + this.path, ( entry ) => {
+	// 	entry.file( ( file ) => {
+	// 		let reader = new plus.io.FileReader();
+	// 		reader.onloadend = ( e ) => {
+	// 			plus.nativeUI.closeWaiting();
+	// 			this.bookContent = e.target.result;
+	// 			//更新文本总长度
+	// 			this.updateBookLength({
+	// 				path: this.path,
+	// 				length: this.bookContent.length
+	// 			})
+	// 			//获取章节目录
+	// 			this.getCatalog();
+				
+	// 			//初始化页面
+	// 			this.initPage();
+	// 		};
+	// 		reader.readAsText( file, 'gb2312' );
+	// 	}, ( fail ) => {
+	// 		console.log("Request file system failed: " + fail.message);
+	// 	});
+	// }, ( fail ) => {
+	// 	console.log( "Request file system failed: " + fail.message );
+	// });
 // }
 ```
 

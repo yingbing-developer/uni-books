@@ -92,16 +92,12 @@
 							<text class="bottom-name">书签</text>
 						</view>
 					</view>
-					<!-- <view class="bottom-box">
-						<view class="bottom-item" v-if="readMode.scroll == 'paging'" @tap="changeScrollMode('scroll')">
-							<c-icon name="scroll" :size="28" color="#8A8A8A"></c-icon>
-							<text class="bottom-name">滚动</text>
+					<view class="bottom-box">
+						<view class="bottom-item" @tap="routePush('/pages/setting/index')">
+							<c-icon name="setting" :size="42" color="#8A8A8A"></c-icon>
+							<text class="bottom-name">设置</text>
 						</view>
-						<view class="bottom-item" v-if="readMode.scroll == 'scroll'" @tap="changeScrollMode('paging')">
-							<c-icon name="paging" :size="28" color="#8A8A8A"></c-icon>
-							<text class="bottom-name">翻页</text>
-						</view>
-					</view> -->
+					</view>
 					<view class="bottom-box">
 						<view class="bottom-item" v-if="skinMode == 'default'" @tap="changeSkin('night')">
 							<c-icon name="night" :size="42" color="#8A8A8A"></c-icon>
@@ -223,7 +219,7 @@
 			this.lightPercent = this.light;
 		},
 		methods: {
-			...mapMutations(['changeFontSize', 'changeScrollMode', 'changeLight', 'updateBookRecord', 'saveBookmark', 'clearBookmark']),
+			...mapMutations(['changeFontSize', 'changeLight', 'updateBookRecord', 'saveBookmark', 'clearBookmark']),
 			show () {
 				uni.$emit('setting-isShow', {
 					show: true
@@ -391,6 +387,19 @@
 				});
 				// 打开 nvue 子窗体 
 				subNvue.show('slide-in-right', 400);
+			},
+			routePush (url) {
+				//路由防抖
+				if ( this.routeDisabled ) {
+					return;
+				}
+				this.routeDisabled = true;
+				uni.navigateTo({
+					url: url,
+					complete: (res) => {
+						this.routeDisabled = false;
+					}
+				})
 			}
 		},
 		beforeDestroy () {
