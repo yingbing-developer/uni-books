@@ -129,45 +129,44 @@
 			...mapMutations(['updateBookReadStatus', 'updateBookLength', 'updateBookReadTime', 'updateBookRecord']),
 			getContent () {
 				//获取内容 正式用
-				let ReadTxt = plus.android.importClass('com.itstudy.io.GetText');
-				let readTxt = new ReadTxt();
-				this.bookContent = readTxt.getTextFromText(plus.io.convertLocalFileSystemURL(this.path));
-				plus.nativeUI.closeWaiting();
-				//更新文本总长度
-				this.updateBookLength({
-					path: this.path,
-					length: this.bookContent.length
-				})
-				//获取章节目录
-				this.getCatalog();
-				//初始化页面
-				this.initPage();
+				// let ReadTxt = plus.android.importClass('com.itstudy.io.GetText');
+				// let readTxt = new ReadTxt();
+				// this.bookContent = readTxt.getTextFromText(plus.io.convertLocalFileSystemURL(this.path));
+				// plus.nativeUI.closeWaiting();
+				// //更新文本总长度
+				// this.updateBookLength({
+				// 	path: this.path,
+				// 	length: this.bookContent.length
+				// })
+				// //获取章节目录
+				// this.getCatalog();
+				// //初始化页面
+				// this.initPage();
 				
 				//获取内容 调试用
-				// plus.io.resolveLocalFileSystemURL('file://' + this.path, ( entry ) => {
-				// 	entry.file( ( file ) => {
-				// 		let reader = new plus.io.FileReader();
-				// 		reader.onloadend = ( e ) => {
-				// 			plus.nativeUI.closeWaiting();
-				// 			this.bookContent = e.target.result;
-				// 			//更新文本总长度
-				// 			this.updateBookLength({
-				// 				path: this.path,
-				// 				length: this.bookContent.length
-				// 			})
-				// 			//获取章节目录
-				// 			this.getCatalog();
-							
-				// 			//初始化页面
-				// 			this.initPage();
-				// 		};
-				// 		reader.readAsText( file, 'gb2312' );
-				// 	}, ( fail ) => {
-				// 		console.log("Request file system failed: " + fail.message);
-				// 	});
-				// }, ( fail ) => {
-				// 	console.log( "Request file system failed: " + fail.message );
-				// });
+				plus.io.resolveLocalFileSystemURL('file://' + this.path, ( entry ) => {
+					entry.file( ( file ) => {
+						let reader = new plus.io.FileReader();
+						reader.onloadend = ( e ) => {
+							plus.nativeUI.closeWaiting();
+							this.bookContent = e.target.result;
+							//更新文本总长度
+							this.updateBookLength({
+								path: this.path,
+								length: this.bookContent.length
+							})
+							//获取章节目录
+							this.getCatalog();
+							//初始化页面
+							this.initPage();
+						};
+						reader.readAsText( file, 'gb2312' );
+					}, ( fail ) => {
+						console.log("Request file system failed: " + fail.message);
+					});
+				}, ( fail ) => {
+					console.log( "Request file system failed: " + fail.message );
+				});
 			},
 			//获取章节目录
 			getCatalog () {
@@ -386,7 +385,7 @@
 					this.$nextTick(() => {
 						this.$set(this.pages[this.page], 'isPageNow', true);
 					})
-				}, this.duration + 20)
+				}, this.duration + 30)
 			},
 			//页面数量变化后，会造成显示页异常，设置可以正常显示的page值 
 			recoverPage (start) {

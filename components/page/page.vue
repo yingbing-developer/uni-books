@@ -1,6 +1,6 @@
 <template>
 	<view class="page" :id="'dom' + dataId" :prop="domProp" :change:prop="dom.domPropChange" :style="{color: color, 'font-size': this.fontSize + 'px', 'line-height': lineHeight + 'px'}">
-		<text :id="'content' + dataId" class="content" ref="content"></text>
+		<view :id="'content' + dataId" class="content" ref="content"></view>
 	</view>
 </template>
 
@@ -66,6 +66,12 @@
 				restartValue: 0
 			}
 		},
+		created () {
+			//如果当前阅读位置为文本最后位置，需要手动触发ready事件
+			if ( this.record == this.length ) {
+				this.$emit('ready', {start: this.record, end: this.record, updatePrev: false});
+			}
+		},
 		computed: {
 			lineHeight () {
 				return this.fontSize + 10;
@@ -117,6 +123,12 @@
 			}
 		},
 		watch: {
+			record (newVal) {
+				//如果当前阅读位置为文本最后位置，需要手动触发ready事件
+				if ( newVal == this.length ) {
+					this.$emit('ready', {start: newVal, end: newVal, updatePrev: false});
+				}
+			},
 			isPageNow (newVal) {
 				if ( newVal ) {
 					this.$emit('ready', {start: this.start, end: this.end, updatePrev: false});
@@ -333,6 +345,5 @@
 		white-space: pre-wrap;
 		word-break: break-all;
 		word-wrap: break-word;
-		display: inline-block;
 	}
 </style>
