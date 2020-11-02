@@ -1,6 +1,6 @@
 <template>
 	<view class="search" :style="{'background-color': skinColor.bgColor}">
-		<nav-bar title="添加书籍" :bgColor="skinColor.navColor" :titleColor="skinColor.iconColor" :cWidth="200">
+		<nav-bar title="添加书籍" :bgColor="skinColor.navColor" :titleColor="skinColor.iconColor">
 			<!-- <view slot="right" @tap="showFilterBox">
 				<c-icon name="filter" size="37.5" :color="skinColor.iconColor"></c-icon>
 			</view> -->

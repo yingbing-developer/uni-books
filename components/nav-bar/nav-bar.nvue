@@ -9,7 +9,7 @@
 				<slot name="left">
 				</slot>
 			</view>
-			<view class="center" :style="centerStyle">
+			<view class="center">
 				<text class="title" :style="{'color': titleColor}">{{title}}</text>
 				<slot name="center"></slot>
 			</view>
@@ -44,10 +44,6 @@
 			titleColor: {
 				type: String,
 				default: '#FFFFFF'
-			},
-			cWidth: {
-				type: Number,
-				default: 0
 			}
 		},
 		data () {
@@ -55,11 +51,6 @@
 				barHeight: '',
 				//返回键防抖
 				backDisabled: false
-			}
-		},
-		computed: {
-			centerStyle () {
-				return this.cWidth > 0 ? { width: this.cWidth + 'rpx' } : {}
 			}
 		},
 		created () {
@@ -143,14 +134,6 @@
 		width: 100rpx;
 	}
 	.center {
-		/* #ifdef APP-NVUE */
-		width: 420rpx;
-		/* #endif */
-		/* #ifndef APP-NVUE */
-		width: 56%;
-		/* #endif */
-	}
-	.right {
 		flex: 1;
 	}
 </style>
