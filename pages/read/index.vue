@@ -128,6 +128,7 @@
 		methods: {
 			...mapMutations(['updateBookReadStatus', 'updateBookLength', 'updateBookReadTime', 'updateBookRecord']),
 			getContent () {
+				
 				//获取内容 正式用
 				// let ReadTxt = plus.android.importClass('com.itstudy.io.GetText');
 				// let readTxt = new ReadTxt();
@@ -143,7 +144,7 @@
 				// //初始化页面
 				// this.initPage();
 				
-				//获取内容 调试用
+				// 获取内容 调试用
 				plus.io.resolveLocalFileSystemURL('file://' + this.path, ( entry ) => {
 					entry.file( ( file ) => {
 						let reader = new plus.io.FileReader();
@@ -502,6 +503,9 @@
 		background-color: rgba(255,255,255,0.4);
 		font-weight: bold;
 		opacity: 0;
+	}
+	.touch-prev, .touch-next {
+		height: 600rpx;
 	}
 	.touch-prev {
 		left: 0;

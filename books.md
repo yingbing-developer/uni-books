@@ -70,10 +70,6 @@ getFileSystem (ff) {
 	this.checkes = [];
 }
 
-```
-
-```javascript
-
 getContent () {
 	//获取内容 正式用
 	let ReadTxt = plus.android.importClass('com.itstudy.io.GetText');
@@ -117,5 +113,3 @@ getContent () {
 	// });
 // }
 ```
-
-#开发不易,麻烦各位帅哥、美女行行好给个好评吧!!!

@@ -1,10 +1,6 @@
 <template>
 	<view class="list-scroll">
-		<list ref="list"
-		:scrollable="scrollable"
-		@scroll="scroll"
-		:loadmoreoffset="loadmoreoffset"
-		@loadmore="loadmore">
+		<list ref="list" :scrollable="scrollable" @scroll="scroll" :loadmoreoffset="loadmoreoffset" @loadmore="loadmore">
 			<cell>
 				<slot name="listTop"></slot>
 			</cell>
@@ -13,9 +9,9 @@
 			:key="i"
 			@appear="appear(i)"
 			@disappear="disappear(i)"
-			:style="{height: i == listSync.length - 1 ? lastItemHeight : itemHeight}">
+			:style="{'height': i == listSync.length - 1 ? lastBoxHeight : boxHeight}">
 				<view class="list" v-if="isShows.indexOf(i) > -1">
-					<view :style="{width: itemWidth + 'rpx'}" v-for="(child, index) in lists" :key="index">
+					<view ref="child" :style="{width: itemWidth + 'rpx'}" v-for="(child, index) in lists" :key="index">
 						<slot :item="child"></slot>
 					</view>
 				</view>
@@ -25,12 +21,18 @@
 </template>
 
 <script>
+	const dom = weex.requireModule('dom');
 	export default {
 		props: {
 			//列数
 			columnCount: {
 				type: Number,
 				default: 1
+			},
+			//一次最多渲染多少列
+			rowCount: {
+				type: Number,
+				default: 4
 			},
 			//是否禁用滚动
 			scrollable: {
@@ -53,74 +55,86 @@
 			offsetAccuracy: {
 				type: Number,
 				default: 5
-			},
-			//外部设置一行的高度
-			listHeight: {
-				type: Number,
-				default: 0
-			},
-			//外部设置的上下间隔
-			gapWidth: {
-				type: Number,
-				default: 0
-			},
-			//一次最多渲染多少列
-			rowCount: {
-				type: Number,
-				default: 4
 			}
 		},
 		computed: {
 			//多列列表数据
-			listSync () {
+			listSync() {
 				let arr = [];
 				let j = -1;
-				for ( let i in this.list ) {
-					if ( i % this.maxCount == 0) {
+				for (let i in this.list) {
+					if (i % this.maxCount == 0) {
 						j++;
-						this.$set(arr, j , []);
+						this.$set(arr, j, []);
 					}
 					arr[j].push(this.list[i]);
 				}
 				return arr;
 			},
-			maxCount () {
+			maxCount() {
 				return parseInt(this.columnCount * this.rowCount);
 			},
-			itemWidth () {
+			itemWidth() {
 				return 750 / this.columnCount;
 			},
-			itemHeight () {
-				return (this.rowCount * (this.listHeight + this.gapWidth)) + 'rpx';
+			boxHeight () {
+				return this.childHeight ? (this.rowCount * this.childHeight) + 'px' : 'auto';
 			},
-			lastItemHeight () {
-				let i = this.listSync.length - 1;
-				let row = this.listSync[i].length % this.columnCount > 0 ? parseInt(this.listSync[i].length / this.columnCount) + 1 : parseInt(this.listSync[i].length / this.columnCount);
-				return (row * (this.listHeight + this.gapWidth)) + 'rpx';
+			lastBoxHeight () {
+				if ( this.childHeight ) {
+					let i = this.listSync.length - 1;
+					let row = Math.ceil(this.listSync[i].length / this.columnCount);
+					return (row * this.childHeight) + 'px';
+				} else {
+					return 'auto'
+				}
 			}
 		},
-		data () {
+		data() {
 			return {
-				isShows: []
+				isShows: [],
+				childHeight: 0
 			}
+		},
+		mounted () {
+			setTimeout(() => {
+				if ( this.listSync.length > 0 ) {
+					this.getChildHeight();
+				}
+			}, 50)
 		},
 		methods: {
-			scroll (e) {
+			scroll(e) {
 				this.$emit('scroll', e)
 			},
-			loadmore (e) {
+			loadmore(e) {
 				this.$emit('loadmore', e);
 			},
-			appear (index) {
+			appear(index) {
 				let flag = this.isShows.indexOf(index);
-				if ( flag == -1 ) {
+				if (flag == -1) {
 					this.isShows.push(index);
 				}
 			},
-			disappear (index) {
+			disappear(index) {
 				let flag = this.isShows.indexOf(index);
-				if ( flag > -1 ) {
+				if (flag > -1) {
 					this.isShows.splice(flag, 1);
+				}
+			},
+			//获取每行数据高度
+			getChildHeight() {
+				dom.getComponentRect(this.$refs.child[0], (res) => {
+					this.childHeight = res.size.height;
+				})
+			}
+		},
+		watch: {
+			listSync(newVal) {
+				if (newVal.length > 0 && !this.childHeight) {
+					setTimeout(() => {
+						this.getChildHeight();
+					}, 50)
 				}
 			}
 		}
@@ -132,6 +146,7 @@
 		flex: 1;
 		width: 750rpx;
 	}
+
 	.list {
 		flex-direction: row;
 		flex-wrap: wrap;

@@ -4,7 +4,7 @@
 		@touchmove="touchmove"
 		@touchend="touchend">
 		
-		<!-- nvue中overflow只有hidden属性，所以超出部分会隐藏，为了显示完成的滑块，在进度条2边加上间隔，宽度为滑块宽度的一半 -->
+		<!-- nvue中overflow只有hidden属性，所以超出部分会隐藏，为了显示完整的滑块，在进度条2边加上间隔，宽度为滑块宽度的一半 -->
 		<view :style="{'width': (itemSize / 2) + 'rpx'}"></view>
 		
 		<!-- 进度条 -->

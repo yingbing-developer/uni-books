@@ -12,7 +12,7 @@
         "compilerVersion" : 3,
         "splashscreen" : {
             "alwaysShowBeforeRender" : true,
-            "waiting" : true,
+            "waiting" : false,
             "autoclose" : true,
             "delay" : 0
         },
@@ -23,52 +23,99 @@
             /* android打包配置 */
             "android" : {
                 "permissions" : [ "<uses-permission android:name=\"android.permission.WAKE_LOCK\"/>" ],
-				"permissionPhoneState": {  
-				   "request": "none",  
-				   "prompt": "为保证您正常、安全地使用，需要获取设备识别码（部分手机提示为获取手机号码）使用权限，请允许。"  
-				},
-                "autoSdkPermissions" : false
+                "permissionPhoneState" : {
+                    "request" : "none",
+                    "prompt" : "为保证您正常、安全地使用，需要获取设备识别码（部分手机提示为获取手机号码）使用权限，请允许。"
+                },
+                "autoSdkPermissions" : false,
+                "abiFilters" : [ "armeabi-v7a", "x86" ]
             },
             /* ios打包配置 */
-            "ios" : {},
+            "ios" : {
+                "idfa" : false
+            },
             /* SDK配置 */
             "sdkConfigs" : {
                 "ad" : {}
             },
             "icons" : {
                 "android" : {
-                    "hdpi" : "unpackage/res/icons/72x72.png",
-                    "xhdpi" : "unpackage/res/icons/96x96.png",
-                    "xxhdpi" : "unpackage/res/icons/144x144.png",
-                    "xxxhdpi" : "unpackage/res/icons/192x192.png"
+                    "hdpi" : "",
+                    "xhdpi" : "",
+                    "xxhdpi" : "",
+                    "xxxhdpi" : ""
                 },
                 "ios" : {
-                    "appstore" : "unpackage/res/icons/1024x1024.png",
+                    "appstore" : "",
                     "ipad" : {
-                        "app" : "unpackage/res/icons/76x76.png",
-                        "app@2x" : "unpackage/res/icons/152x152.png",
-                        "notification" : "unpackage/res/icons/20x20.png",
-                        "notification@2x" : "unpackage/res/icons/40x40.png",
-                        "proapp@2x" : "unpackage/res/icons/167x167.png",
-                        "settings" : "unpackage/res/icons/29x29.png",
-                        "settings@2x" : "unpackage/res/icons/58x58.png",
-                        "spotlight" : "unpackage/res/icons/40x40.png",
-                        "spotlight@2x" : "unpackage/res/icons/80x80.png"
+                        "app" : "",
+                        "app@2x" : "",
+                        "notification" : "",
+                        "notification@2x" : "",
+                        "proapp@2x" : "",
+                        "settings" : "",
+                        "settings@2x" : "",
+                        "spotlight" : "",
+                        "spotlight@2x" : ""
                     },
                     "iphone" : {
-                        "app@2x" : "unpackage/res/icons/120x120.png",
-                        "app@3x" : "unpackage/res/icons/180x180.png",
-                        "notification@2x" : "unpackage/res/icons/40x40.png",
-                        "notification@3x" : "unpackage/res/icons/60x60.png",
-                        "settings@2x" : "unpackage/res/icons/58x58.png",
-                        "settings@3x" : "unpackage/res/icons/87x87.png",
-                        "spotlight@2x" : "unpackage/res/icons/80x80.png",
-                        "spotlight@3x" : "unpackage/res/icons/120x120.png"
+                        "app@2x" : "",
+                        "app@3x" : "",
+                        "notification@2x" : "",
+                        "notification@3x" : "",
+                        "settings@2x" : "",
+                        "settings@3x" : "",
+                        "spotlight@2x" : "",
+                        "spotlight@3x" : ""
                     }
                 }
             },
             "splashscreen" : {
                 "androidStyle" : "default"
+            }
+        },
+        "nativePlugins" : {
+            "IO-YingBing-Plugin-GetFileList" : {
+                "插件需要配置的参数名称, 如appid" : "__UNI__8A96B42",
+                "__plugin_info__" : {
+                    "name" : "IOYingBingPluginGetFileList",
+                    "description" : "获取本地文件列表",
+                    "platforms" : "Android",
+                    "url" : "",
+                    "android_package_name" : "",
+                    "ios_bundle_id" : "",
+                    "isCloud" : false,
+                    "bought" : -1,
+                    "pid" : "",
+                    "parameters" : {
+                        "插件需要配置的参数名称, 如appid" : {
+                            "des" : "__UNI__8A96B42",
+                            "key" : "",
+                            "value" : ""
+                        }
+                    }
+                }
+            },
+            "IO-YingBing-Plugin-GetText" : {
+                "插件需要配置的参数名称, 如appid" : "__UNI__8A96B42",
+                "__plugin_info__" : {
+                    "name" : "IOYingBingPluginGetText",
+                    "description" : "获取TxT内容",
+                    "platforms" : "Android",
+                    "url" : "",
+                    "android_package_name" : "",
+                    "ios_bundle_id" : "",
+                    "isCloud" : false,
+                    "bought" : -1,
+                    "pid" : "",
+                    "parameters" : {
+                        "插件需要配置的参数名称, 如appid" : {
+                            "des" : "__UNI__8A96B42",
+                            "key" : "",
+                            "value" : ""
+                        }
+                    }
+                }
             }
         }
     },

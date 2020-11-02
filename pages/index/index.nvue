@@ -20,7 +20,7 @@
 			</view>
 		</nav-bar>
 		<c-search v-if="showFilter" @confirm="setNameFilter"></c-search>
-		<list-scroll :column-count="3" @scroll="scroll" :list="books" :gapWidth="20" :listHeight="285" :scrollable="scrollable">
+		<list-scroll :column-count="3" @scroll="scroll" :list="books" :scrollable="scrollable">
 			<view slot="listTop" ref="listTop"></view>
 			<template v-slot="{item}">
 				<view class="book" @tap="readBook(item.path)" @longpress="showAction(item.path)">
