@@ -11,7 +11,7 @@ const store = new Vuex.Store({
     state: {
 		skin: uni.getStorageSync(SKIN) || 'default', //皮肤
 		books: uni.getStorageSync(BOOKS) || [],//导入的书籍列表
-		read: uni.getStorageSync(READ) || {pageMode: 'L2RTrans', duration: 100, fontSize: 20, light: 1},//阅读模式包含字体大小，翻页方式和动画时间
+		read: uni.getStorageSync(READ) || {pageMode: 'L2RTrans', duration: 200, fontSize: 20, light: 1},//阅读模式包含字体大小，翻页方式和动画时间
 		path: uni.getStorageSync(PATH) || '',//上次访问的文件夹路径
 		bookmark: uni.getStorageSync(MARK) || []//书签
 	},

@@ -12,7 +12,7 @@
 			</view>
 		</nav-bar>
 		<c-search @confirm="setNameFilter"></c-search>
-		<list-scroll @scroll="scroll" :row-count="20" :list="listSync">
+		<list-scroll @scroll="scroll" :row-count="20" :line-height="108" :list="listSync">
 			 <!-- 注意事项: 不能使用 index 作为 key 的唯一标识 -->
 			<!-- 返回项 -->
 			<view slot="listTop" ref="listTop" @tap="backParent()" class="list" :style="{'border-bottom-color': skinColor.gapColor}">
@@ -465,7 +465,6 @@
 				let list = str.split('::');
 				let folder = JSON.parse(JSON.parse(JSON.stringify(list[0])));
 				let file = JSON.parse(JSON.parse(JSON.stringify(list[1])));
-				
 				
 				//获取文件列表 调试用
 				// let list = plus.android.invoke(fd, "listFiles");
